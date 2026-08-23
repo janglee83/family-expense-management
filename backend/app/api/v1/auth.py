@@ -1,3 +1,4 @@
+import secrets
 from datetime import UTC, datetime, timedelta
 
 from fastapi import APIRouter, Depends, HTTPException, Request, Response, status
@@ -6,7 +7,11 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.deps import get_current_user
 from app.core.config import get_settings
-from app.core.rate_limit import is_login_rate_limited, record_failed_login
+from app.core.rate_limit import (
+    LOGIN_ATTEMPT_WINDOW_SECONDS,
+    is_login_rate_limited,
+    record_failed_login,
+)
 from app.core.security import (
     create_access_token,
     generate_refresh_token,
@@ -22,6 +27,11 @@ from app.schemas.auth import LoginRequest, RegisterRequest, UserResponse
 router = APIRouter()
 
 REFRESH_COOKIE_PATH = "/api/v1/auth"
+
+# Precomputed at import time so login() always pays the Argon2 verify cost,
+# even when the email doesn't exist — this closes a timing side channel that
+# would otherwise leak whether an email is registered.
+_DUMMY_PASSWORD_HASH = hash_password(secrets.token_urlsafe(32))
 
 
 def _set_auth_cookies(response: Response, access_token: str, refresh_token: str) -> None:
@@ -104,10 +114,20 @@ async def login(
         raise HTTPException(
             status_code=status.HTTP_429_TOO_MANY_REQUESTS,
             detail="Too many login attempts. Try again later.",
+            headers={"Retry-After": str(LOGIN_ATTEMPT_WINDOW_SECONDS)},
         )
 
     user = await session.scalar(select(User).where(User.email == email))
-    if user is None or not verify_password(payload.password, user.password_hash):
+    if user is None:
+        # Always pay the Argon2 verify cost, even when there's no user to
+        # compare against, so the response time doesn't reveal whether the
+        # email is registered.
+        verify_password(payload.password, _DUMMY_PASSWORD_HASH)
+        await record_failed_login(email)
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid email or password"
+        )
+    if not verify_password(payload.password, user.password_hash):
         await record_failed_login(email)
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid email or password"

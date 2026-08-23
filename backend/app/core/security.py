@@ -5,7 +5,7 @@ from typing import Any
 
 import jwt
 from argon2 import PasswordHasher
-from argon2.exceptions import VerifyMismatchError
+from argon2.exceptions import Argon2Error, InvalidHashError
 
 from app.core.config import get_settings
 
@@ -19,7 +19,11 @@ def hash_password(password: str) -> str:
 def verify_password(password: str, password_hash: str) -> bool:
     try:
         return _password_hasher.verify(password_hash, password)
-    except VerifyMismatchError:
+    except (Argon2Error, InvalidHashError):
+        # InvalidHashError (raised for a malformed/corrupt hash before it's
+        # even passed to Argon2) is a ValueError, not an Argon2Error
+        # subclass, so it must be listed explicitly here. Both cases mean
+        # "not authenticated," not a server error.
         return False
 
 

@@ -25,6 +25,13 @@ def test_verify_password_rejects_wrong_password() -> None:
     assert verify_password("wrong-password", password_hash) is False
 
 
+def test_verify_password_returns_false_for_malformed_hash() -> None:
+    # A corrupt/malformed password_hash raises argon2.exceptions.InvalidHash,
+    # not VerifyMismatchError — verify_password must treat that as "not
+    # authenticated" too, rather than letting it propagate as a 500.
+    assert verify_password("correct-password", "not-a-real-argon2-hash") is False
+
+
 def test_create_and_decode_access_token_roundtrip() -> None:
     token = create_access_token("user-123")
 
