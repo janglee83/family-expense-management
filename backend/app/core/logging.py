@@ -1,4 +1,5 @@
 import logging
+from typing import cast
 
 import structlog
 
@@ -7,12 +8,12 @@ from app.core.config import get_settings
 
 def configure_logging() -> None:
     settings = get_settings()
-    shared_processors = [
+    shared_processors: list[structlog.types.Processor] = [
         structlog.contextvars.merge_contextvars,
         structlog.processors.add_log_level,
         structlog.processors.TimeStamper(fmt="iso"),
     ]
-    renderer = (
+    renderer: structlog.types.Processor = (
         structlog.processors.JSONRenderer()
         if settings.env == "production"
         else structlog.dev.ConsoleRenderer()
@@ -27,4 +28,4 @@ def configure_logging() -> None:
 
 
 def get_logger(name: str) -> structlog.typing.FilteringBoundLogger:
-    return structlog.get_logger(name)
+    return cast(structlog.typing.FilteringBoundLogger, structlog.get_logger(name))

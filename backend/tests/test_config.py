@@ -23,4 +23,4 @@ def test_settings_raises_when_database_url_missing(monkeypatch: pytest.MonkeyPat
     monkeypatch.setenv("REDIS_URL", "redis://localhost:6379/0")
 
     with pytest.raises(ValidationError):
-        Settings(_env_file=None)
+        Settings(_env_file=None)  # type: ignore[call-arg]
