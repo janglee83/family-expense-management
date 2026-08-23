@@ -14,6 +14,7 @@ dependencies = [
   "redis>=5.0,<6.0",
   "pyjwt>=2.9,<3.0",
   "argon2-cffi>=23.1,<24.0",
+  "email-validator>=2.2,<3.0",
 ]
 
 [project.optional-dependencies]
@@ -42,6 +43,9 @@ select = ["E", "F", "I", "UP", "B"]
 [tool.ruff.lint.isort]
 known-third-party = ["alembic"]
 
+[tool.ruff.lint.flake8-bugbear]
+extend-immutable-calls = ["fastapi.Depends"]
+
 [tool.ruff.lint.per-file-ignores]
 "alembic/versions/*.py" = ["F401"]
 
@@ -52,6 +56,8 @@ ignore_missing_imports = true
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "session"
+asyncio_default_test_loop_scope = "session"
 pythonpath = ["."]
 addopts = "-m 'not integration'"
 markers = ["integration: requires postgres/redis running (docker compose up -d postgres redis)"]
