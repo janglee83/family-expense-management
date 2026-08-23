@@ -3,6 +3,7 @@ import {
   fetchCurrentUser,
   loginUser,
   logoutUser,
+  refreshSession,
   registerUser,
   type AuthUser,
 } from "./authApi";
@@ -24,9 +25,27 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    fetchCurrentUser()
-      .then(setUser)
-      .finally(() => setIsLoading(false));
+    let cancelled = false;
+
+    async function establishSession() {
+      let currentUser = await fetchCurrentUser();
+      if (!currentUser) {
+        const refreshed = await refreshSession();
+        if (refreshed) {
+          currentUser = await fetchCurrentUser();
+        }
+      }
+      if (!cancelled) {
+        setUser(currentUser);
+        setIsLoading(false);
+      }
+    }
+
+    void establishSession();
+
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   async function login(email: string, password: string) {

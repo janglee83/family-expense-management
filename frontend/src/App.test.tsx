@@ -6,9 +6,11 @@ import { AppRoutes } from "./AppRoutes";
 import { AuthProvider } from "./auth/AuthContext";
 
 const fetchCurrentUserMock = vi.fn();
+const refreshSessionMock = vi.fn();
 
 vi.mock("./auth/authApi", () => ({
   fetchCurrentUser: (...args: unknown[]) => fetchCurrentUserMock(...args),
+  refreshSession: (...args: unknown[]) => refreshSessionMock(...args),
   loginUser: vi.fn(),
   registerUser: vi.fn(),
   logoutUser: vi.fn(),
@@ -27,6 +29,8 @@ function renderAt(initialPath: string) {
 describe("AppRoutes", () => {
   beforeEach(() => {
     fetchCurrentUserMock.mockReset();
+    refreshSessionMock.mockReset();
+    refreshSessionMock.mockResolvedValue(false);
   });
 
   it("redirects unauthenticated users from / to /login", async () => {
@@ -55,5 +59,22 @@ describe("AppRoutes", () => {
     renderAt("/login");
 
     expect(await screen.findByRole("heading", { name: "ログイン" })).toBeInTheDocument();
+  });
+
+  it("re-establishes the session via refresh when the access token has expired", async () => {
+    fetchCurrentUserMock
+      .mockResolvedValueOnce(null)
+      .mockResolvedValueOnce({
+        id: "11111111-1111-1111-1111-111111111111",
+        email: "alice@example.com",
+        display_name: "Alice",
+      });
+    refreshSessionMock.mockResolvedValue(true);
+
+    renderAt("/");
+
+    expect(await screen.findByRole("heading", { name: "家計簿" })).toBeInTheDocument();
+    expect(refreshSessionMock).toHaveBeenCalled();
+    expect(fetchCurrentUserMock).toHaveBeenCalledTimes(2);
   });
 });
