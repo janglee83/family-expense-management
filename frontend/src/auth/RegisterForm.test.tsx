@@ -53,4 +53,34 @@ describe("RegisterForm", () => {
       "Alice",
     );
   });
+
+  it("shows a translated error when the email is already registered", async () => {
+    registerMock.mockRejectedValue(new Error("email_in_use"));
+    const user = userEvent.setup();
+    render(<RegisterForm />, { wrapper: MemoryRouter });
+
+    await user.type(screen.getByLabelText("表示名"), "Alice");
+    await user.type(screen.getByLabelText("メールアドレス"), "alice@example.com");
+    await user.type(screen.getByLabelText("パスワード"), "correct-password");
+    await user.click(screen.getByRole("button", { name: "登録する" }));
+
+    expect(await screen.findByRole("alert")).toHaveTextContent(
+      "このメールアドレスは既に登録されています",
+    );
+  });
+
+  it("shows a generic error for unexpected registration failures", async () => {
+    registerMock.mockRejectedValue(new Error("register_failed"));
+    const user = userEvent.setup();
+    render(<RegisterForm />, { wrapper: MemoryRouter });
+
+    await user.type(screen.getByLabelText("表示名"), "Alice");
+    await user.type(screen.getByLabelText("メールアドレス"), "alice@example.com");
+    await user.type(screen.getByLabelText("パスワード"), "correct-password");
+    await user.click(screen.getByRole("button", { name: "登録する" }));
+
+    expect(await screen.findByRole("alert")).toHaveTextContent(
+      "エラーが発生しました。もう一度お試しください",
+    );
+  });
 });

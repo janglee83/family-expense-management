@@ -61,4 +61,18 @@ describe("LoginForm", () => {
       "ログイン試行回数が多すぎます。しばらくしてから再度お試しください",
     );
   });
+
+  it("shows a generic error when login fails for an unexpected reason", async () => {
+    loginMock.mockRejectedValue(new Error("login_failed"));
+    const user = userEvent.setup();
+    render(<LoginForm />, { wrapper: MemoryRouter });
+
+    await user.type(screen.getByLabelText("メールアドレス"), "alice@example.com");
+    await user.type(screen.getByLabelText("パスワード"), "wrong-password");
+    await user.click(screen.getByRole("button", { name: "ログイン" }));
+
+    expect(await screen.findByRole("alert")).toHaveTextContent(
+      "エラーが発生しました。もう一度お試しください",
+    );
+  });
 });

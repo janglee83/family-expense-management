@@ -20,11 +20,13 @@ export function LoginForm() {
       await login(email, password);
       navigate("/");
     } catch (err) {
-      setError(
-        err instanceof Error && err.message === "rate_limited"
-          ? t("auth.rateLimited")
-          : t("auth.invalidCredentials"),
-      );
+      if (err instanceof Error && err.message === "rate_limited") {
+        setError(t("auth.rateLimited"));
+      } else if (err instanceof Error && err.message === "invalid_credentials") {
+        setError(t("auth.invalidCredentials"));
+      } else {
+        setError(t("auth.genericError"));
+      }
     } finally {
       setIsSubmitting(false);
     }

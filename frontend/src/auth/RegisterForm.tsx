@@ -30,7 +30,7 @@ export function RegisterForm() {
       navigate("/");
     } catch (err) {
       setError(
-        err instanceof Error && err.message === "register_failed"
+        err instanceof Error && err.message === "email_in_use"
           ? t("auth.emailInUse")
           : t("auth.genericError"),
       );
