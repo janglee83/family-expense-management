@@ -1,4 +1,26 @@
 {
+  "components": {
+    "schemas": {
+      "PingResponse": {
+        "properties": {
+          "message": {
+            "title": "Message",
+            "type": "string"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "status",
+          "message"
+        ],
+        "title": "PingResponse",
+        "type": "object"
+      }
+    }
+  },
   "info": {
     "title": "Family Expense Management API",
     "version": "0.1.0"
@@ -13,11 +35,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "additionalProperties": {
-                    "type": "string"
-                  },
-                  "title": "Response Ping Api V1 Ping Get",
-                  "type": "object"
+                  "$ref": "#/components/schemas/PingResponse"
                 }
               }
             },

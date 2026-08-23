@@ -41,7 +41,15 @@ export interface paths {
 }
 export type webhooks = Record<string, never>;
 export interface components {
-    schemas: never;
+    schemas: {
+        /** PingResponse */
+        PingResponse: {
+            /** Message */
+            message: string;
+            /** Status */
+            status: string;
+        };
+    };
     responses: never;
     parameters: never;
     requestBodies: never;
@@ -65,9 +73,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        [key: string]: string;
-                    };
+                    "application/json": components["schemas"]["PingResponse"];
                 };
             };
         };

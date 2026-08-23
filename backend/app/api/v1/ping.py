@@ -1,8 +1,14 @@
 from fastapi import APIRouter
+from pydantic import BaseModel
 
 router = APIRouter()
 
 
-@router.get("/ping")
-async def ping() -> dict[str, str]:
-    return {"status": "ok", "message": "pong"}
+class PingResponse(BaseModel):
+    status: str
+    message: str
+
+
+@router.get("/ping", response_model=PingResponse)
+async def ping() -> PingResponse:
+    return PingResponse(status="ok", message="pong")
