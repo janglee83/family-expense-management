@@ -1,0 +1,8 @@
+{
+  "app": { "title": "Quản lý chi tiêu gia đình" },
+  "common": { "loading": "Đang tải...", "language": "Ngôn ngữ" },
+  "ping": {
+    "success": "Đã kết nối với máy chủ",
+    "failure": "Không thể kết nối với máy chủ"
+  }
+}
