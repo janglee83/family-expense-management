@@ -103,6 +103,25 @@ async def test_login_rate_limited_after_repeated_failures(client: AsyncClient) -
 
 
 @pytest.mark.integration
+async def test_login_rate_limit_blocks_even_correct_password(client: AsyncClient) -> None:
+    email = _unique_email()
+    correct_password = "correct-password"
+    await _register(client, email, correct_password)
+
+    for _ in range(5):
+        response = await client.post(
+            "/api/v1/auth/login", json={"email": email, "password": "wrong-password"}
+        )
+        assert response.status_code == 401
+
+    response = await client.post(
+        "/api/v1/auth/login", json={"email": email, "password": correct_password}
+    )
+
+    assert response.status_code == 429
+
+
+@pytest.mark.integration
 async def test_refresh_rotates_token_and_invalidates_old_one(client: AsyncClient) -> None:
     email = _unique_email()
     await _register(client, email)
