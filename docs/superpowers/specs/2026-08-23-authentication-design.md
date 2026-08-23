@@ -124,7 +124,7 @@ correct guess resets the window) — it simply expires naturally.
 | POST | `/register` | `{email, password, display_name}` | 201, sets cookies, returns `{id, email, display_name}` | 409 duplicate email, 422 validation (password too short, invalid email) |
 | POST | `/login` | `{email, password}` | 200, sets cookies, returns `{id, email, display_name}` | 401 invalid credentials, 429 rate limited |
 | POST | `/refresh` | (reads `refresh_token` cookie) | 200, rotated cookies | 401 missing/expired/revoked refresh token |
-| POST | `/logout` | (reads `refresh_token` cookie) | 204, cookies cleared | 401 if no valid session (still clears cookies) |
+| POST | `/logout` | (reads `refresh_token` cookie) | 204, cookies cleared (idempotent — always succeeds, whether or not a valid/any refresh token was present) | — |
 | GET | `/me` | (reads `access_token` cookie) | 200 `{id, email, display_name}` | 401 missing/expired/invalid access token, or inactive user |
 
 `get_current_user` (a FastAPI dependency wrapping the `/me` logic) is
