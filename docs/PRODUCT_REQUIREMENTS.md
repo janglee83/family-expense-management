@@ -16,6 +16,16 @@ balances are calculated → settlement is generated.
 A family has members with roles (`OWNER`, `ADMIN`, `MEMBER`). All access is
 family-scoped — a member never sees another family's data.
 
+## Authentication
+
+Email + password registration and login. No OAuth, no email verification,
+and no password reset yet — all explicitly deferred. A logged-in session
+is maintained via httpOnly cookies; logging out revokes the session
+server-side. Login attempts are rate-limited per email to blunt
+brute-force guessing. Family-scoped authorization (Section "Family model"
+above) builds on top of the authenticated user established here, in the
+next phase.
+
 ## Expense model
 
 Each receipt has line items; each item is either `PERSONAL` or `SHARED`.

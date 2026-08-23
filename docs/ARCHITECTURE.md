@@ -33,6 +33,27 @@ frontend client for now.
    matching frontend type regen is a CI failure, not a runtime bug found
    later.
 
+## Authentication
+
+Email/password only for now (no OAuth, no email verification). Sessions
+use two token types, both delivered as httpOnly cookies so the frontend
+never handles a token directly:
+
+- **Access token**: a stateless JWT (HS256, 15-minute lifetime). Verified
+  per-request with no database round-trip.
+- **Refresh token**: an opaque random string; only its SHA-256 hash is
+  stored (`refresh_tokens.token_hash`), so it can be revoked. `/refresh`
+  rotates it on every use (old token is revoked, a new one issued);
+  `/logout` revokes it directly. This is what makes logout actually
+  invalidate a session server-side, not just delete a cookie.
+
+Login is rate-limited per email (5 failed attempts / 15 minutes) via a
+Redis fixed-window counter — the same Redis instance already provisioned
+for Celery.
+
+`app/api/deps.py`'s `get_current_user` is the dependency every future
+protected route (family, expense, receipt endpoints) will depend on.
+
 ## Repository layout
 
 ```
