@@ -12,10 +12,15 @@ export default function App() {
   useEffect(() => {
     let cancelled = false;
 
-    apiClient.GET("/api/v1/ping").then(({ data, error }) => {
-      if (cancelled) return;
-      setStatus(data && !error ? "success" : "failure");
-    });
+    apiClient
+      .GET("/api/v1/ping")
+      .then(({ data, error }) => {
+        if (cancelled) return;
+        setStatus(data && !error ? "success" : "failure");
+      })
+      .catch(() => {
+        if (!cancelled) setStatus("failure");
+      });
 
     return () => {
       cancelled = true;
