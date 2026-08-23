@@ -24,3 +24,48 @@ def test_settings_raises_when_database_url_missing(monkeypatch: pytest.MonkeyPat
 
     with pytest.raises(ValidationError):
         Settings(_env_file=None)  # type: ignore[call-arg]
+
+
+def test_settings_rejects_wildcard_cors_origin() -> None:
+    with pytest.raises(ValidationError):
+        Settings(  # type: ignore[call-arg]
+            _env_file=None,
+            database_url="postgresql+psycopg://u:p@localhost:5432/db",
+            redis_url="redis://localhost:6379/0",
+            jwt_secret_key="a" * 32,
+            cors_origins=["*"],
+        )
+
+
+def test_settings_rejects_placeholder_jwt_secret_in_production() -> None:
+    with pytest.raises(ValidationError):
+        Settings(  # type: ignore[call-arg]
+            _env_file=None,
+            env="production",
+            database_url="postgresql+psycopg://u:p@localhost:5432/db",
+            redis_url="redis://localhost:6379/0",
+            jwt_secret_key="change-this-to-a-random-secret-in-real-deployments",
+        )
+
+
+def test_settings_accepts_real_jwt_secret_in_production() -> None:
+    settings = Settings(  # type: ignore[call-arg]
+        _env_file=None,
+        env="production",
+        database_url="postgresql+psycopg://u:p@localhost:5432/db",
+        redis_url="redis://localhost:6379/0",
+        jwt_secret_key="a" * 32,
+    )
+
+    assert settings.env == "production"
+
+
+def test_settings_allows_placeholder_jwt_secret_in_development() -> None:
+    settings = Settings(  # type: ignore[call-arg]
+        _env_file=None,
+        database_url="postgresql+psycopg://u:p@localhost:5432/db",
+        redis_url="redis://localhost:6379/0",
+        jwt_secret_key="change-this-to-a-random-secret-in-real-deployments",
+    )
+
+    assert settings.env == "development"

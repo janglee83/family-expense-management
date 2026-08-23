@@ -1,6 +1,9 @@
 from functools import lru_cache
 
+from pydantic import ValidationInfo, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
+
+_PLACEHOLDER_JWT_SECRET = "change-this-to-a-random-secret-in-real-deployments"
 
 
 class Settings(BaseSettings):
@@ -15,6 +18,25 @@ class Settings(BaseSettings):
     jwt_secret_key: str
     access_token_expire_minutes: int = 15
     refresh_token_expire_days: int = 7
+
+    @field_validator("cors_origins")
+    @classmethod
+    def _reject_wildcard_cors(cls, value: list[str]) -> list[str]:
+        if "*" in value:
+            raise ValueError(
+                "cors_origins must not contain '*' — CORS is paired with allow_credentials=True"
+            )
+        return value
+
+    @field_validator("jwt_secret_key")
+    @classmethod
+    def _reject_placeholder_secret_in_production(cls, value: str, info: ValidationInfo) -> str:
+        env = info.data.get("env", "development")
+        if env == "production" and (len(value) < 32 or value == _PLACEHOLDER_JWT_SECRET):
+            raise ValueError(
+                "jwt_secret_key must be a real random secret (>=32 chars) in production"
+            )
+        return value
 
 
 @lru_cache

@@ -33,6 +33,10 @@ def test_configure_logging_uses_json_renderer_in_production(
     monkeypatch.setenv("ENV", "production")
     monkeypatch.setenv("DATABASE_URL", "postgresql://user:pass@localhost/db")
     monkeypatch.setenv("REDIS_URL", "redis://localhost:6379/0")
+    # Settings now rejects a short/placeholder jwt_secret_key when env is
+    # "production" (see app.core.config); the test-only default from
+    # conftest.py is too short for that, so provide a valid one here.
+    monkeypatch.setenv("JWT_SECRET_KEY", "a-real-production-secret-that-is-long-enough")
     get_settings.cache_clear()
 
     configure_logging()
