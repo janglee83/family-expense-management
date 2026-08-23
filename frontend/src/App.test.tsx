@@ -1,45 +1,59 @@
 import { render, screen } from "@testing-library/react";
-import userEvent from "@testing-library/user-event";
+import { MemoryRouter } from "react-router-dom";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import i18n from "./i18n/i18n";
-import App from "./App";
+import "./i18n/i18n";
+import { AppRoutes } from "./AppRoutes";
+import { AuthProvider } from "./auth/AuthContext";
 
-const getMock = vi.fn();
+const fetchCurrentUserMock = vi.fn();
 
-vi.mock("./api/client", () => ({
-  apiClient: { GET: (...args: unknown[]) => getMock(...args) },
+vi.mock("./auth/authApi", () => ({
+  fetchCurrentUser: (...args: unknown[]) => fetchCurrentUserMock(...args),
+  loginUser: vi.fn(),
+  registerUser: vi.fn(),
+  logoutUser: vi.fn(),
 }));
 
-describe("App", () => {
-  beforeEach(async () => {
-    getMock.mockReset();
-    // i18next is a global singleton; reset the language before each test so
-    // the language switch in one test doesn't leak into the next.
-    await i18n.changeLanguage("ja");
+function renderAt(initialPath: string) {
+  return render(
+    <MemoryRouter initialEntries={[initialPath]}>
+      <AuthProvider>
+        <AppRoutes />
+      </AuthProvider>
+    </MemoryRouter>,
+  );
+}
+
+describe("AppRoutes", () => {
+  beforeEach(() => {
+    fetchCurrentUserMock.mockReset();
   });
 
-  it("renders the title in the default (Japanese) language", async () => {
-    getMock.mockResolvedValue({ data: { status: "ok", message: "pong" }, error: undefined });
-    render(<App />);
+  it("redirects unauthenticated users from / to /login", async () => {
+    fetchCurrentUserMock.mockResolvedValue(null);
 
-    expect(screen.getByText("家計簿")).toBeInTheDocument();
-    expect(await screen.findByText("サーバーに接続しました")).toBeInTheDocument();
+    renderAt("/");
+
+    expect(await screen.findByRole("heading", { name: "ログイン" })).toBeInTheDocument();
   });
 
-  it("switches to Vietnamese when selected", async () => {
-    getMock.mockResolvedValue({ data: { status: "ok", message: "pong" }, error: undefined });
-    render(<App />);
-    const user = userEvent.setup();
+  it("renders the home page for authenticated users", async () => {
+    fetchCurrentUserMock.mockResolvedValue({
+      id: "11111111-1111-1111-1111-111111111111",
+      email: "alice@example.com",
+      display_name: "Alice",
+    });
 
-    await user.selectOptions(screen.getByRole("combobox"), "vi");
+    renderAt("/");
 
-    expect(await screen.findByText("Quản lý chi tiêu gia đình")).toBeInTheDocument();
+    expect(await screen.findByRole("heading", { name: "家計簿" })).toBeInTheDocument();
   });
 
-  it("shows a failure message when the ping call errors", async () => {
-    getMock.mockResolvedValue({ data: undefined, error: { detail: "boom" } });
-    render(<App />);
+  it("renders the login page directly at /login", async () => {
+    fetchCurrentUserMock.mockResolvedValue(null);
 
-    expect(await screen.findByText("サーバーに接続できませんでした")).toBeInTheDocument();
+    renderAt("/login");
+
+    expect(await screen.findByRole("heading", { name: "ログイン" })).toBeInTheDocument();
   });
 });

@@ -4,5 +4,20 @@
   "ping": {
     "success": "サーバーに接続しました",
     "failure": "サーバーに接続できませんでした"
+  },
+  "auth": {
+    "login": "ログイン",
+    "register": "アカウント作成",
+    "email": "メールアドレス",
+    "password": "パスワード",
+    "displayName": "表示名",
+    "loginButton": "ログイン",
+    "registerButton": "登録する",
+    "logout": "ログアウト",
+    "invalidCredentials": "メールアドレスまたはパスワードが正しくありません",
+    "emailInUse": "このメールアドレスは既に登録されています",
+    "rateLimited": "ログイン試行回数が多すぎます。しばらくしてから再度お試しください",
+    "passwordTooShort": "パスワードは8文字以上で入力してください",
+    "genericError": "エラーが発生しました。もう一度お試しください"
   }
 }

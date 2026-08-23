@@ -4,5 +4,20 @@
   "ping": {
     "success": "Đã kết nối với máy chủ",
     "failure": "Không thể kết nối với máy chủ"
+  },
+  "auth": {
+    "login": "Đăng nhập",
+    "register": "Đăng ký",
+    "email": "Địa chỉ email",
+    "password": "Mật khẩu",
+    "displayName": "Tên hiển thị",
+    "loginButton": "Đăng nhập",
+    "registerButton": "Đăng ký",
+    "logout": "Đăng xuất",
+    "invalidCredentials": "Email hoặc mật khẩu không đúng",
+    "emailInUse": "Email này đã được đăng ký",
+    "rateLimited": "Bạn đã đăng nhập sai quá nhiều lần. Vui lòng thử lại sau",
+    "passwordTooShort": "Mật khẩu phải có ít nhất 8 ký tự",
+    "genericError": "Đã xảy ra lỗi. Vui lòng thử lại"
   }
 }
