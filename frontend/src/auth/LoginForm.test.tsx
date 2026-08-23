@@ -47,4 +47,18 @@ describe("LoginForm", () => {
       "メールアドレスまたはパスワードが正しくありません",
     );
   });
+
+  it("shows a translated rate-limit error when login fails with rate_limited", async () => {
+    loginMock.mockRejectedValue(new Error("rate_limited"));
+    const user = userEvent.setup();
+    render(<LoginForm />, { wrapper: MemoryRouter });
+
+    await user.type(screen.getByLabelText("メールアドレス"), "alice@example.com");
+    await user.type(screen.getByLabelText("パスワード"), "wrong-password");
+    await user.click(screen.getByRole("button", { name: "ログイン" }));
+
+    expect(await screen.findByRole("alert")).toHaveTextContent(
+      "ログイン試行回数が多すぎます。しばらくしてから再度お試しください",
+    );
+  });
 });
