@@ -31,6 +31,12 @@ uv run alembic upgrade head
 uv run python scripts/export_openapi.py   # regenerate openapi/openapi.json
 ```
 
+Host-side commands read `../.env` (the same file docker-compose uses) — copy
+`.env.example` to `.env` at the repo root first if you haven't already. Note
+`DATABASE_URL`'s `postgres`/`redis` hostnames only resolve inside Docker; for
+host-side Postgres access use `docker compose exec` or a separate host-facing
+`DATABASE_URL` override.
+
 ## Frontend
 
 ```bash

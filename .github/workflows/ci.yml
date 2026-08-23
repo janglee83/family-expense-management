@@ -5,6 +5,9 @@ on:
     branches: [main]
   pull_request:
 
+permissions:
+  contents: read
+
 jobs:
   backend:
     runs-on: ubuntu-latest
@@ -38,11 +41,14 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: astral-sh/setup-uv@v3
+        with:
+          python-version: '3.12'
       - run: uv sync --extra dev
       - run: uv run ruff check .
       - run: uv run mypy app
       - run: uv run alembic upgrade head
       - run: uv run pytest
+      - run: uv run pytest -m integration
       - run: uv run python scripts/export_openapi.py
       - name: Check OpenAPI schema is committed and up to date
         run: git diff --exit-code -- ../openapi/openapi.json
