@@ -75,6 +75,16 @@ Adding a member requires they already have an account (looked up by
 email) — there are no invite tokens for not-yet-registered users in this
 phase.
 
+No user-deletion endpoint exists yet, so this is not reachable today, but
+it's worth flagging for whichever future phase adds account deletion:
+`family_members.user_id` cascades on delete, so deleting a user who is the
+sole OWNER of a family would silently delete their OWNER row and leave
+that family ownerless — with no OWNER left, nobody could rename, delete,
+or manage it (ADMINs cannot promote themselves, and there is no ownership
+transfer). Account-deletion work should address this explicitly, e.g. by
+blocking deletion of a user who is the sole OWNER of any family, or by
+requiring ownership transfer/family deletion first.
+
 ## Repository layout
 
 ```
