@@ -321,6 +321,19 @@ async def test_admin_and_member_can_leave_but_owner_cannot(client: AsyncClient) 
 
     assert leave_response.status_code == 204
 
+    member_email = _unique_email()
+    async with AsyncClient(
+        transport=ASGITransport(app=app), base_url="http://test"
+    ) as member_client:
+        member_user = await _register(member_client, member_email)
+        await _add_member(client, family_id, member_email)
+
+        member_leave_response = await member_client.delete(
+            f"/api/v1/families/{family_id}/members/{member_user['id']}"
+        )
+
+    assert member_leave_response.status_code == 204
+
     owner_id_response = await client.get(f"/api/v1/families/{family_id}")
     owner_user_id = owner_id_response.json()["members"][0]["user_id"]
     owner_leave_response = await client.delete(
@@ -328,6 +341,33 @@ async def test_admin_and_member_can_leave_but_owner_cannot(client: AsyncClient) 
     )
 
     assert owner_leave_response.status_code == 403
+
+
+@pytest.mark.integration
+async def test_member_cannot_remove_another_member(client: AsyncClient) -> None:
+    await _register(client, _unique_email())
+    family_id = await _create_family(client)
+
+    member1_email = _unique_email()
+    member2_email = _unique_email()
+
+    async with AsyncClient(
+        transport=ASGITransport(app=app), base_url="http://test"
+    ) as member1_client:
+        await _register(member1_client, member1_email)
+        await _add_member(client, family_id, member1_email)
+
+        async with AsyncClient(
+            transport=ASGITransport(app=app), base_url="http://test"
+        ) as member2_client:
+            member2_user = await _register(member2_client, member2_email)
+            await _add_member(client, family_id, member2_email)
+
+            response = await member1_client.delete(
+                f"/api/v1/families/{family_id}/members/{member2_user['id']}"
+            )
+
+    assert response.status_code == 403
 
 
 @pytest.mark.integration
