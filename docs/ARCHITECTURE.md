@@ -54,6 +54,27 @@ for Celery.
 `app/api/deps.py`'s `get_current_user` is the dependency every future
 protected route (family, expense, receipt endpoints) will depend on.
 
+## Family Management
+
+A user can belong to multiple families. Each membership carries exactly
+one role — OWNER (the creator; no ownership transfer in this phase),
+ADMIN, or MEMBER — stored as a plain string (`FamilyRole` StrEnum at the
+application layer) rather than a Postgres ENUM, so adding a role later
+needs no migration.
+
+`app/api/deps.py`'s `get_family_membership` is the family-scoped
+counterpart to `get_current_user`: every family route depends on it first
+(404 if the family doesn't exist, 403 if the caller isn't a member), then
+layers `require_owner`/`require_owner_or_admin` (`app/core/permissions.py`)
+on top for actions restricted by role. Later phases scoping data to a
+family (expenses, receipts, settlements) should depend on
+`get_family_membership` the same way, rather than re-implementing
+membership checks.
+
+Adding a member requires they already have an account (looked up by
+email) — there are no invite tokens for not-yet-registered users in this
+phase.
+
 ## Repository layout
 
 ```

@@ -26,6 +26,18 @@ brute-force guessing. Family-scoped authorization (Section "Family model"
 above) builds on top of the authenticated user established here, in the
 next phase.
 
+## Family Management
+
+A family has members, each with a role: OWNER (creator, full control
+including delete), ADMIN (can rename the family, add members, remove
+MEMBERs), or MEMBER (view-only, can leave voluntarily). A user can belong
+to multiple families. Only the OWNER can delete a family, remove an
+ADMIN, or change another member's role; an ADMIN cannot act on another
+ADMIN or the OWNER. The OWNER cannot leave their own family — they delete
+it instead. Adding a member requires they already have a registered
+account; there is no invite-link flow yet. Ownership transfer and audit
+logging of membership changes are both deferred to a later phase.
+
 ## Expense model
 
 Each receipt has line items; each item is either `PERSONAL` or `SHARED`.
