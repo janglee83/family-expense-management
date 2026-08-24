@@ -223,7 +223,8 @@ async def change_member_role(
     await session.commit()
 
     target_user = await session.get(User, user_id)
-    assert target_user is not None
+    if target_user is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
     return FamilyMemberResponse(
         user_id=target_user.id,
         email=target_user.email,
