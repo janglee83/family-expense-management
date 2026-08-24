@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { Link } from "react-router-dom";
 import { apiClient } from "../api/client";
 import { LanguageSwitcher } from "../components/LanguageSwitcher";
 import { useAuth } from "../auth/useAuth";
@@ -44,6 +45,9 @@ export function HomePage() {
           <button onClick={() => void logout()}>{t("auth.logout")}</button>
         </p>
       )}
+      <p>
+        <Link to="/families">{t("family.myFamilies")}</Link>
+      </p>
     </main>
   );
 }

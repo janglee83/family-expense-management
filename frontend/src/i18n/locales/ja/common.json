@@ -19,5 +19,27 @@
     "rateLimited": "ログイン試行回数が多すぎます。しばらくしてから再度お試しください",
     "passwordTooShort": "パスワードは8文字以上で入力してください",
     "genericError": "エラーが発生しました。もう一度お試しください"
+  },
+  "family": {
+    "myFamilies": "自分の家族",
+    "noFamilies": "まだ家族がありません",
+    "create": "作成",
+    "name": "家族名",
+    "rename": "名前を変更",
+    "delete": "削除",
+    "addMember": "メンバーを追加",
+    "memberEmail": "メールアドレス",
+    "memberNotFound": "登録されているユーザーが見つかりません",
+    "memberAlreadyExists": "すでにメンバーです",
+    "removeMember": "削除",
+    "leaveFamily": "退出する",
+    "confirmDelete": "この家族を削除してもよろしいですか?",
+    "confirmLeave": "この家族から退出してもよろしいですか?",
+    "actionFailed": "エラーが発生しました。もう一度お試しください"
+  },
+  "role": {
+    "owner": "オーナー",
+    "admin": "管理者",
+    "member": "メンバー"
   }
 }
