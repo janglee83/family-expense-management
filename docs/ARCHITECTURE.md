@@ -54,6 +54,37 @@ for Celery.
 `app/api/deps.py`'s `get_current_user` is the dependency every future
 protected route (family, expense, receipt endpoints) will depend on.
 
+## Family Management
+
+A user can belong to multiple families. Each membership carries exactly
+one role — OWNER (the creator; no ownership transfer in this phase),
+ADMIN, or MEMBER — stored as a plain string (`FamilyRole` StrEnum at the
+application layer) rather than a Postgres ENUM, so adding a role later
+needs no migration.
+
+`app/api/deps.py`'s `get_family_membership` is the family-scoped
+counterpart to `get_current_user`: every family route depends on it first
+(404 if the family doesn't exist, 403 if the caller isn't a member), then
+layers `require_owner`/`require_owner_or_admin` (`app/core/permissions.py`)
+on top for actions restricted by role. Later phases scoping data to a
+family (expenses, receipts, settlements) should depend on
+`get_family_membership` the same way, rather than re-implementing
+membership checks.
+
+Adding a member requires they already have an account (looked up by
+email) — there are no invite tokens for not-yet-registered users in this
+phase.
+
+No user-deletion endpoint exists yet, so this is not reachable today, but
+it's worth flagging for whichever future phase adds account deletion:
+`family_members.user_id` cascades on delete, so deleting a user who is the
+sole OWNER of a family would silently delete their OWNER row and leave
+that family ownerless — with no OWNER left, nobody could rename, delete,
+or manage it (ADMINs cannot promote themselves, and there is no ownership
+transfer). Account-deletion work should address this explicitly, e.g. by
+blocking deletion of a user who is the sole OWNER of any family, or by
+requiring ownership transfer/family deletion first.
+
 ## Repository layout
 
 ```

@@ -58,7 +58,9 @@ def test_decode_access_token_rejects_expired_token(monkeypatch: pytest.MonkeyPat
 
 def test_decode_access_token_rejects_tampered_token() -> None:
     token = create_access_token("user-123")
-    tampered = token[:-1] + ("A" if token[-1] != "A" else "B")
+    header, payload, signature = token.split(".")
+    tampered_payload = payload[:-1] + ("A" if payload[-1] != "A" else "B")
+    tampered = f"{header}.{tampered_payload}.{signature}"
 
     with pytest.raises(jwt.InvalidTokenError):
         decode_access_token(tampered)

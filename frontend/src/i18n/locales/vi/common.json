@@ -19,5 +19,27 @@
     "rateLimited": "Bạn đã đăng nhập sai quá nhiều lần. Vui lòng thử lại sau",
     "passwordTooShort": "Mật khẩu phải có ít nhất 8 ký tự",
     "genericError": "Đã xảy ra lỗi. Vui lòng thử lại"
+  },
+  "family": {
+    "myFamilies": "Gia đình của tôi",
+    "noFamilies": "Bạn chưa có gia đình nào",
+    "create": "Tạo",
+    "name": "Tên gia đình",
+    "rename": "Đổi tên",
+    "delete": "Xóa",
+    "addMember": "Thêm thành viên",
+    "memberEmail": "Địa chỉ email",
+    "memberNotFound": "Không tìm thấy người dùng đã đăng ký",
+    "memberAlreadyExists": "Đã là thành viên",
+    "removeMember": "Xóa",
+    "leaveFamily": "Rời khỏi",
+    "confirmDelete": "Bạn có chắc muốn xóa gia đình này?",
+    "confirmLeave": "Bạn có chắc muốn rời khỏi gia đình này?",
+    "actionFailed": "Đã xảy ra lỗi. Vui lòng thử lại"
+  },
+  "role": {
+    "owner": "Chủ sở hữu",
+    "admin": "Quản trị viên",
+    "member": "Thành viên"
   }
 }

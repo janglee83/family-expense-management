@@ -1,5 +1,6 @@
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { MemoryRouter } from "react-router-dom";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import i18n from "../i18n/i18n";
 import { HomePage } from "./HomePage";
@@ -36,7 +37,7 @@ describe("HomePage", () => {
 
   it("renders the title in the default (Japanese) language", async () => {
     getMock.mockResolvedValue({ data: { status: "ok", message: "pong" }, error: undefined });
-    render(<HomePage />);
+    render(<HomePage />, { wrapper: MemoryRouter });
 
     expect(screen.getByText("家計簿")).toBeInTheDocument();
     expect(await screen.findByText("サーバーに接続しました")).toBeInTheDocument();
@@ -44,7 +45,7 @@ describe("HomePage", () => {
 
   it("switches to Vietnamese when selected", async () => {
     getMock.mockResolvedValue({ data: { status: "ok", message: "pong" }, error: undefined });
-    render(<HomePage />);
+    render(<HomePage />, { wrapper: MemoryRouter });
     const user = userEvent.setup();
 
     await user.selectOptions(screen.getByRole("combobox"), "vi");
@@ -54,14 +55,14 @@ describe("HomePage", () => {
 
   it("shows a failure message when the ping call errors", async () => {
     getMock.mockResolvedValue({ data: undefined, error: { detail: "boom" } });
-    render(<HomePage />);
+    render(<HomePage />, { wrapper: MemoryRouter });
 
     expect(await screen.findByText("サーバーに接続できませんでした")).toBeInTheDocument();
   });
 
   it("calls logout when the logout button is clicked", async () => {
     getMock.mockResolvedValue({ data: { status: "ok", message: "pong" }, error: undefined });
-    render(<HomePage />);
+    render(<HomePage />, { wrapper: MemoryRouter });
     const user = userEvent.setup();
 
     await user.click(await screen.findByRole("button", { name: "ログアウト" }));
