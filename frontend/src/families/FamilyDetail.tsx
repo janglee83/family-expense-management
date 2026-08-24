@@ -57,6 +57,7 @@ export function FamilyDetail() {
   const isOwner = myRole === "owner";
 
   async function handleRename() {
+    setError(null);
     try {
       const updated = await renameFamily(familyId, nameInput);
       setDetail((current) => (current ? { ...current, name: updated.name } : current));
@@ -67,6 +68,7 @@ export function FamilyDetail() {
 
   async function handleDelete() {
     if (!window.confirm(t("family.confirmDelete"))) return;
+    setError(null);
     try {
       await deleteFamily(familyId);
       navigate("/families");
@@ -77,6 +79,7 @@ export function FamilyDetail() {
 
   async function handleRemoveOrLeave(userId: string, isSelf: boolean) {
     if (isSelf && !window.confirm(t("family.confirmLeave"))) return;
+    setError(null);
     try {
       await removeMember(familyId, userId);
       if (isSelf) {
@@ -97,6 +100,7 @@ export function FamilyDetail() {
   }
 
   async function handleRoleChange(userId: string, role: "admin" | "member") {
+    setError(null);
     try {
       const updated = await changeMemberRole(familyId, userId, role);
       setDetail((current) =>
@@ -116,13 +120,15 @@ export function FamilyDetail() {
 
   return (
     <main>
-      {canManage ? (
+      <h1>{detail.name}</h1>
+      {canManage && (
         <p>
-          <input value={nameInput} onChange={(event) => setNameInput(event.target.value)} />
+          <label>
+            {t("family.name")}
+            <input value={nameInput} onChange={(event) => setNameInput(event.target.value)} />
+          </label>
           <button onClick={() => void handleRename()}>{t("family.rename")}</button>
         </p>
-      ) : (
-        <h1>{detail.name}</h1>
       )}
       {isOwner && <button onClick={() => void handleDelete()}>{t("family.delete")}</button>}
       <ul>
