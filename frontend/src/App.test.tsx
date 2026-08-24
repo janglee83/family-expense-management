@@ -77,4 +77,12 @@ describe("AppRoutes", () => {
     expect(refreshSessionMock).toHaveBeenCalled();
     expect(fetchCurrentUserMock).toHaveBeenCalledTimes(2);
   });
+
+  it("does not get stuck loading when session establishment rejects at the network level", async () => {
+    fetchCurrentUserMock.mockRejectedValue(new Error("network error"));
+
+    renderAt("/");
+
+    expect(await screen.findByRole("heading", { name: "ログイン" })).toBeInTheDocument();
+  });
 });

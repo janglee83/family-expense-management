@@ -28,16 +28,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     let cancelled = false;
 
     async function establishSession() {
-      let currentUser = await fetchCurrentUser();
-      if (!currentUser) {
-        const refreshed = await refreshSession();
-        if (refreshed) {
-          currentUser = await fetchCurrentUser();
+      let currentUser: AuthUser | null = null;
+      try {
+        currentUser = await fetchCurrentUser();
+        if (!currentUser) {
+          const refreshed = await refreshSession();
+          if (refreshed) {
+            currentUser = await fetchCurrentUser();
+          }
         }
-      }
-      if (!cancelled) {
-        setUser(currentUser);
-        setIsLoading(false);
+      } catch {
+        currentUser = null;
+      } finally {
+        if (!cancelled) {
+          setUser(currentUser);
+          setIsLoading(false);
+        }
       }
     }
 
