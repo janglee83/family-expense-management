@@ -73,9 +73,14 @@ describe("FamilyDetail", () => {
 
     await screen.findByText("Member Person");
 
+    // Scope to the member's own row: the family-level delete button also
+    // uses the "削除" label, so an unscoped query would pass even if the
+    // per-member remove button were removed entirely.
+    const memberRow = screen.getByText("Member Person").closest("li");
+    expect(memberRow).not.toBeNull();
     expect(
-      screen.getAllByRole("button", { name: "削除" }).length,
-    ).toBeGreaterThan(0);
+      within(memberRow as HTMLElement).getByRole("button", { name: "削除" }),
+    ).toBeInTheDocument();
   });
 
   it("shows a leave button instead of remove for the current member themselves", async () => {
