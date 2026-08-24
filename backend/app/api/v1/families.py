@@ -12,6 +12,8 @@ from app.models.family import Family
 from app.models.family_member import FamilyMember, FamilyRole
 from app.models.user import User
 from app.schemas.family import (
+    AddMemberRequest,
+    ChangeRoleRequest,
     CreateFamilyRequest,
     FamilyDetailResponse,
     FamilyMemberResponse,
@@ -111,3 +113,118 @@ async def delete_family(
     if family is not None:
         await session.delete(family)
         await session.commit()
+
+
+@router.post(
+    "/{family_id}/members", status_code=status.HTTP_201_CREATED, response_model=FamilyMemberResponse
+)
+async def add_member(
+    family_id: uuid.UUID,
+    payload: AddMemberRequest,
+    membership: Annotated[FamilyMember, Depends(get_family_membership)],
+    session: Annotated[AsyncSession, Depends(get_session)],
+) -> FamilyMemberResponse:
+    require_owner_or_admin(membership)
+
+    email = payload.email.lower()
+    target_user = await session.scalar(select(User).where(User.email == email))
+    if target_user is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="No registered user with that email"
+        )
+
+    existing = await session.scalar(
+        select(FamilyMember).where(
+            FamilyMember.family_id == family_id, FamilyMember.user_id == target_user.id
+        )
+    )
+    if existing is not None:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="User is already a member of this family",
+        )
+
+    new_member = FamilyMember(
+        family_id=family_id, user_id=target_user.id, role=FamilyRole.MEMBER
+    )
+    session.add(new_member)
+    await session.commit()
+
+    return FamilyMemberResponse(
+        user_id=target_user.id,
+        email=target_user.email,
+        display_name=target_user.display_name,
+        role=new_member.role,
+    )
+
+
+@router.delete("/{family_id}/members/{user_id}", status_code=status.HTTP_204_NO_CONTENT)
+async def remove_member(
+    family_id: uuid.UUID,
+    user_id: uuid.UUID,
+    membership: Annotated[FamilyMember, Depends(get_family_membership)],
+    session: Annotated[AsyncSession, Depends(get_session)],
+) -> None:
+    target = await session.scalar(
+        select(FamilyMember).where(
+            FamilyMember.family_id == family_id, FamilyMember.user_id == user_id
+        )
+    )
+    if target is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Membership not found")
+
+    is_self_removal = user_id == membership.user_id
+
+    if is_self_removal:
+        if membership.role == FamilyRole.OWNER:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="The owner cannot leave the family; delete it instead",
+            )
+    else:
+        if target.role == FamilyRole.OWNER:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN, detail="Cannot remove the owner"
+            )
+        if target.role == FamilyRole.ADMIN:
+            require_owner(membership)
+        else:
+            require_owner_or_admin(membership)
+
+    await session.delete(target)
+    await session.commit()
+
+
+@router.patch("/{family_id}/members/{user_id}", response_model=FamilyMemberResponse)
+async def change_member_role(
+    family_id: uuid.UUID,
+    user_id: uuid.UUID,
+    payload: ChangeRoleRequest,
+    membership: Annotated[FamilyMember, Depends(get_family_membership)],
+    session: Annotated[AsyncSession, Depends(get_session)],
+) -> FamilyMemberResponse:
+    require_owner(membership)
+
+    target = await session.scalar(
+        select(FamilyMember).where(
+            FamilyMember.family_id == family_id, FamilyMember.user_id == user_id
+        )
+    )
+    if target is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Membership not found")
+    if target.role == FamilyRole.OWNER:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, detail="Cannot change the owner's role"
+        )
+
+    target.role = payload.role
+    await session.commit()
+
+    target_user = await session.get(User, user_id)
+    assert target_user is not None
+    return FamilyMemberResponse(
+        user_id=target_user.id,
+        email=target_user.email,
+        display_name=target_user.display_name,
+        role=target.role,
+    )
