@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
 import { beforeEach, describe, expect, it, vi } from "vitest";
@@ -22,6 +22,8 @@ vi.mock("../auth/useAuth");
 
 const OWNER_ID = "11111111-1111-1111-1111-111111111111";
 const MEMBER_ID = "22222222-2222-2222-2222-222222222222";
+const ADMIN_ID = "44444444-4444-4444-4444-444444444444";
+const OTHER_ADMIN_ID = "55555555-5555-5555-5555-555555555555";
 
 function renderAtFamily(userId: string) {
   vi.mocked(useAuth).mockReturnValue({
@@ -107,5 +109,67 @@ describe("FamilyDetail", () => {
     await user.click(screen.getByRole("button", { name: "メンバーを追加" }));
 
     expect(addMemberMock).toHaveBeenCalledWith("fam-1", "new@example.com");
+  });
+
+  it("gates delete/rename/remove correctly when viewed by an admin", async () => {
+    getFamilyDetailMock.mockResolvedValue({
+      id: "fam-1",
+      name: "My Family",
+      members: [
+        {
+          user_id: OWNER_ID,
+          email: "owner@example.com",
+          display_name: "Owner Person",
+          role: "owner",
+        },
+        {
+          user_id: ADMIN_ID,
+          email: "admin@example.com",
+          display_name: "Admin Person",
+          role: "admin",
+        },
+        {
+          user_id: MEMBER_ID,
+          email: "member@example.com",
+          display_name: "Member Person",
+          role: "member",
+        },
+        {
+          user_id: OTHER_ADMIN_ID,
+          email: "other-admin@example.com",
+          display_name: "Other Admin",
+          role: "admin",
+        },
+      ],
+    });
+
+    const { container } = renderAtFamily(ADMIN_ID);
+    await screen.findByText("Member Person");
+
+    // 1. Delete button is OWNER-only, so an ADMIN viewer must not see it.
+    // The delete button (if rendered) is a direct child of <main>, unlike the
+    // per-member remove/leave buttons which live inside <li> elements — this
+    // avoids ambiguity with the "削除" text shared by removeMember.
+    expect(container.querySelector("main > button")).toBeNull();
+
+    // 2. Rename control (OWNER-or-ADMIN) is visible.
+    expect(screen.getByRole("button", { name: "名前を変更" })).toBeInTheDocument();
+
+    // 3. A remove button is rendered for the plain MEMBER row.
+    const memberRow = screen.getByText("Member Person").closest("li");
+    expect(memberRow).not.toBeNull();
+    expect(
+      within(memberRow as HTMLElement).getByRole("button", { name: "削除" }),
+    ).toBeInTheDocument();
+
+    // 4. No remove button and no promote/demote <select> for a peer ADMIN's row.
+    const otherAdminRow = screen.getByText("Other Admin").closest("li");
+    expect(otherAdminRow).not.toBeNull();
+    expect(
+      within(otherAdminRow as HTMLElement).queryByRole("button"),
+    ).not.toBeInTheDocument();
+    expect(
+      within(otherAdminRow as HTMLElement).queryByRole("combobox"),
+    ).not.toBeInTheDocument();
   });
 });
