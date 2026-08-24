@@ -1,11 +1,12 @@
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { listMyFamilies, type Family } from "./familyApi";
 import { CreateFamilyForm } from "./CreateFamilyForm";
 
 export function FamilyList() {
   const { t } = useTranslation();
+  const navigate = useNavigate();
   const [families, setFamilies] = useState<Family[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -27,7 +28,7 @@ export function FamilyList() {
   }, []);
 
   function handleCreated(family: Family) {
-    setFamilies((current) => [...current, family]);
+    navigate(`/families/${family.id}`);
   }
 
   return (

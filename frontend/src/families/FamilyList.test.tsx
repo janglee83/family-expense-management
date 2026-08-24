@@ -7,16 +7,24 @@ import { FamilyList } from "./FamilyList";
 
 const listMyFamiliesMock = vi.fn();
 const createFamilyMock = vi.fn();
+const navigateMock = vi.fn();
 
 vi.mock("./familyApi", () => ({
   listMyFamilies: (...args: unknown[]) => listMyFamiliesMock(...args),
   createFamily: (...args: unknown[]) => createFamilyMock(...args),
 }));
 
+vi.mock("react-router-dom", async () => {
+  const actual =
+    await vi.importActual<typeof import("react-router-dom")>("react-router-dom");
+  return { ...actual, useNavigate: () => navigateMock };
+});
+
 describe("FamilyList", () => {
   beforeEach(() => {
     listMyFamiliesMock.mockReset();
     createFamilyMock.mockReset();
+    navigateMock.mockReset();
   });
 
   it("renders the user's families", async () => {
@@ -37,7 +45,7 @@ describe("FamilyList", () => {
     expect(await screen.findByText("まだ家族がありません")).toBeInTheDocument();
   });
 
-  it("adds the newly created family to the list on submit", async () => {
+  it("navigates to the new family's detail page on submit", async () => {
     listMyFamiliesMock.mockResolvedValue([]);
     createFamilyMock.mockResolvedValue({
       id: "22222222-2222-2222-2222-222222222222",
@@ -52,6 +60,8 @@ describe("FamilyList", () => {
     await user.type(screen.getByLabelText("家族名"), "New Family");
     await user.click(screen.getByRole("button", { name: "作成" }));
 
-    expect(await screen.findByText("New Family")).toBeInTheDocument();
+    expect(navigateMock).toHaveBeenCalledWith(
+      "/families/22222222-2222-2222-2222-222222222222",
+    );
   });
 });
