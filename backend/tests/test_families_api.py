@@ -400,3 +400,53 @@ async def test_member_cannot_change_roles(client: AsyncClient) -> None:
         )
 
     assert response.status_code == 403
+
+
+@pytest.mark.integration
+async def test_admin_can_add_member(client: AsyncClient) -> None:
+    await _register(client, _unique_email())
+    family_id = await _create_family(client)
+
+    admin_email = _unique_email()
+    async with AsyncClient(
+        transport=ASGITransport(app=app), base_url="http://test"
+    ) as admin_client:
+        admin_user = await _register(admin_client, admin_email)
+        await _add_member(client, family_id, admin_email)
+        await client.patch(
+            f"/api/v1/families/{family_id}/members/{admin_user['id']}", json={"role": "admin"}
+        )
+
+        new_member_email = _unique_email()
+        async with AsyncClient(
+            transport=ASGITransport(app=app), base_url="http://test"
+        ) as new_member_client:
+            await _register(new_member_client, new_member_email)
+
+        response = await admin_client.post(
+            f"/api/v1/families/{family_id}/members", json={"email": new_member_email}
+        )
+
+    assert response.status_code == 201
+
+
+@pytest.mark.integration
+async def test_admin_cannot_remove_the_owner(client: AsyncClient) -> None:
+    owner = await _register(client, _unique_email())
+    family_id = await _create_family(client)
+
+    admin_email = _unique_email()
+    async with AsyncClient(
+        transport=ASGITransport(app=app), base_url="http://test"
+    ) as admin_client:
+        admin_user = await _register(admin_client, admin_email)
+        await _add_member(client, family_id, admin_email)
+        await client.patch(
+            f"/api/v1/families/{family_id}/members/{admin_user['id']}", json={"role": "admin"}
+        )
+
+        response = await admin_client.delete(
+            f"/api/v1/families/{family_id}/members/{owner['id']}"
+        )
+
+    assert response.status_code == 403
