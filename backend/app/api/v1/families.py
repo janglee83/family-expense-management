@@ -50,6 +50,7 @@ async def list_my_families(
         select(Family, FamilyMember.role)
         .join(FamilyMember, FamilyMember.family_id == Family.id)
         .where(FamilyMember.user_id == user.id)
+        .order_by(Family.created_at)
     )
     return [
         FamilyResponse(id=family.id, name=family.name, role=role) for family, role in rows.all()
@@ -70,6 +71,7 @@ async def get_family_detail(
         select(FamilyMember, User)
         .join(User, User.id == FamilyMember.user_id)
         .where(FamilyMember.family_id == family_id)
+        .order_by(FamilyMember.joined_at)
     )
     members = [
         FamilyMemberResponse(
