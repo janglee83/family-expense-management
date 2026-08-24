@@ -4,8 +4,11 @@ from typing import Any
 
 import pytest
 from httpx import ASGITransport, AsyncClient
+from sqlalchemy import select
 
+from app.db.session import get_session_factory
 from app.main import app
+from app.models.family_member import FamilyMember
 
 
 @pytest.fixture
@@ -124,3 +127,10 @@ async def test_delete_family_as_owner_cascades_membership(client: AsyncClient) -
 
     get_response = await client.get(f"/api/v1/families/{family_id}")
     assert get_response.status_code == 404
+
+    session_factory = get_session_factory()
+    async with session_factory() as session:
+        remaining = await session.scalar(
+            select(FamilyMember).where(FamilyMember.family_id == uuid.UUID(family_id))
+        )
+    assert remaining is None
