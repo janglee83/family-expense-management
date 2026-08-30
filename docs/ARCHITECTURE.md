@@ -85,6 +85,30 @@ transfer). Account-deletion work should address this explicitly, e.g. by
 blocking deletion of a user who is the sole OWNER of any family, or by
 requiring ownership transfer/family deletion first.
 
+## Expense Domain
+
+Expenses and categories are family-scoped the same way family membership
+is — every endpoint depends on `get_family_membership` first. Categories
+are a hybrid: global ones (`family_id IS NULL`) are seeded via migration
+with stable slugs (`groceries`, `dining`, ...) and are immutable by
+design; custom ones belong to exactly one family and are
+OWNER/ADMIN-managed, since a category is a shared resource other
+members' expenses may already reference.
+
+Editing or deleting a specific expense is gated by a new permission
+helper, `require_owner_admin_or_creator` — the expense's own creator can
+always edit it, and an OWNER/ADMIN can edit any expense in their family
+even if they didn't create it. `payer_user_id` (who paid) is deliberately
+separate from `created_by_user_id` (who logged the entry) and from the
+caller's own identity — any member can log an expense on another
+member's behalf.
+
+This phase deliberately does not implement allocation/splitting math or
+settlement calculation — `is_shared` is a plain classification flag for
+now; Phases 10 and 11 build the actual splitting and settlement logic on
+top of this data model. All amounts are integer yen; no floating-point
+money anywhere in the schema or API.
+
 ## Repository layout
 
 ```

@@ -38,6 +38,19 @@ it instead. Adding a member requires they already have a registered
 account; there is no invite-link flow yet. Ownership transfer and audit
 logging of membership changes are both deferred to a later phase.
 
+## Expense Domain
+
+A family member can log an expense: amount (integer yen), a category
+(a fixed seeded set plus per-family custom ones), the payer (any family
+member, not necessarily whoever is logging it), a personal-or-shared
+classification, a date, and an optional description. Editing or deleting
+an expense is restricted to its creator or an OWNER/ADMIN of the family.
+Custom categories can be created by any member but renamed/deleted only
+by an OWNER/ADMIN; the seeded global categories are immutable. How a
+shared expense's cost is actually divided among members (Section "Shared
+allocation" below) and settlement calculation are both separate, later
+phases — this phase only establishes the data these depend on.
+
 ## Expense model
 
 Each receipt has line items; each item is either `PERSONAL` or `SHARED`.
