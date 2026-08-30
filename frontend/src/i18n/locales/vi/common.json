@@ -1,6 +1,6 @@
 {
   "app": { "title": "Quản lý chi tiêu gia đình" },
-  "common": { "loading": "Đang tải...", "language": "Ngôn ngữ" },
+  "common": { "loading": "Đang tải...", "language": "Ngôn ngữ", "cancel": "Hủy" },
   "ping": {
     "success": "Đã kết nối với máy chủ",
     "failure": "Không thể kết nối với máy chủ"
@@ -41,5 +41,33 @@
     "owner": "Chủ sở hữu",
     "admin": "Quản trị viên",
     "member": "Thành viên"
+  },
+  "expense": {
+    "myExpenses": "Danh sách chi tiêu",
+    "noExpenses": "Chưa có khoản chi nào",
+    "amount": "Số tiền",
+    "category": "Danh mục",
+    "payer": "Người thanh toán",
+    "description": "Ghi chú",
+    "date": "Ngày",
+    "personal": "Cá nhân",
+    "shared": "Chung",
+    "addExpense": "Thêm",
+    "editExpense": "Sửa",
+    "deleteExpense": "Xóa",
+    "confirmDeleteExpense": "Bạn có chắc muốn xóa khoản chi này?",
+    "addCategory": "Thêm danh mục",
+    "newCategoryName": "Tên danh mục mới",
+    "actionFailed": "Đã xảy ra lỗi. Vui lòng thử lại",
+    "amountMustBePositive": "Số tiền phải lớn hơn 0",
+    "invalidPayerOrCategory": "Người thanh toán hoặc danh mục không hợp lệ"
+  },
+  "category": {
+    "groceries": "Thực phẩm",
+    "dining": "Ăn ngoài",
+    "transport": "Đi lại",
+    "utilities": "Tiện ích",
+    "entertainment": "Giải trí",
+    "other": "Khác"
   }
 }

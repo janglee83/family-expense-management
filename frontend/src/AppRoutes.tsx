@@ -5,6 +5,7 @@ import { LoginPage } from "./routes/LoginPage";
 import { RegisterPage } from "./routes/RegisterPage";
 import { FamilyList } from "./families/FamilyList";
 import { FamilyDetail } from "./families/FamilyDetail";
+import { ExpenseList } from "./expenses/ExpenseList";
 
 export function AppRoutes() {
   return (
@@ -32,6 +33,14 @@ export function AppRoutes() {
         element={
           <ProtectedRoute>
             <FamilyDetail />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/families/:familyId/expenses"
+        element={
+          <ProtectedRoute>
+            <ExpenseList />
           </ProtectedRoute>
         }
       />

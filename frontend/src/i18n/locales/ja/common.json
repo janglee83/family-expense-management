@@ -1,6 +1,6 @@
 {
   "app": { "title": "家計簿" },
-  "common": { "loading": "読み込み中...", "language": "言語" },
+  "common": { "loading": "読み込み中...", "language": "言語", "cancel": "キャンセル" },
   "ping": {
     "success": "サーバーに接続しました",
     "failure": "サーバーに接続できませんでした"
@@ -41,5 +41,33 @@
     "owner": "オーナー",
     "admin": "管理者",
     "member": "メンバー"
+  },
+  "expense": {
+    "myExpenses": "支出一覧",
+    "noExpenses": "まだ支出がありません",
+    "amount": "金額",
+    "category": "カテゴリー",
+    "payer": "支払者",
+    "description": "メモ",
+    "date": "日付",
+    "personal": "個人",
+    "shared": "共同",
+    "addExpense": "追加",
+    "editExpense": "編集",
+    "deleteExpense": "削除",
+    "confirmDeleteExpense": "この支出を削除してもよろしいですか?",
+    "addCategory": "カテゴリーを追加",
+    "newCategoryName": "新しいカテゴリー名",
+    "actionFailed": "エラーが発生しました。もう一度お試しください",
+    "amountMustBePositive": "金額は1円以上で入力してください",
+    "invalidPayerOrCategory": "支払者またはカテゴリーが無効です"
+  },
+  "category": {
+    "groceries": "食料品",
+    "dining": "外食",
+    "transport": "交通費",
+    "utilities": "光熱費",
+    "entertainment": "娯楽",
+    "other": "その他"
   }
 }

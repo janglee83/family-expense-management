@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { useNavigate, useParams } from "react-router-dom";
+import { Link, useNavigate, useParams } from "react-router-dom";
 import { useAuth } from "../auth/useAuth";
 import {
   changeMemberRole,
@@ -121,6 +121,9 @@ export function FamilyDetail() {
   return (
     <main>
       <h1>{detail.name}</h1>
+      <p>
+        <Link to={`/families/${familyId}/expenses`}>{t("expense.myExpenses")}</Link>
+      </p>
       {canManage && (
         <p>
           <label>
