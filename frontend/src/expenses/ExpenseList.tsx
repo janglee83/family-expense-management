@@ -116,6 +116,7 @@ export function ExpenseList() {
           familyId={familyId}
           onSaved={(expense) => {
             setExpenses((current) => [expense, ...current]);
+            void listCategories(familyId).then(setCategories);
             setIsCreating(false);
           }}
           onCancel={() => setIsCreating(false)}
@@ -139,6 +140,7 @@ export function ExpenseList() {
                       setExpenses((current) =>
                         current.map((item) => (item.id === updated.id ? updated : item)),
                       );
+                      void listCategories(familyId).then(setCategories);
                       setEditingExpenseId(null);
                     }}
                     onCancel={() => setEditingExpenseId(null)}
