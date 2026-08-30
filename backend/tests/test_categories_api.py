@@ -1,5 +1,6 @@
 import uuid
 from collections.abc import AsyncGenerator
+from datetime import date
 from typing import Any
 
 import pytest
@@ -33,6 +34,11 @@ async def _create_family(client: AsyncClient, name: str = "Test Family") -> str:
     assert response.status_code == 201
     family_id: str = response.json()["id"]
     return family_id
+
+
+async def _get_global_category_id(client: AsyncClient, family_id: str) -> str:
+    response = await client.get(f"/api/v1/families/{family_id}/categories/")
+    return response.json()[0]["id"]  # type: ignore[no-any-return]
 
 
 @pytest.mark.integration
@@ -153,3 +159,29 @@ async def test_owner_cannot_mutate_another_familys_custom_category(client: Async
     )
 
     assert rename_response.status_code == 403
+
+
+@pytest.mark.integration
+async def test_cannot_delete_a_category_referenced_by_an_expense(client: AsyncClient) -> None:
+    owner = await _register(client, _unique_email())
+    family_id = await _create_family(client)
+    create_category_response = await client.post(
+        f"/api/v1/families/{family_id}/categories/", json={"name": "In Use"}
+    )
+    category_id = create_category_response.json()["id"]
+
+    await client.post(
+        f"/api/v1/families/{family_id}/expenses/",
+        json={
+            "payer_user_id": owner["id"],
+            "category_id": category_id,
+            "amount": 1000,
+            "is_shared": False,
+            "description": None,
+            "expense_date": date.today().isoformat(),
+        },
+    )
+
+    response = await client.delete(f"/api/v1/families/{family_id}/categories/{category_id}")
+
+    assert response.status_code == 409
