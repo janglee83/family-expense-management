@@ -63,7 +63,7 @@ async def test_fresh_family_sees_only_seeded_global_categories(client: AsyncClie
 
 
 @pytest.mark.integration
-async def test_member_can_create_custom_category(client: AsyncClient) -> None:
+async def test_owner_can_create_custom_category(client: AsyncClient) -> None:
     await _register(client, _unique_email())
     family_id = await _create_family(client)
 
@@ -75,6 +75,44 @@ async def test_member_can_create_custom_category(client: AsyncClient) -> None:
     body = response.json()
     assert body["name"] == "Kids' School Supplies"
     assert body["family_id"] == family_id
+
+
+@pytest.mark.integration
+async def test_member_can_create_custom_category(client: AsyncClient) -> None:
+    await _register(client, _unique_email())
+    family_id = await _create_family(client)
+
+    member_email = _unique_email()
+    async with AsyncClient(
+        transport=ASGITransport(app=app), base_url="http://test"
+    ) as member_client:
+        await _register(member_client, member_email)
+        await client.post(
+            f"/api/v1/families/{family_id}/members", json={"email": member_email}
+        )
+
+        response = await member_client.post(
+            f"/api/v1/families/{family_id}/categories/", json={"name": "Kids' School Supplies"}
+        )
+
+    assert response.status_code == 201
+    body = response.json()
+    assert body["name"] == "Kids' School Supplies"
+    assert body["family_id"] == family_id
+
+
+@pytest.mark.integration
+async def test_list_categories_rejects_non_member(client: AsyncClient) -> None:
+    await _register(client, _unique_email())
+    family_id = await _create_family(client)
+
+    async with AsyncClient(
+        transport=ASGITransport(app=app), base_url="http://test"
+    ) as other_client:
+        await _register(other_client, _unique_email())
+        response = await other_client.get(f"/api/v1/families/{family_id}/categories/")
+
+    assert response.status_code == 403
 
 
 @pytest.mark.integration

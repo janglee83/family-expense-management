@@ -23,7 +23,7 @@ class CategoryResponse(BaseModel):
 class CreateExpenseRequest(BaseModel):
     payer_user_id: uuid.UUID
     category_id: uuid.UUID
-    amount: int = Field(gt=0)
+    amount: int = Field(gt=0, le=2_147_483_647)
     is_shared: bool
     description: str | None = Field(default=None, max_length=500)
     expense_date: date
@@ -32,7 +32,7 @@ class CreateExpenseRequest(BaseModel):
 class UpdateExpenseRequest(BaseModel):
     payer_user_id: uuid.UUID
     category_id: uuid.UUID
-    amount: int = Field(gt=0)
+    amount: int = Field(gt=0, le=2_147_483_647)
     is_shared: bool
     description: str | None = Field(default=None, max_length=500)
     expense_date: date

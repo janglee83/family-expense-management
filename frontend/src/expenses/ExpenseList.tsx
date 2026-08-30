@@ -31,6 +31,7 @@ export function ExpenseList() {
   useEffect(() => {
     if (!familyId) return;
     let cancelled = false;
+    setError(null);
 
     Promise.all([listExpenses(familyId), listCategories(familyId), getFamilyDetail(familyId)])
       .then(([expenseResult, categoryResult, familyDetail]) => {
@@ -48,6 +49,7 @@ export function ExpenseList() {
         if (!cancelled) {
           setExpenses([]);
           setCategories([]);
+          setError(t("expense.actionFailed"));
         }
       })
       .finally(() => {
@@ -57,7 +59,7 @@ export function ExpenseList() {
     return () => {
       cancelled = true;
     };
-  }, [familyId, user?.id]);
+  }, [familyId, user?.id, t]);
 
   const canManage = myRole === "owner" || myRole === "admin";
 
@@ -68,6 +70,7 @@ export function ExpenseList() {
 
   async function handleDeleteExpense(expenseId: string) {
     if (!familyId || !window.confirm(t("expense.confirmDeleteExpense"))) return;
+    setError(null);
     try {
       await deleteExpense(familyId, expenseId);
       setExpenses((current) => current.filter((expense) => expense.id !== expenseId));
@@ -80,6 +83,7 @@ export function ExpenseList() {
     if (!familyId) return;
     const newName = window.prompt(t("expense.newCategoryName"));
     if (!newName) return;
+    setError(null);
     try {
       const updated = await renameCategory(familyId, categoryId, newName);
       setCategories((current) =>
@@ -92,6 +96,7 @@ export function ExpenseList() {
 
   async function handleDeleteCategory(categoryId: string) {
     if (!familyId) return;
+    setError(null);
     try {
       await deleteCategory(familyId, categoryId);
       setCategories((current) => current.filter((category) => category.id !== categoryId));
@@ -125,7 +130,7 @@ export function ExpenseList() {
         <button onClick={() => setIsCreating(true)}>{t("expense.addExpense")}</button>
       )}
       {expenses.length === 0 ? (
-        <p>{t("expense.noExpenses")}</p>
+        !error && <p>{t("expense.noExpenses")}</p>
       ) : (
         <ul>
           {expenses.map((expense) => {
