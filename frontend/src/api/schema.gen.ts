@@ -234,6 +234,59 @@ export interface paths {
         patch: operations["change_member_role_api_v1_families__family_id__members__user_id__patch"];
         trace?: never;
     };
+    "/api/v1/families/{family_id}/receipts/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Receipts */
+        get: operations["list_receipts_api_v1_families__family_id__receipts__get"];
+        put?: never;
+        /** Upload Receipt */
+        post: operations["upload_receipt_api_v1_families__family_id__receipts__post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/families/{family_id}/receipts/{receipt_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Receipt */
+        get: operations["get_receipt_api_v1_families__family_id__receipts__receipt_id__get"];
+        put?: never;
+        post?: never;
+        /** Delete Receipt */
+        delete: operations["delete_receipt_api_v1_families__family_id__receipts__receipt_id__delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/families/{family_id}/receipts/{receipt_id}/image": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Receipt Image */
+        get: operations["get_receipt_image_api_v1_families__family_id__receipts__receipt_id__image_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/ping": {
         parameters: {
             query?: never;
@@ -279,6 +332,11 @@ export interface components {
              * Format: email
              */
             email: string;
+        };
+        /** Body_upload_receipt_api_v1_families__family_id__receipts__post */
+        Body_upload_receipt_api_v1_families__family_id__receipts__post: {
+            /** File */
+            file: string;
         };
         /** CategoryResponse */
         CategoryResponse: {
@@ -432,6 +490,42 @@ export interface components {
             message: string;
             /** Status */
             status: string;
+        };
+        /** ReceiptResponse */
+        ReceiptResponse: {
+            /** Content Type */
+            content_type: string;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Error Message */
+            error_message: string | null;
+            /**
+             * Family Id
+             * Format: uuid
+             */
+            family_id: string;
+            /** File Size Bytes */
+            file_size_bytes: number;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Status */
+            status: string;
+            /**
+             * Updated At
+             * Format: date-time
+             */
+            updated_at: string;
+            /**
+             * Uploaded By User Id
+             * Format: uuid
+             */
+            uploaded_by_user_id: string;
         };
         /** RegisterRequest */
         RegisterRequest: {
@@ -1169,6 +1263,166 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["FamilyMemberResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_receipts_api_v1_families__family_id__receipts__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                family_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReceiptResponse"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    upload_receipt_api_v1_families__family_id__receipts__post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                family_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "multipart/form-data": components["schemas"]["Body_upload_receipt_api_v1_families__family_id__receipts__post"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReceiptResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_receipt_api_v1_families__family_id__receipts__receipt_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                family_id: string;
+                receipt_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReceiptResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    delete_receipt_api_v1_families__family_id__receipts__receipt_id__delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                family_id: string;
+                receipt_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_receipt_image_api_v1_families__family_id__receipts__receipt_id__image_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                family_id: string;
+                receipt_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
                 };
             };
             /** @description Validation Error */

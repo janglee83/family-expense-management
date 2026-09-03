@@ -69,5 +69,19 @@
     "utilities": "Tiện ích",
     "entertainment": "Giải trí",
     "other": "Khác"
+  },
+  "receipt": {
+    "myReceipts": "Danh sách hóa đơn",
+    "noReceipts": "Chưa có hóa đơn nào",
+    "upload": "Tải lên",
+    "uploading": "Đang tải lên...",
+    "delete": "Xóa",
+    "confirmDelete": "Bạn có chắc muốn xóa hóa đơn này?",
+    "statusUploaded": "Đã tải lên",
+    "statusProcessing": "Đang xử lý",
+    "statusFailed": "Thất bại",
+    "invalidFileType": "Chỉ chấp nhận định dạng JPEG, PNG, HEIC",
+    "fileTooLarge": "Kích thước tệp phải nhỏ hơn 10MB",
+    "uploadFailed": "Đã xảy ra lỗi. Vui lòng thử lại"
   }
 }

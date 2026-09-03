@@ -6,6 +6,7 @@ import { RegisterPage } from "./routes/RegisterPage";
 import { FamilyList } from "./families/FamilyList";
 import { FamilyDetail } from "./families/FamilyDetail";
 import { ExpenseList } from "./expenses/ExpenseList";
+import { ReceiptList } from "./receipts/ReceiptList";
 
 export function AppRoutes() {
   return (
@@ -41,6 +42,14 @@ export function AppRoutes() {
         element={
           <ProtectedRoute>
             <ExpenseList />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/families/:familyId/receipts"
+        element={
+          <ProtectedRoute>
+            <ReceiptList />
           </ProtectedRoute>
         }
       />
