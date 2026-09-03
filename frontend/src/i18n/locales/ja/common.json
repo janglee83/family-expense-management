@@ -69,5 +69,19 @@
     "utilities": "光熱費",
     "entertainment": "娯楽",
     "other": "その他"
+  },
+  "receipt": {
+    "myReceipts": "レシート一覧",
+    "noReceipts": "まだレシートがありません",
+    "upload": "アップロード",
+    "uploading": "アップロード中...",
+    "delete": "削除",
+    "confirmDelete": "このレシートを削除してもよろしいですか?",
+    "statusUploaded": "アップロード済み",
+    "statusProcessing": "処理中",
+    "statusFailed": "失敗",
+    "invalidFileType": "JPEG、PNG、HEIC形式のみアップロードできます",
+    "fileTooLarge": "ファイルサイズは10MB以下にしてください",
+    "uploadFailed": "エラーが発生しました。もう一度お試しください"
   }
 }

@@ -124,6 +124,9 @@ export function FamilyDetail() {
       <p>
         <Link to={`/families/${familyId}/expenses`}>{t("expense.myExpenses")}</Link>
       </p>
+      <p>
+        <Link to={`/families/${familyId}/receipts`}>{t("receipt.myReceipts")}</Link>
+      </p>
       {canManage && (
         <p>
           <label>

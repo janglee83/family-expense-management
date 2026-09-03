@@ -1,6 +1,6 @@
 from fastapi import APIRouter
 
-from app.api.v1 import auth, categories, expenses, families, ping
+from app.api.v1 import auth, categories, expenses, families, ping, receipts
 
 api_router = APIRouter()
 api_router.include_router(ping.router, tags=["ping"])
@@ -11,4 +11,7 @@ api_router.include_router(
 )
 api_router.include_router(
     expenses.router, prefix="/families/{family_id}/expenses", tags=["expenses"]
+)
+api_router.include_router(
+    receipts.router, prefix="/families/{family_id}/receipts", tags=["receipts"]
 )
