@@ -3,10 +3,11 @@
 ## Overview
 
 A modular monolith: one FastAPI backend owns auth, family, expense, and
-settlement domains; a separate `ocr-worker` (introduced in Phase 6) handles
-OCR/AI workloads, since those have very different resource and scaling
-characteristics from normal API traffic. A Vite/React SPA is the only
-frontend client for now.
+settlement domains; a separate `worker` process (this phase adds it as a
+generic Celery/Redis consumer; Phase 6 specializes it into the real
+`ocr-worker`) handles background/OCR workloads, since those have very
+different resource and scaling characteristics from normal API traffic. A
+Vite/React SPA is the only frontend client for now.
 
 ## Stack decisions
 
@@ -108,6 +109,29 @@ settlement calculation — `is_shared` is a plain classification flag for
 now; Phases 10 and 11 build the actual splitting and settlement logic on
 top of this data model. All amounts are integer yen; no floating-point
 money anywhere in the schema or API.
+
+## Receipt Upload
+
+Receipts are family-scoped the same way expenses are — every endpoint
+depends on `get_family_membership` first. Uploaded images are validated
+by real content-sniffing (`python-magic`, not the client-supplied
+filename/MIME), stored in MinIO behind a small `ReceiptStorage`
+interface, and served back through a backend proxy endpoint (never a
+public/presigned URL) so family-membership authorization applies to
+every view, not just the upload.
+
+A `receipts` row tracks `status` as a plain string (a `ReceiptStatus`
+StrEnum at the app layer, matching `FamilyRole`'s precedent) so later
+phases can add new states without a migration. This phase's Celery task
+(`process_receipt`, run by the new generic `worker` service) is a
+deliberate stub: it only advances `UPLOAD` → `PROCESSING`, proving the
+queue/worker infrastructure works end to end. Phase 6 replaces the task
+body with real OpenCV/PaddleOCR/Ollama extraction and advances the state
+machine further (toward `OCR_COMPLETED`/`FAILED`).
+
+`receipts` has no FK to `expenses` in this phase — the two stay fully
+independent until a later phase has parsed OCR data to reconcile against
+manual expense entries.
 
 ## Repository layout
 

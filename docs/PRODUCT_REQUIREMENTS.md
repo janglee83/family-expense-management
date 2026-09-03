@@ -84,6 +84,10 @@ NEEDS_REVIEW → CONFIRMED → FAILED`), never blocking the upload request.
 Raw OCR output, parsed values, and user-confirmed values are kept as three
 distinct, never-overwritten layers.
 
+This phase (5) implements only the upload/storage/state-machine
+mechanics described above (`UPLOAD` → `PROCESSING`) — the OpenCV →
+PaddleOCR → structure-detection pipeline itself is Phase 6's job.
+
 ## Zero-cost AI constraint
 
 No paid AI/OCR API (OpenAI, Anthropic, Google Vision, AWS Textract, etc.)
