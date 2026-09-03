@@ -1,3 +1,4 @@
+import re
 import uuid
 from typing import Annotated
 
@@ -9,6 +10,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.deps import get_current_user, get_family_membership
+from app.core.logging import get_logger
 from app.core.permissions import require_owner_admin_or_creator
 from app.core.storage import get_receipt_storage
 from app.db.session import get_session
@@ -19,6 +21,7 @@ from app.schemas.receipt import ReceiptResponse
 from app.worker import process_receipt
 
 router = APIRouter()
+logger = get_logger(__name__)
 
 ALLOWED_CONTENT_TYPES = {"image/jpeg", "image/png", "image/heic", "image/heif"}
 MAX_FILE_SIZE_BYTES = 10 * 1024 * 1024
@@ -39,6 +42,11 @@ def _validate_receipt_content(content: bytes) -> str:
     return content_type
 
 
+def _sanitize_filename(filename: str) -> str:
+    safe = re.sub(r"[^A-Za-z0-9._-]", "_", filename)
+    return safe[:100] or "receipt"
+
+
 @router.post("/", status_code=status.HTTP_201_CREATED, response_model=ReceiptResponse)
 async def upload_receipt(
     family_id: uuid.UUID,
@@ -47,14 +55,26 @@ async def upload_receipt(
     session: Annotated[AsyncSession, Depends(get_session)],
     file: UploadFile,
 ) -> Receipt:
+    # Cheap guard against oversized uploads before we buffer the body into memory.
+    # This does not protect against an unbounded read before authentication runs
+    # (Starlette parses the multipart body, including this file, before dependency
+    # injection such as get_current_user/get_family_membership executes) — closing
+    # that gap needs a request-level body-size cap (ASGI middleware or reverse-proxy
+    # client_max_body_size), which is a deployment-hardening item for a later phase
+    # since this repo has no reverse proxy yet.
+    if file.size is not None and file.size > MAX_FILE_SIZE_BYTES:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail="File exceeds the 10MB size limit",
+        )
     content = await file.read()
     content_type = _validate_receipt_content(content)
 
     receipt_id = uuid.uuid4()
-    filename = (file.filename or "receipt").replace("/", "_")
+    filename = _sanitize_filename(file.filename or "receipt")
     storage_key = f"receipts/{family_id}/{receipt_id}/{filename}"
 
-    storage = get_receipt_storage()
+    storage = await run_in_threadpool(get_receipt_storage)
     await run_in_threadpool(storage.save, storage_key, content, content_type)
 
     receipt = Receipt(
@@ -69,7 +89,10 @@ async def upload_receipt(
     session.add(receipt)
     await session.commit()
 
-    process_receipt.delay(str(receipt.id))
+    try:
+        await run_in_threadpool(process_receipt.delay, str(receipt.id))
+    except Exception:
+        logger.exception("Failed to enqueue receipt processing", receipt_id=str(receipt.id))
     return receipt
 
 
@@ -114,7 +137,7 @@ async def get_receipt_image(
     session: Annotated[AsyncSession, Depends(get_session)],
 ) -> Response:
     receipt = await _get_receipt_or_404(family_id, receipt_id, session)
-    storage = get_receipt_storage()
+    storage = await run_in_threadpool(get_receipt_storage)
     content = await run_in_threadpool(storage.get, receipt.storage_key)
     return Response(content=content, media_type=receipt.content_type)
 
@@ -128,7 +151,7 @@ async def delete_receipt(
 ) -> None:
     receipt = await _get_receipt_or_404(family_id, receipt_id, session)
     require_owner_admin_or_creator(membership, receipt.uploaded_by_user_id)
-    storage = get_receipt_storage()
+    storage = await run_in_threadpool(get_receipt_storage)
     await run_in_threadpool(storage.delete, receipt.storage_key)
     await session.delete(receipt)
     await session.commit()

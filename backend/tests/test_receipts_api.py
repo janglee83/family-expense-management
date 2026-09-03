@@ -1,6 +1,7 @@
 import uuid
 from collections.abc import AsyncGenerator
 from typing import Any
+from unittest.mock import patch
 
 import pytest
 from httpx import ASGITransport, AsyncClient
@@ -60,6 +61,17 @@ async def test_valid_upload_succeeds(client: AsyncClient) -> None:
     assert body["status"] == "upload"
     assert body["content_type"] == "image/jpeg"
     assert body["file_size_bytes"] == len(_VALID_JPEG_BYTES)
+
+
+@pytest.mark.integration
+async def test_valid_upload_enqueues_the_processing_task(client: AsyncClient) -> None:
+    await _register(client, _unique_email())
+    family_id = await _create_family(client)
+
+    with patch("app.api.v1.receipts.process_receipt.delay") as mock_delay:
+        body = await _upload_receipt(client, family_id)
+
+    mock_delay.assert_called_once_with(body["id"])
 
 
 @pytest.mark.integration
