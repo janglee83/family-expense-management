@@ -1,16 +1,20 @@
 import uuid
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, status
 from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.api.deps import get_family_membership
+from app.api.deps import get_current_user, get_family_membership
+from app.core.api_errors import raise_api_error
+from app.core.notifications import queue_family_notification
 from app.core.permissions import require_owner_or_admin
 from app.db.session import get_session
+from app.db.transaction import locked_write
 from app.models.category import Category
 from app.models.family_member import FamilyMember
+from app.models.user import User
 from app.schemas.expense import CategoryResponse, CreateCategoryRequest, RenameCategoryRequest
 
 router = APIRouter()
@@ -35,11 +39,18 @@ async def create_category(
     family_id: uuid.UUID,
     payload: CreateCategoryRequest,
     membership: Annotated[FamilyMember, Depends(get_family_membership)],
+    user: Annotated[User, Depends(get_current_user)],
     session: Annotated[AsyncSession, Depends(get_session)],
 ) -> Category:
-    category = Category(family_id=family_id, name=payload.name)
-    session.add(category)
-    await session.commit()
+    async with locked_write(session, tables=("categories", "notifications")):
+        category = Category(family_id=family_id, name=payload.name, icon=payload.icon)
+        session.add(category)
+        await queue_family_notification(
+            session,
+            family_id,
+            message=f"{user.display_name} created category \"{category.name}\".",
+            actor_user_id=user.id,
+        )
     return category
 
 
@@ -48,11 +59,16 @@ async def _get_mutable_category(
 ) -> Category:
     category = await session.get(Category, category_id)
     if category is None:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Category not found")
+        raise_api_error(
+            status_code=status.HTTP_404_NOT_FOUND,
+            code="CATEGORY_NOT_FOUND",
+            message="Category not found",
+        )
     if category.family_id != family_id:
-        raise HTTPException(
+        raise_api_error(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="This category cannot be modified by this family",
+            code="CATEGORY_MODIFICATION_FORBIDDEN",
+            message="This category cannot be modified by this family",
         )
     return category
 
@@ -63,12 +79,20 @@ async def rename_category(
     category_id: uuid.UUID,
     payload: RenameCategoryRequest,
     membership: Annotated[FamilyMember, Depends(get_family_membership)],
+    user: Annotated[User, Depends(get_current_user)],
     session: Annotated[AsyncSession, Depends(get_session)],
 ) -> Category:
     require_owner_or_admin(membership)
-    category = await _get_mutable_category(family_id, category_id, session)
-    category.name = payload.name
-    await session.commit()
+    async with locked_write(session, tables=("categories", "notifications")):
+        category = await _get_mutable_category(family_id, category_id, session)
+        old_name = category.name
+        category.name = payload.name
+        await queue_family_notification(
+            session,
+            family_id,
+            message=f"{user.display_name} renamed category \"{old_name}\" to \"{category.name}\".",
+            actor_user_id=user.id,
+        )
     return category
 
 
@@ -77,16 +101,24 @@ async def delete_category(
     family_id: uuid.UUID,
     category_id: uuid.UUID,
     membership: Annotated[FamilyMember, Depends(get_family_membership)],
+    user: Annotated[User, Depends(get_current_user)],
     session: Annotated[AsyncSession, Depends(get_session)],
 ) -> None:
     require_owner_or_admin(membership)
-    category = await _get_mutable_category(family_id, category_id, session)
-    await session.delete(category)
     try:
-        await session.commit()
+        async with locked_write(session, tables=("categories", "notifications")):
+            category = await _get_mutable_category(family_id, category_id, session)
+            category_name = category.name
+            await session.delete(category)
+            await queue_family_notification(
+                session,
+                family_id,
+                message=f"{user.display_name} deleted category \"{category_name}\".",
+                actor_user_id=user.id,
+            )
     except IntegrityError:
-        await session.rollback()
-        raise HTTPException(
+        raise_api_error(
             status_code=status.HTTP_409_CONFLICT,
-            detail="Cannot delete a category that has expenses",
-        ) from None
+            code="CATEGORY_HAS_EXPENSES",
+            message="Cannot delete a category that has expenses",
+        )

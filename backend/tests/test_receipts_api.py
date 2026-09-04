@@ -200,3 +200,30 @@ async def test_delete_as_owner_who_did_not_upload_succeeds(client: AsyncClient) 
     response = await client.delete(f"/api/v1/families/{family_id}/receipts/{receipt['id']}")
 
     assert response.status_code == 204
+
+
+@pytest.mark.integration
+async def test_list_and_get_receipt_detail_succeed(client: AsyncClient) -> None:
+    await _register(client, _unique_email())
+    family_id = await _create_family(client)
+    receipt = await _upload_receipt(client, family_id)
+
+    list_response = await client.get(f"/api/v1/families/{family_id}/receipts/")
+    assert list_response.status_code == 200
+    ids = {item["id"] for item in list_response.json()}
+    assert receipt["id"] in ids
+
+    detail_response = await client.get(f"/api/v1/families/{family_id}/receipts/{receipt['id']}")
+    assert detail_response.status_code == 200
+    assert detail_response.json()["id"] == receipt["id"]
+
+
+@pytest.mark.integration
+async def test_get_receipt_detail_returns_not_found_for_unknown_id(client: AsyncClient) -> None:
+    await _register(client, _unique_email())
+    family_id = await _create_family(client)
+
+    response = await client.get(f"/api/v1/families/{family_id}/receipts/{uuid.uuid4()}")
+
+    assert response.status_code == 404
+    assert response.json()["error"]["code"] == "RECEIPT_NOT_FOUND"

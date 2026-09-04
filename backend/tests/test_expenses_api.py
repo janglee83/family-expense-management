@@ -334,3 +334,33 @@ async def test_delete_expense_as_member_who_did_not_create_it_rejected(
         )
 
     assert response.status_code == 403
+
+
+@pytest.mark.integration
+async def test_get_expense_by_id_succeeds(client: AsyncClient) -> None:
+    owner = await _register(client, _unique_email())
+    family_id = await _create_family(client)
+    category_id = await _get_global_category_id(client, family_id)
+    create_response = await client.post(
+        f"/api/v1/families/{family_id}/expenses/",
+        json=_expense_payload(owner["id"], category_id, amount=1234),
+    )
+    expense_id = create_response.json()["id"]
+
+    response = await client.get(f"/api/v1/families/{family_id}/expenses/{expense_id}")
+
+    assert response.status_code == 200
+    body = response.json()
+    assert body["id"] == expense_id
+    assert body["amount"] == 1234
+
+
+@pytest.mark.integration
+async def test_get_expense_by_id_returns_404_for_unknown_expense(client: AsyncClient) -> None:
+    await _register(client, _unique_email())
+    family_id = await _create_family(client)
+
+    response = await client.get(f"/api/v1/families/{family_id}/expenses/{uuid.uuid4()}")
+
+    assert response.status_code == 404
+    assert response.json()["error"]["code"] == "EXPENSE_NOT_FOUND"

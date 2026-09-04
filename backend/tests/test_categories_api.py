@@ -75,6 +75,23 @@ async def test_owner_can_create_custom_category(client: AsyncClient) -> None:
     body = response.json()
     assert body["name"] == "Kids' School Supplies"
     assert body["family_id"] == family_id
+    assert body["icon"] is None
+
+
+@pytest.mark.integration
+async def test_owner_can_create_custom_category_with_icon(client: AsyncClient) -> None:
+    await _register(client, _unique_email())
+    family_id = await _create_family(client)
+
+    response = await client.post(
+        f"/api/v1/families/{family_id}/categories/",
+        json={"name": "Travel", "icon": "car"},
+    )
+
+    assert response.status_code == 201
+    body = response.json()
+    assert body["name"] == "Travel"
+    assert body["icon"] == "car"
 
 
 @pytest.mark.integration
@@ -223,3 +240,28 @@ async def test_cannot_delete_a_category_referenced_by_an_expense(client: AsyncCl
     response = await client.delete(f"/api/v1/families/{family_id}/categories/{category_id}")
 
     assert response.status_code == 409
+
+
+@pytest.mark.integration
+async def test_rename_unknown_category_returns_not_found(client: AsyncClient) -> None:
+    await _register(client, _unique_email())
+    family_id = await _create_family(client)
+
+    response = await client.patch(
+        f"/api/v1/families/{family_id}/categories/{uuid.uuid4()}",
+        json={"name": "Any"},
+    )
+
+    assert response.status_code == 404
+    assert response.json()["error"]["code"] == "CATEGORY_NOT_FOUND"
+
+
+@pytest.mark.integration
+async def test_delete_unknown_category_returns_not_found(client: AsyncClient) -> None:
+    await _register(client, _unique_email())
+    family_id = await _create_family(client)
+
+    response = await client.delete(f"/api/v1/families/{family_id}/categories/{uuid.uuid4()}")
+
+    assert response.status_code == 404
+    assert response.json()["error"]["code"] == "CATEGORY_NOT_FOUND"

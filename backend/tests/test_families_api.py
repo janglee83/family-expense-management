@@ -32,7 +32,10 @@ async def _register(client: AsyncClient, email: str) -> dict[str, Any]:
 
 
 async def _create_family(client: AsyncClient, name: str = "Test Family") -> str:
-    response = await client.post("/api/v1/families/", json={"name": name})
+    response = await client.post(
+        "/api/v1/families/",
+        json={"name": name, "family_type": "shared", "member_emails": []},
+    )
     assert response.status_code == 201
     family_id: str = response.json()["id"]
     return family_id
@@ -48,6 +51,169 @@ async def test_create_family_creates_owner_membership(client: AsyncClient) -> No
     body = response.json()
     assert body["name"] == "My Family"
     assert body["role"] == "owner"
+    assert body["family_type"] == "shared"
+    assert body["currency_code"] == "jpy"
+    assert body["monthly_income_enabled"] is False
+    assert body["savings_goal_amount"] is None
+
+
+@pytest.mark.integration
+async def test_create_family_with_initial_members_succeeds(client: AsyncClient) -> None:
+    await _register(client, _unique_email())
+    invited_email = _unique_email()
+
+    async with AsyncClient(
+        transport=ASGITransport(app=app), base_url="http://test"
+    ) as invited_client:
+        invited_user = await _register(invited_client, invited_email)
+
+        response = await client.post(
+            "/api/v1/families/",
+            json={
+                "name": "My Family",
+                "family_type": "shared",
+                "member_emails": [invited_email],
+                "monthly_income_enabled": True,
+                "monthly_income": 120000,
+            },
+        )
+
+        assert response.status_code == 201
+        family_id = response.json()["id"]
+
+        detail_response = await invited_client.get(f"/api/v1/families/{family_id}")
+        assert detail_response.status_code == 200
+        members = detail_response.json()["members"]
+        assert any(member["user_id"] == invited_user["id"] for member in members)
+
+
+@pytest.mark.integration
+async def test_create_solo_family_rejects_member_emails(client: AsyncClient) -> None:
+    await _register(client, _unique_email())
+
+    response = await client.post(
+        "/api/v1/families/",
+        json={
+            "name": "Solo Family",
+            "family_type": "solo",
+            "member_emails": ["someone@example.com"],
+        },
+    )
+
+    assert response.status_code == 422
+
+
+@pytest.mark.integration
+async def test_create_solo_family_requires_savings_goal(client: AsyncClient) -> None:
+    await _register(client, _unique_email())
+
+    response = await client.post(
+        "/api/v1/families/",
+        json={
+            "name": "Solo Family",
+            "family_type": "solo",
+            "currency_code": "vnd",
+        },
+    )
+
+    assert response.status_code == 422
+
+
+@pytest.mark.integration
+async def test_create_solo_family_with_currency_and_savings_goal(client: AsyncClient) -> None:
+    await _register(client, _unique_email())
+
+    response = await client.post(
+        "/api/v1/families/",
+        json={
+            "name": "Solo Savings",
+            "family_type": "solo",
+            "currency_code": "vnd",
+            "monthly_income_enabled": True,
+            "monthly_income": 30000000,
+            "savings_goal_amount": 15000000,
+            "member_emails": [],
+        },
+    )
+
+    assert response.status_code == 201
+    body = response.json()
+    assert body["family_type"] == "solo"
+    assert body["currency_code"] == "vnd"
+    assert body["monthly_income_enabled"] is True
+    assert body["monthly_income"] == 30000000
+    assert body["savings_goal_amount"] == 15000000
+
+
+@pytest.mark.integration
+async def test_create_solo_family_without_monthly_income_is_allowed(client: AsyncClient) -> None:
+    await _register(client, _unique_email())
+
+    response = await client.post(
+        "/api/v1/families/",
+        json={
+            "name": "Solo No Income",
+            "family_type": "solo",
+            "currency_code": "jpy",
+            "monthly_income_enabled": False,
+            "monthly_income": None,
+            "savings_goal_amount": 100000,
+            "member_emails": [],
+        },
+    )
+
+    assert response.status_code == 201
+    body = response.json()
+    assert body["monthly_income_enabled"] is False
+    assert body["monthly_income"] is None
+
+
+@pytest.mark.integration
+async def test_monthly_income_enabled_requires_monthly_income(client: AsyncClient) -> None:
+    await _register(client, _unique_email())
+
+    response = await client.post(
+        "/api/v1/families/",
+        json={
+            "name": "Shared Invalid Income Toggle",
+            "family_type": "shared",
+            "monthly_income_enabled": True,
+            "monthly_income": None,
+            "member_emails": [],
+        },
+    )
+
+    assert response.status_code == 422
+
+
+@pytest.mark.integration
+async def test_add_member_to_solo_family_is_rejected(client: AsyncClient) -> None:
+    await _register(client, _unique_email())
+    family_response = await client.post(
+        "/api/v1/families/",
+        json={
+            "name": "Solo Savings",
+            "family_type": "solo",
+            "currency_code": "jpy",
+            "monthly_income_enabled": True,
+            "monthly_income": 300000,
+            "savings_goal_amount": 100000,
+            "member_emails": [],
+        },
+    )
+    assert family_response.status_code == 201
+    family_id = family_response.json()["id"]
+
+    member_email = _unique_email()
+    async with AsyncClient(
+        transport=ASGITransport(app=app), base_url="http://test"
+    ) as member_client:
+        await _register(member_client, member_email)
+
+    add_response = await client.post(
+        f"/api/v1/families/{family_id}/members", json={"email": member_email}
+    )
+    assert add_response.status_code == 400
 
 
 @pytest.mark.integration
