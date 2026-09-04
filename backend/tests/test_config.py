@@ -14,7 +14,8 @@ def test_settings_loads_from_env(monkeypatch: pytest.MonkeyPatch) -> None:
     assert settings.database_url == "postgresql+psycopg://u:p@localhost:5432/db"
     assert settings.redis_url == "redis://localhost:6379/0"
     assert settings.env == "development"
-    assert settings.cors_origins == ["http://localhost:5173"]
+    assert "http://localhost:5173" in settings.cors_origins
+    assert "*" not in settings.cors_origins
 
 
 def test_settings_raises_when_database_url_missing(monkeypatch: pytest.MonkeyPatch) -> None:

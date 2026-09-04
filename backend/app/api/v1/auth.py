@@ -1,11 +1,12 @@
 import secrets
 from datetime import UTC, datetime, timedelta
 
-from fastapi import APIRouter, Depends, HTTPException, Request, Response, status
+from fastapi import APIRouter, Depends, Request, Response, status
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.deps import get_current_user
+from app.core.api_errors import raise_api_error
 from app.core.config import get_settings
 from app.core.rate_limit import (
     LOGIN_ATTEMPT_WINDOW_SECONDS,
@@ -20,6 +21,7 @@ from app.core.security import (
     verify_password,
 )
 from app.db.session import get_session
+from app.db.transaction import locked_write
 from app.models.refresh_token import RefreshToken
 from app.models.user import User
 from app.schemas.auth import LoginRequest, RegisterRequest, UserResponse
@@ -74,7 +76,7 @@ async def _issue_tokens_for_user(session: AsyncSession, response: Response, user
             + timedelta(days=settings.refresh_token_expire_days),
         )
     )
-    await session.commit()
+    await session.flush()
     _set_auth_cookies(response, access_token, raw_refresh_token)
 
 
@@ -85,20 +87,23 @@ async def register(
     session: AsyncSession = Depends(get_session),
 ) -> User:
     email = payload.email.lower()
-    existing = await session.scalar(select(User).where(User.email == email))
-    if existing is not None:
-        raise HTTPException(
-            status_code=status.HTTP_409_CONFLICT, detail="Email already registered"
-        )
+    async with locked_write(session, tables=("users", "refresh_tokens")):
+        existing = await session.scalar(select(User).where(User.email == email))
+        if existing is not None:
+            raise_api_error(
+                status_code=status.HTTP_409_CONFLICT,
+                code="AUTH_EMAIL_ALREADY_REGISTERED",
+                message="Email already registered",
+            )
 
-    user = User(
-        email=email,
-        password_hash=hash_password(payload.password),
-        display_name=payload.display_name,
-    )
-    session.add(user)
-    await session.flush()
-    await _issue_tokens_for_user(session, response, user)
+        user = User(
+            email=email,
+            password_hash=hash_password(payload.password),
+            display_name=payload.display_name,
+        )
+        session.add(user)
+        await session.flush()
+        await _issue_tokens_for_user(session, response, user)
     return user
 
 
@@ -111,9 +116,10 @@ async def login(
     email = payload.email.lower()
 
     if await is_login_rate_limited(email):
-        raise HTTPException(
+        raise_api_error(
             status_code=status.HTTP_429_TOO_MANY_REQUESTS,
-            detail="Too many login attempts. Try again later.",
+            code="AUTH_LOGIN_RATE_LIMITED",
+            message="Too many login attempts. Try again later.",
             headers={"Retry-After": str(LOGIN_ATTEMPT_WINDOW_SECONDS)},
         )
 
@@ -124,16 +130,21 @@ async def login(
         # email is registered.
         verify_password(payload.password, _DUMMY_PASSWORD_HASH)
         await record_failed_login(email)
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid email or password"
+        raise_api_error(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            code="AUTH_INVALID_CREDENTIALS",
+            message="Invalid email or password",
         )
     if not verify_password(payload.password, user.password_hash):
         await record_failed_login(email)
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid email or password"
+        raise_api_error(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            code="AUTH_INVALID_CREDENTIALS",
+            message="Invalid email or password",
         )
 
-    await _issue_tokens_for_user(session, response, user)
+    async with locked_write(session, tables=("refresh_tokens",)):
+        await _issue_tokens_for_user(session, response, user)
     return user
 
 
@@ -145,30 +156,38 @@ async def refresh(
 ) -> User:
     raw_refresh_token = request.cookies.get("refresh_token")
     if raw_refresh_token is None:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED, detail="Missing refresh token"
+        raise_api_error(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            code="AUTH_REFRESH_TOKEN_MISSING",
+            message="Missing refresh token",
         )
 
     token_hash = hash_token(raw_refresh_token)
-    token_row = await session.scalar(
-        select(RefreshToken).where(RefreshToken.token_hash == token_hash)
-    )
-
-    now = datetime.now(UTC)
-    if token_row is None or token_row.revoked_at is not None or token_row.expires_at < now:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid or expired refresh token"
+    async with locked_write(session, tables=("refresh_tokens",)):
+        token_row = await session.scalar(
+            select(RefreshToken)
+            .where(RefreshToken.token_hash == token_hash)
+            .with_for_update()
         )
 
-    token_row.revoked_at = now
-    user = await session.get(User, token_row.user_id)
-    if user is None or not user.is_active:
-        await session.commit()
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid or expired refresh token"
-        )
+        now = datetime.now(UTC)
+        if token_row is None or token_row.revoked_at is not None or token_row.expires_at < now:
+            raise_api_error(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                code="AUTH_REFRESH_TOKEN_INVALID",
+                message="Invalid or expired refresh token",
+            )
 
-    await _issue_tokens_for_user(session, response, user)
+        token_row.revoked_at = now
+        user = await session.get(User, token_row.user_id)
+        if user is None or not user.is_active:
+            raise_api_error(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                code="AUTH_REFRESH_TOKEN_INVALID",
+                message="Invalid or expired refresh token",
+            )
+
+        await _issue_tokens_for_user(session, response, user)
     return user
 
 
@@ -181,12 +200,14 @@ async def logout(
     raw_refresh_token = request.cookies.get("refresh_token")
     if raw_refresh_token is not None:
         token_hash = hash_token(raw_refresh_token)
-        token_row = await session.scalar(
-            select(RefreshToken).where(RefreshToken.token_hash == token_hash)
-        )
-        if token_row is not None and token_row.revoked_at is None:
-            token_row.revoked_at = datetime.now(UTC)
-            await session.commit()
+        async with locked_write(session, tables=("refresh_tokens",)):
+            token_row = await session.scalar(
+                select(RefreshToken)
+                .where(RefreshToken.token_hash == token_hash)
+                .with_for_update()
+            )
+            if token_row is not None and token_row.revoked_at is None:
+                token_row.revoked_at = datetime.now(UTC)
 
     _clear_auth_cookies(response)
 
