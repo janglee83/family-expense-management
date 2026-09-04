@@ -1,4 +1,5 @@
 import { API_BASE_URL, apiClient } from "../api/client";
+import { buildApiError, throwApiErrorFromResponse } from "../api/errors";
 import type { components } from "../api/schema.gen";
 
 export type Receipt = components["schemas"]["ReceiptResponse"];
@@ -25,31 +26,41 @@ export async function uploadReceipt(familyId: string, file: File): Promise<Recei
     body: formData,
   });
   if (!response.ok) {
-    if (response.status === 422) {
-      throw new Error("invalid_file");
-    }
-    throw new Error("upload_receipt_failed");
+    await throwApiErrorFromResponse(response, {
+      fallbackCode: "upload_receipt_failed",
+      fallbackMessage: "Failed to upload receipt",
+    });
   }
   return (await response.json()) as Receipt;
 }
 
 export async function listReceipts(familyId: string): Promise<Receipt[]> {
-  const { data, error } = await apiClient.GET("/api/v1/families/{family_id}/receipts/", {
+  const { data, error, response } = await apiClient.GET("/api/v1/families/{family_id}/receipts/", {
     params: { path: { family_id: familyId } },
   });
   if (error || !data) {
-    throw new Error("list_receipts_failed");
+    throw buildApiError({
+      status: response.status,
+      payload: error,
+      fallbackCode: "list_receipts_failed",
+      fallbackMessage: "Failed to list receipts",
+    });
   }
   return data;
 }
 
 export async function deleteReceipt(familyId: string, receiptId: string): Promise<void> {
-  const { error } = await apiClient.DELETE(
+  const { error, response } = await apiClient.DELETE(
     "/api/v1/families/{family_id}/receipts/{receipt_id}",
     { params: { path: { family_id: familyId, receipt_id: receiptId } } },
   );
   if (error) {
-    throw new Error("delete_receipt_failed");
+    throw buildApiError({
+      status: response.status,
+      payload: error,
+      fallbackCode: "delete_receipt_failed",
+      fallbackMessage: "Failed to delete receipt",
+    });
   }
 }
 

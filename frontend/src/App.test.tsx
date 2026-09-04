@@ -4,6 +4,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import "./i18n/i18n";
 import { AppRoutes } from "./AppRoutes";
 import { AuthProvider } from "./auth/AuthContext";
+import { SnackbarProvider } from "./components/ui/Snackbar";
 
 const fetchCurrentUserMock = vi.fn();
 const refreshSessionMock = vi.fn();
@@ -19,9 +20,11 @@ vi.mock("./auth/authApi", () => ({
 function renderAt(initialPath: string) {
   return render(
     <MemoryRouter initialEntries={[initialPath]}>
-      <AuthProvider>
-        <AppRoutes />
-      </AuthProvider>
+      <SnackbarProvider>
+        <AuthProvider>
+          <AppRoutes />
+        </AuthProvider>
+      </SnackbarProvider>
     </MemoryRouter>,
   );
 }
@@ -50,7 +53,7 @@ describe("AppRoutes", () => {
 
     renderAt("/");
 
-    expect(await screen.findByRole("heading", { name: "家計簿" })).toBeInTheDocument();
+    expect(await screen.findByRole("heading", { name: "ダッシュボード" })).toBeInTheDocument();
   });
 
   it("renders the login page directly at /login", async () => {
@@ -73,7 +76,7 @@ describe("AppRoutes", () => {
 
     renderAt("/");
 
-    expect(await screen.findByRole("heading", { name: "家計簿" })).toBeInTheDocument();
+    expect(await screen.findByRole("heading", { name: "ダッシュボード" })).toBeInTheDocument();
     expect(refreshSessionMock).toHaveBeenCalled();
     expect(fetchCurrentUserMock).toHaveBeenCalledTimes(2);
   });
@@ -84,5 +87,15 @@ describe("AppRoutes", () => {
     renderAt("/");
 
     expect(await screen.findByRole("heading", { name: "ログイン" })).toBeInTheDocument();
+  });
+
+  it("renders an isolated loading view for protected routes while auth state is pending", () => {
+    fetchCurrentUserMock.mockImplementation(() => new Promise(() => {}));
+
+    renderAt("/");
+
+    expect(screen.getByText("Loading...")).toBeInTheDocument();
+    expect(screen.queryByLabelText("サイドバー")).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "ガイドを再表示" })).not.toBeInTheDocument();
   });
 });

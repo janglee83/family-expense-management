@@ -6,6 +6,7 @@ import { ReceiptList } from "./ReceiptList";
 import { useAuth } from "../auth/useAuth";
 import { getFamilyDetail } from "../families/familyApi";
 import { deleteReceipt, listReceipts } from "./receiptApi";
+import { SnackbarProvider } from "../components/ui/Snackbar";
 
 vi.mock("./receiptApi", async () => {
   const actual = await vi.importActual<typeof import("./receiptApi")>("./receiptApi");
@@ -16,11 +17,13 @@ vi.mock("../auth/useAuth", () => ({ useAuth: vi.fn() }));
 
 function renderAt() {
   return render(
-    <MemoryRouter initialEntries={["/families/fam-1/receipts"]}>
-      <Routes>
-        <Route path="/families/:familyId/receipts" element={<ReceiptList />} />
-      </Routes>
-    </MemoryRouter>,
+    <SnackbarProvider>
+      <MemoryRouter initialEntries={["/families/fam-1/receipts"]}>
+        <Routes>
+          <Route path="/families/:familyId/receipts" element={<ReceiptList />} />
+        </Routes>
+      </MemoryRouter>
+    </SnackbarProvider>,
   );
 }
 
@@ -33,6 +36,11 @@ describe("ReceiptList", () => {
     vi.mocked(getFamilyDetail).mockResolvedValue({
       id: "fam-1",
       name: "Test Family",
+      family_type: "shared",
+      currency_code: "jpy",
+      monthly_income_enabled: false,
+      monthly_income: null,
+      savings_goal_amount: null,
       members: [
         { user_id: "u1", email: "a@example.com", display_name: "Alice", role: "owner" },
         { user_id: "u2", email: "b@example.com", display_name: "Bob", role: "member" },

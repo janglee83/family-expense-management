@@ -1,6 +1,10 @@
 import { useState, type FormEvent } from "react";
 import { useTranslation } from "react-i18next";
+import { translateApiError } from "../api/errorI18n";
 import { addMember, type FamilyMemberInfo } from "./familyApi";
+import { Button } from "../components/ui/Button";
+import { Field } from "../components/ui/Field";
+import { Alert } from "../components/ui/Alert";
 
 export function AddMemberForm({
   familyId,
@@ -13,6 +17,7 @@ export function AddMemberForm({
   const [email, setEmail] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const emailId = `member-email-${familyId}`;
 
   async function handleSubmit(event: FormEvent) {
     event.preventDefault();
@@ -23,33 +28,33 @@ export function AddMemberForm({
       onAdded(member);
       setEmail("");
     } catch (err) {
-      setError(
-        err instanceof Error && err.message === "member_not_found"
-          ? t("family.memberNotFound")
-          : err instanceof Error && err.message === "member_already_exists"
-            ? t("family.memberAlreadyExists")
-            : t("family.actionFailed"),
-      );
+      setError(translateApiError(t, err, "family.actionFailed"));
     } finally {
       setIsSubmitting(false);
     }
   }
 
   return (
-    <form onSubmit={handleSubmit}>
-      <label>
-        {t("family.memberEmail")}
+    <form onSubmit={handleSubmit} className="space-y-4 rounded-lg border border-border/80 bg-muted/25 p-4">
+      <Field label={t("family.memberEmail")} htmlFor={emailId} required>
         <input
+          id={emailId}
           type="email"
           value={email}
           onChange={(event) => setEmail(event.target.value)}
           required
         />
-      </label>
-      <button type="submit" disabled={isSubmitting}>
-        {t("family.addMember")}
-      </button>
-      {error && <p role="alert">{error}</p>}
+      </Field>
+      <div className="flex flex-wrap gap-2">
+        <Button type="submit" loading={isSubmitting} loadingLabel={t("common.loading")}>
+          {t("family.addMember")}
+        </Button>
+      </div>
+      {error && (
+        <Alert variant="error" role="alert">
+          {error}
+        </Alert>
+      )}
     </form>
   );
 }

@@ -1,0 +1,255 @@
+@import url("https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&family=Noto+Sans+JP:wght@400;500;600;700&display=swap");
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Be Vietnam Pro", "Noto Sans JP", "Hiragino Sans", "Segoe UI", sans-serif;
+  --font-mono: "IBM Plex Mono", "SFMono-Regular", "Consolas", monospace;
+
+  --color-background: oklch(0.975 0.006 255);
+  --color-foreground: oklch(0.26 0.021 262);
+  --color-card: oklch(0.995 0.002 255);
+  --color-card-foreground: oklch(0.26 0.021 262);
+  --color-muted: oklch(0.948 0.01 255);
+  --color-muted-foreground: oklch(0.5 0.02 260);
+  --color-border: oklch(0.89 0.012 257);
+
+  --color-primary: oklch(0.55 0.15 250);
+  --color-primary-foreground: oklch(0.98 0.005 255);
+  --color-secondary: oklch(0.92 0.02 252);
+  --color-secondary-foreground: oklch(0.33 0.03 258);
+
+  --color-destructive: oklch(0.61 0.2 28);
+  --color-destructive-foreground: oklch(0.98 0.005 255);
+  --color-success: oklch(0.63 0.15 150);
+  --color-success-foreground: oklch(0.98 0.005 255);
+  --color-warning: oklch(0.76 0.17 82);
+  --color-warning-foreground: oklch(0.24 0.04 82);
+  --color-info: oklch(0.62 0.12 230);
+  --color-info-foreground: oklch(0.98 0.005 255);
+
+  --radius-sm: 0.4rem;
+  --radius-md: 0.7rem;
+  --radius-lg: 1rem;
+  --radius-xl: 1.25rem;
+
+  --shadow-sm: 0 1px 2px -1px rgb(17 24 39 / 0.12), 0 1px 1px rgb(17 24 39 / 0.06);
+  --shadow-md: 0 6px 16px -8px rgb(15 23 42 / 0.24), 0 2px 8px -4px rgb(15 23 42 / 0.14);
+  --shadow-lg: 0 18px 35px -16px rgb(15 23 42 / 0.36), 0 8px 16px -10px rgb(15 23 42 / 0.2);
+}
+
+:root[lang="vi"] {
+  --font-sans: "Be Vietnam Pro", "Segoe UI", "Arial", sans-serif;
+}
+
+:root[lang="ja"] {
+  --font-sans: "Noto Sans JP", "Hiragino Sans", "Yu Gothic", sans-serif;
+}
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --color-background: oklch(0.2 0.02 262);
+  --color-foreground: oklch(0.94 0.012 255);
+  --color-card: oklch(0.24 0.02 262);
+  --color-card-foreground: oklch(0.94 0.012 255);
+  --color-muted: oklch(0.31 0.02 262);
+  --color-muted-foreground: oklch(0.76 0.02 255);
+  --color-border: oklch(0.34 0.02 262);
+  --color-primary: oklch(0.69 0.13 248);
+  --color-primary-foreground: oklch(0.23 0.03 262);
+  --color-secondary: oklch(0.34 0.03 258);
+  --color-secondary-foreground: oklch(0.9 0.02 255);
+  --color-destructive: oklch(0.66 0.18 28);
+  --color-destructive-foreground: oklch(0.98 0.005 255);
+  --color-success: oklch(0.71 0.14 148);
+  --color-success-foreground: oklch(0.18 0.03 150);
+  --color-warning: oklch(0.8 0.14 90);
+  --color-warning-foreground: oklch(0.2 0.03 90);
+  --color-info: oklch(0.7 0.11 230);
+  --color-info-foreground: oklch(0.2 0.03 230);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --color-background: oklch(0.2 0.02 262);
+    --color-foreground: oklch(0.94 0.012 255);
+    --color-card: oklch(0.24 0.02 262);
+    --color-card-foreground: oklch(0.94 0.012 255);
+    --color-muted: oklch(0.31 0.02 262);
+    --color-muted-foreground: oklch(0.76 0.02 255);
+    --color-border: oklch(0.34 0.02 262);
+    --color-primary: oklch(0.69 0.13 248);
+    --color-primary-foreground: oklch(0.23 0.03 262);
+    --color-secondary: oklch(0.34 0.03 258);
+    --color-secondary-foreground: oklch(0.9 0.02 255);
+    --color-destructive: oklch(0.66 0.18 28);
+    --color-destructive-foreground: oklch(0.98 0.005 255);
+    --color-success: oklch(0.71 0.14 148);
+    --color-success-foreground: oklch(0.18 0.03 150);
+    --color-warning: oklch(0.8 0.14 90);
+    --color-warning-foreground: oklch(0.2 0.03 90);
+    --color-info: oklch(0.7 0.11 230);
+    --color-info-foreground: oklch(0.2 0.03 230);
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  html,
+  body,
+  #root {
+    @apply min-h-screen;
+  }
+
+  body {
+    @apply bg-background font-sans text-base text-foreground antialiased;
+    background-image: radial-gradient(circle at 0 0, color-mix(in oklab, var(--color-primary) 11%, transparent) 0, transparent 34%),
+      radial-gradient(circle at 100% 0, color-mix(in oklab, var(--color-success) 10%, transparent) 0, transparent 40%),
+      linear-gradient(to bottom, color-mix(in oklab, var(--color-muted) 24%, transparent), transparent 14rem);
+    background-attachment: fixed;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4 {
+    @apply text-balance text-foreground;
+  }
+
+  p {
+    @apply text-pretty;
+  }
+
+  a {
+    @apply text-primary underline-offset-4 transition-colors hover:text-primary/80 hover:underline;
+  }
+
+  :where(button, a[href], [role="button"], select, input[type="checkbox"], summary) {
+    @apply cursor-pointer;
+  }
+
+  :where(button:disabled, select:disabled, input:disabled) {
+    @apply cursor-not-allowed;
+  }
+
+  :where(button, [href], input, select, textarea):focus-visible {
+    @apply outline-none ring-2 ring-primary ring-offset-2 ring-offset-background;
+  }
+
+  :where(input[type="text"], input[type="email"], input[type="password"], input[type="number"], input[type="date"], input[type="file"], select, textarea) {
+    @apply block min-h-10 w-full rounded-md border border-border bg-card px-3 py-2 text-sm text-foreground shadow-sm transition-colors placeholder:text-muted-foreground;
+  }
+
+  :where(select) {
+    @apply pe-9;
+  }
+
+  :where(input[type="text"], input[type="email"], input[type="password"], input[type="number"], input[type="date"], select, textarea):hover {
+    @apply border-primary/40;
+  }
+
+  :where(input[type="text"], input[type="email"], input[type="password"], input[type="number"], input[type="date"], select, textarea):disabled {
+    @apply cursor-not-allowed opacity-70;
+  }
+
+  :where(input[type="checkbox"]) {
+    @apply h-4 w-4 rounded border-border text-primary;
+  }
+
+  ::selection {
+    background: color-mix(in oklab, var(--color-primary) 30%, transparent);
+  }
+}
+
+@layer components {
+  .type-display {
+    @apply text-2xl font-semibold tracking-tight sm:text-4xl;
+  }
+
+  .type-h1 {
+    @apply text-2xl font-semibold tracking-tight sm:text-3xl;
+  }
+
+  .type-h2 {
+    @apply text-xl font-semibold tracking-tight;
+  }
+
+  .type-h3 {
+    @apply text-lg font-semibold;
+  }
+
+  .type-body {
+    @apply text-sm leading-6 sm:text-base;
+  }
+
+  .type-body-sm {
+    @apply text-sm text-muted-foreground;
+  }
+
+  .type-label {
+    @apply text-sm font-medium text-foreground;
+  }
+
+  .surface-card {
+    @apply rounded-lg border border-border bg-card/90 shadow-sm backdrop-blur-sm;
+  }
+
+  .surface-elevated {
+    @apply rounded-lg border border-border bg-card/95 shadow-md backdrop-blur-xl;
+  }
+
+  .interactive-row {
+    @apply relative overflow-hidden rounded-md border border-border bg-muted/30 px-4 py-3 transition-all duration-200 hover:-translate-y-0.5 hover:border-primary/35 hover:bg-card hover:shadow-sm;
+  }
+
+  .interactive-row::after {
+    content: "";
+    @apply pointer-events-none absolute inset-x-0 top-0 h-px bg-linear-to-r from-transparent via-primary/35 to-transparent opacity-0 transition-opacity duration-300;
+  }
+
+  .interactive-row:hover::after {
+    @apply opacity-100;
+  }
+
+  .enter-fade {
+    animation: enter-fade 280ms ease-out both;
+  }
+
+  .enter-rise {
+    animation: enter-rise 320ms ease-out both;
+  }
+}
+
+@keyframes enter-fade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes enter-rise {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

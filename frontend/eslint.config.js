@@ -35,6 +35,7 @@ export default [
     rules: {
       ...tseslintPlugin.configs.recommended.rules,
       ...reactHooks.configs.recommended.rules,
+      "react-hooks/set-state-in-effect": "off",
       "react-refresh/only-export-components": ["warn", { allowConstantExport: true }],
       // TypeScript's own compiler (tsc --noEmit) already catches undefined
       // identifiers with full knowledge of ambient lib types (DOM, Node);

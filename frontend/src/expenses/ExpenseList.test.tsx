@@ -1,10 +1,11 @@
 import { render, screen } from "@testing-library/react";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import "../i18n/i18n";
+import i18n from "../i18n/i18n";
 import { ExpenseList } from "./ExpenseList";
 import { getFamilyDetail } from "../families/familyApi";
 import { useAuth } from "../auth/useAuth";
+import { SnackbarProvider } from "../components/ui/Snackbar";
 
 const listExpensesMock = vi.fn();
 const listCategoriesMock = vi.fn();
@@ -26,23 +27,31 @@ vi.mock("../auth/useAuth", () => ({
 
 function renderAt() {
   return render(
-    <MemoryRouter initialEntries={["/families/fam-1/expenses"]}>
-      <Routes>
-        <Route path="/families/:familyId/expenses" element={<ExpenseList />} />
-      </Routes>
-    </MemoryRouter>,
+    <SnackbarProvider>
+      <MemoryRouter initialEntries={["/families/fam-1/expenses"]}>
+        <Routes>
+          <Route path="/families/:familyId/expenses" element={<ExpenseList />} />
+        </Routes>
+      </MemoryRouter>
+    </SnackbarProvider>,
   );
 }
 
 describe("ExpenseList", () => {
-  beforeEach(() => {
+  beforeEach(async () => {
     listExpensesMock.mockReset();
     listCategoriesMock.mockReset();
     vi.mocked(getFamilyDetail).mockReset();
     vi.mocked(useAuth).mockReset();
+    await i18n.changeLanguage("ja");
     vi.mocked(getFamilyDetail).mockResolvedValue({
       id: "fam-1",
       name: "Test Family",
+      family_type: "shared",
+      currency_code: "jpy",
+      monthly_income_enabled: false,
+      monthly_income: null,
+      savings_goal_amount: null,
       members: [
         { user_id: "u1", email: "a@example.com", display_name: "Alice", role: "owner" },
       ],
@@ -58,7 +67,7 @@ describe("ExpenseList", () => {
 
     renderAt();
 
-    expect(await screen.findByText("まだ支出がありません")).toBeInTheDocument();
+    expect(await screen.findByText(i18n.t("expense.noExpenses"))).toBeInTheDocument();
   });
 
   it("renders an expense with its resolved category and payer names", async () => {
@@ -76,14 +85,17 @@ describe("ExpenseList", () => {
       },
     ]);
     listCategoriesMock.mockResolvedValue([
-      { id: "cat-1", family_id: null, name: "groceries" },
+       { id: "cat-1", family_id: null, name: "groceries", icon: "basket" },
     ]);
 
     renderAt();
 
-    expect(await screen.findByText(/1500/)).toBeInTheDocument();
+    const amountNode = await screen.findByText(/1,500/);
+    expect(amountNode).toBeInTheDocument();
+    const expenseRow = amountNode.closest("li");
+    expect(expenseRow).not.toBeNull();
     expect(await screen.findByText(/食料品/)).toBeInTheDocument();
-    expect(await screen.findByText(/Alice/)).toBeInTheDocument();
+    expect(expenseRow).toHaveTextContent("Alice");
   });
 });
 
@@ -93,10 +105,17 @@ describe("ExpenseList permission gating", () => {
     listCategoriesMock.mockReset();
     vi.mocked(getFamilyDetail).mockReset();
     vi.mocked(useAuth).mockReset();
-    listCategoriesMock.mockResolvedValue([{ id: "cat-1", family_id: null, name: "groceries" }]);
+    listCategoriesMock.mockResolvedValue([
+      { id: "cat-1", family_id: null, name: "groceries", icon: "basket" },
+    ]);
     vi.mocked(getFamilyDetail).mockResolvedValue({
       id: "fam-1",
       name: "Test Family",
+      family_type: "shared",
+      currency_code: "jpy",
+      monthly_income_enabled: false,
+      monthly_income: null,
+      savings_goal_amount: null,
       members: [
         { user_id: "u1", email: "a@example.com", display_name: "Alice", role: "owner" },
         { user_id: "u2", email: "b@example.com", display_name: "Bob", role: "member" },
@@ -124,9 +143,10 @@ describe("ExpenseList permission gating", () => {
 
     renderAt();
 
-    await screen.findByText(/1000/);
-    expect(screen.queryByText("編集")).not.toBeInTheDocument();
-    expect(screen.queryByText("削除")).not.toBeInTheDocument();
+    await screen.findByText(/1,000/);
+    expect(screen.getByText(i18n.t("expense.viewExpense"))).toBeInTheDocument();
+    expect(screen.queryByText(i18n.t("expense.editExpense"))).not.toBeInTheDocument();
+    expect(screen.queryByText(i18n.t("expense.deleteExpense"))).not.toBeInTheDocument();
   });
 
   it("shows edit/delete for the expense's own creator", async () => {
@@ -149,9 +169,9 @@ describe("ExpenseList permission gating", () => {
 
     renderAt();
 
-    await screen.findByText(/1000/);
-    expect(screen.getByText("編集")).toBeInTheDocument();
-    expect(screen.getByText("削除")).toBeInTheDocument();
+    await screen.findByText(/1,000/);
+    expect(screen.getByText(i18n.t("expense.editExpense"))).toBeInTheDocument();
+    expect(screen.getByText(i18n.t("expense.deleteExpense"))).toBeInTheDocument();
   });
 
   it("shows edit/delete for an OWNER viewing someone else's expense", async () => {
@@ -174,8 +194,8 @@ describe("ExpenseList permission gating", () => {
 
     renderAt();
 
-    await screen.findByText(/1000/);
-    expect(screen.getByText("編集")).toBeInTheDocument();
-    expect(screen.getByText("削除")).toBeInTheDocument();
+    await screen.findByText(/1,000/);
+    expect(screen.getByText(i18n.t("expense.editExpense"))).toBeInTheDocument();
+    expect(screen.getByText(i18n.t("expense.deleteExpense"))).toBeInTheDocument();
   });
 });

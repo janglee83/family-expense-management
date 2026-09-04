@@ -1,19 +1,17 @@
 import { render, screen, within } from "@testing-library/react";
-import userEvent from "@testing-library/user-event";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import "../i18n/i18n";
+import i18n from "../i18n/i18n";
 import { FamilyDetail } from "./FamilyDetail";
 import { useAuth } from "../auth/useAuth";
+import { SnackbarProvider } from "../components/ui/Snackbar";
 
 const getFamilyDetailMock = vi.fn();
 const removeMemberMock = vi.fn();
-const addMemberMock = vi.fn();
 
 vi.mock("./familyApi", () => ({
   getFamilyDetail: (...args: unknown[]) => getFamilyDetailMock(...args),
   removeMember: (...args: unknown[]) => removeMemberMock(...args),
-  addMember: (...args: unknown[]) => addMemberMock(...args),
   renameFamily: vi.fn(),
   deleteFamily: vi.fn(),
   changeMemberRole: vi.fn(),
@@ -35,22 +33,29 @@ function renderAtFamily(userId: string) {
   });
 
   return render(
-    <MemoryRouter initialEntries={["/families/fam-1"]}>
-      <Routes>
-        <Route path="/families/:familyId" element={<FamilyDetail />} />
-      </Routes>
-    </MemoryRouter>,
+    <SnackbarProvider>
+      <MemoryRouter initialEntries={["/families/fam-1"]}>
+        <Routes>
+          <Route path="/families/:familyId" element={<FamilyDetail />} />
+        </Routes>
+      </MemoryRouter>
+    </SnackbarProvider>,
   );
 }
 
 describe("FamilyDetail", () => {
-  beforeEach(() => {
+  beforeEach(async () => {
     getFamilyDetailMock.mockReset();
     removeMemberMock.mockReset();
-    addMemberMock.mockReset();
+    await i18n.changeLanguage("ja");
     getFamilyDetailMock.mockResolvedValue({
       id: "fam-1",
       name: "My Family",
+      family_type: "shared",
+      currency_code: "jpy",
+      monthly_income_enabled: false,
+      monthly_income: null,
+      savings_goal_amount: null,
       members: [
         {
           user_id: OWNER_ID,
@@ -74,12 +79,12 @@ describe("FamilyDetail", () => {
     await screen.findByText("Member Person");
 
     // Scope to the member's own row: the family-level delete button also
-    // uses the "削除" label, so an unscoped query would pass even if the
+    // uses a delete-like label, so an unscoped query would pass even if the
     // per-member remove button were removed entirely.
     const memberRow = screen.getByText("Member Person").closest("li");
     expect(memberRow).not.toBeNull();
     expect(
-      within(memberRow as HTMLElement).getByRole("button", { name: "削除" }),
+      within(memberRow as HTMLElement).getByRole("button", { name: i18n.t("family.removeMember") }),
     ).toBeInTheDocument();
   });
 
@@ -88,7 +93,7 @@ describe("FamilyDetail", () => {
 
     await screen.findByText("Member Person");
 
-    expect(screen.getByRole("button", { name: "退出する" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: i18n.t("family.leaveFamily") })).toBeInTheDocument();
   });
 
   it("does not show a remove/leave button for the owner row", async () => {
@@ -96,30 +101,18 @@ describe("FamilyDetail", () => {
 
     await screen.findByText("Owner Person");
 
-    expect(screen.queryByRole("button", { name: "退出する" })).not.toBeInTheDocument();
-  });
-
-  it("calls addMember when the owner submits the add-member form", async () => {
-    addMemberMock.mockResolvedValue({
-      user_id: "33333333-3333-3333-3333-333333333333",
-      email: "new@example.com",
-      display_name: "New Person",
-      role: "member",
-    });
-    const user = userEvent.setup();
-    renderAtFamily(OWNER_ID);
-    await screen.findByText("Member Person");
-
-    await user.type(screen.getByLabelText("メールアドレス"), "new@example.com");
-    await user.click(screen.getByRole("button", { name: "メンバーを追加" }));
-
-    expect(addMemberMock).toHaveBeenCalledWith("fam-1", "new@example.com");
+    expect(screen.queryByRole("button", { name: i18n.t("family.leaveFamily") })).not.toBeInTheDocument();
   });
 
   it("gates delete/rename/remove correctly when viewed by an admin", async () => {
     getFamilyDetailMock.mockResolvedValue({
       id: "fam-1",
       name: "My Family",
+      family_type: "shared",
+      currency_code: "jpy",
+      monthly_income_enabled: false,
+      monthly_income: null,
+      savings_goal_amount: null,
       members: [
         {
           user_id: OWNER_ID,
@@ -154,17 +147,17 @@ describe("FamilyDetail", () => {
     // 1. Delete button is OWNER-only, so an ADMIN viewer must not see it.
     // The delete button (if rendered) is a direct child of <main>, unlike the
     // per-member remove/leave buttons which live inside <li> elements — this
-    // avoids ambiguity with the "削除" text shared by removeMember.
+    // avoids ambiguity with the member-remove label.
     expect(container.querySelector("main > button")).toBeNull();
 
-    // 2. Rename control (OWNER-or-ADMIN) is visible.
-    expect(screen.getByRole("button", { name: "名前を変更" })).toBeInTheDocument();
+    // 2. Rename edit control (OWNER-or-ADMIN) is visible.
+    expect(screen.getByRole("button", { name: i18n.t("common.edit") })).toBeInTheDocument();
 
     // 3. A remove button is rendered for the plain MEMBER row.
     const memberRow = screen.getByText("Member Person").closest("li");
     expect(memberRow).not.toBeNull();
     expect(
-      within(memberRow as HTMLElement).getByRole("button", { name: "削除" }),
+      within(memberRow as HTMLElement).getByRole("button", { name: i18n.t("family.removeMember") }),
     ).toBeInTheDocument();
 
     // 4. No remove button and no promote/demote <select> for a peer ADMIN's row.

@@ -287,6 +287,57 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/notifications/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Notifications */
+        get: operations["list_notifications_api_v1_notifications__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/notifications/read-all": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Mark All Notifications Read */
+        post: operations["mark_all_notifications_read_api_v1_notifications_read_all_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/notifications/{notification_id}/read": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Mark Notification Read */
+        patch: operations["mark_notification_read_api_v1_notifications__notification_id__read_patch"];
+        trace?: never;
+    };
     "/api/v1/ping": {
         parameters: {
             query?: never;
@@ -342,6 +393,8 @@ export interface components {
         CategoryResponse: {
             /** Family Id */
             family_id: string | null;
+            /** Icon */
+            icon: string | null;
             /**
              * Id
              * Format: uuid
@@ -360,6 +413,8 @@ export interface components {
         };
         /** CreateCategoryRequest */
         CreateCategoryRequest: {
+            /** Icon */
+            icon?: string | null;
             /** Name */
             name: string;
         };
@@ -389,9 +444,29 @@ export interface components {
         };
         /** CreateFamilyRequest */
         CreateFamilyRequest: {
+            /** @default jpy */
+            currency_code: components["schemas"]["CurrencyCode"];
+            /** @default shared */
+            family_type: components["schemas"]["FamilyType"];
+            /** Member Emails */
+            member_emails?: string[];
+            /** Monthly Income */
+            monthly_income?: number | null;
+            /**
+             * Monthly Income Enabled
+             * @default false
+             */
+            monthly_income_enabled: boolean;
             /** Name */
             name: string;
+            /** Savings Goal Amount */
+            savings_goal_amount?: number | null;
         };
+        /**
+         * CurrencyCode
+         * @enum {string}
+         */
+        CurrencyCode: "vnd" | "jpy";
         /** ExpenseResponse */
         ExpenseResponse: {
             /** Amount */
@@ -433,6 +508,8 @@ export interface components {
         };
         /** FamilyDetailResponse */
         FamilyDetailResponse: {
+            currency_code: components["schemas"]["CurrencyCode"];
+            family_type: components["schemas"]["FamilyType"];
             /**
              * Id
              * Format: uuid
@@ -440,8 +517,14 @@ export interface components {
             id: string;
             /** Members */
             members: components["schemas"]["FamilyMemberResponse"][];
+            /** Monthly Income */
+            monthly_income: number | null;
+            /** Monthly Income Enabled */
+            monthly_income_enabled: boolean;
             /** Name */
             name: string;
+            /** Savings Goal Amount */
+            savings_goal_amount: number | null;
         };
         /** FamilyMemberResponse */
         FamilyMemberResponse: {
@@ -449,8 +532,7 @@ export interface components {
             display_name: string;
             /** Email */
             email: string;
-            /** Role */
-            role: string;
+            role: components["schemas"]["FamilyRole"];
             /**
              * User Id
              * Format: uuid
@@ -459,16 +541,33 @@ export interface components {
         };
         /** FamilyResponse */
         FamilyResponse: {
+            currency_code: components["schemas"]["CurrencyCode"];
+            family_type: components["schemas"]["FamilyType"];
             /**
              * Id
              * Format: uuid
              */
             id: string;
+            /** Monthly Income */
+            monthly_income: number | null;
+            /** Monthly Income Enabled */
+            monthly_income_enabled: boolean;
             /** Name */
             name: string;
-            /** Role */
-            role: string;
+            role: components["schemas"]["FamilyRole"];
+            /** Savings Goal Amount */
+            savings_goal_amount: number | null;
         };
+        /**
+         * FamilyRole
+         * @enum {string}
+         */
+        FamilyRole: "owner" | "admin" | "member";
+        /**
+         * FamilyType
+         * @enum {string}
+         */
+        FamilyType: "solo" | "shared";
         /** HTTPValidationError */
         HTTPValidationError: {
             /** Detail */
@@ -483,6 +582,32 @@ export interface components {
             email: string;
             /** Password */
             password: string;
+        };
+        /** NotificationResponse */
+        NotificationResponse: {
+            /** Actor User Id */
+            actor_user_id: string | null;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Family Id */
+            family_id: string | null;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Message */
+            message: string;
+            /** Read At */
+            read_at: string | null;
+            /**
+             * User Id
+             * Format: uuid
+             */
+            user_id: string;
         };
         /** PingResponse */
         PingResponse: {
@@ -1423,6 +1548,87 @@ export interface operations {
                 };
                 content: {
                     "application/json": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_notifications_api_v1_notifications__get: {
+        parameters: {
+            query?: {
+                limit?: number;
+                unread_only?: boolean;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["NotificationResponse"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    mark_all_notifications_read_api_v1_notifications_read_all_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    mark_notification_read_api_v1_notifications__notification_id__read_patch: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                notification_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["NotificationResponse"];
                 };
             };
             /** @description Validation Error */

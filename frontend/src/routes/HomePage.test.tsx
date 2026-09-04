@@ -5,20 +5,34 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import i18n from "../i18n/i18n";
 import { HomePage } from "./HomePage";
 import { useAuth } from "../auth/useAuth";
+import { SnackbarProvider } from "../components/ui/Snackbar";
+import { listMyFamilies } from "../families/familyApi";
+import { listCategories, listExpenses } from "../expenses/expenseApi";
 
-const getMock = vi.fn();
-
-vi.mock("../api/client", () => ({
-  apiClient: { GET: (...args: unknown[]) => getMock(...args) },
+vi.mock("../families/familyApi", () => ({
+  listMyFamilies: vi.fn(),
 }));
+vi.mock("../expenses/expenseApi", async () => {
+  const actual = await vi.importActual<typeof import("../expenses/expenseApi")>("../expenses/expenseApi");
+  return {
+    ...actual,
+    listExpenses: vi.fn(),
+    listCategories: vi.fn(),
+  };
+});
+
 vi.mock("../auth/useAuth");
 
 describe("HomePage", () => {
   const logoutMock = vi.fn();
 
   beforeEach(async () => {
-    getMock.mockReset();
     logoutMock.mockReset();
+    vi.mocked(listMyFamilies).mockReset();
+    vi.mocked(listExpenses).mockReset();
+    vi.mocked(listCategories).mockReset();
+    vi.mocked(listExpenses).mockResolvedValue([]);
+    vi.mocked(listCategories).mockResolvedValue([]);
     // i18next is a global singleton; reset the language before each test so
     // the language switch in one test doesn't leak into the next.
     await i18n.changeLanguage("ja");
@@ -35,37 +49,59 @@ describe("HomePage", () => {
     });
   });
 
-  it("renders the title in the default (Japanese) language", async () => {
-    getMock.mockResolvedValue({ data: { status: "ok", message: "pong" }, error: undefined });
-    render(<HomePage />, { wrapper: MemoryRouter });
+  function renderPage() {
+    return render(
+      <SnackbarProvider>
+        <MemoryRouter>
+          <HomePage />
+        </MemoryRouter>
+      </SnackbarProvider>,
+    );
+  }
 
-    expect(screen.getByText("家計簿")).toBeInTheDocument();
-    expect(await screen.findByText("サーバーに接続しました")).toBeInTheDocument();
+  it("renders dashboard heading and empty-family state in Japanese by default", async () => {
+    vi.mocked(listMyFamilies).mockResolvedValue([]);
+    renderPage();
+
+    expect(await screen.findByRole("heading", { name: i18n.t("dashboard.title") })).toBeInTheDocument();
+    expect(await screen.findByText(i18n.t("family.noFamilies"))).toBeInTheDocument();
   });
 
   it("switches to Vietnamese when selected", async () => {
-    getMock.mockResolvedValue({ data: { status: "ok", message: "pong" }, error: undefined });
-    render(<HomePage />, { wrapper: MemoryRouter });
+    vi.mocked(listMyFamilies).mockResolvedValue([
+      {
+        id: "fam-1",
+        name: "My Family",
+        role: "owner",
+        family_type: "shared",
+        currency_code: "jpy",
+        monthly_income_enabled: false,
+        monthly_income: null,
+        savings_goal_amount: null,
+      },
+    ]);
+    renderPage();
     const user = userEvent.setup();
 
-    await user.selectOptions(screen.getByRole("combobox"), "vi");
+    await user.click(screen.getByRole("button", { name: "言語" }));
+    await user.click(screen.getByRole("menuitemradio", { name: "Tiếng Việt" }));
 
-    expect(await screen.findByText("Quản lý chi tiêu gia đình")).toBeInTheDocument();
+    expect(await screen.findByRole("heading", { name: i18n.t("dashboard.title") })).toBeInTheDocument();
   });
 
-  it("shows a failure message when the ping call errors", async () => {
-    getMock.mockResolvedValue({ data: undefined, error: { detail: "boom" } });
-    render(<HomePage />, { wrapper: MemoryRouter });
+  it("shows a failure message when loading families fails", async () => {
+    vi.mocked(listMyFamilies).mockRejectedValue(new Error("boom"));
+    renderPage();
 
-    expect(await screen.findByText("サーバーに接続できませんでした")).toBeInTheDocument();
+    expect(await screen.findByRole("alert")).toHaveTextContent(i18n.t("family.actionFailed"));
   });
 
   it("calls logout when the logout button is clicked", async () => {
-    getMock.mockResolvedValue({ data: { status: "ok", message: "pong" }, error: undefined });
-    render(<HomePage />, { wrapper: MemoryRouter });
+    vi.mocked(listMyFamilies).mockResolvedValue([]);
+    renderPage();
     const user = userEvent.setup();
 
-    await user.click(await screen.findByRole("button", { name: "ログアウト" }));
+    await user.click(await screen.findByRole("button", { name: i18n.t("auth.logout") }));
 
     expect(logoutMock).toHaveBeenCalled();
   });

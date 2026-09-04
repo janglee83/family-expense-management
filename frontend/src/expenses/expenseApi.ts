@@ -1,4 +1,5 @@
 import { apiClient } from "../api/client";
+import { buildApiError } from "../api/errors";
 import type { components } from "../api/schema.gen";
 
 export type Category = components["schemas"]["CategoryResponse"];
@@ -21,22 +22,36 @@ export function resolveCategoryDisplayName(
 }
 
 export async function listCategories(familyId: string): Promise<Category[]> {
-  const { data, error } = await apiClient.GET("/api/v1/families/{family_id}/categories/", {
+  const { data, error, response } = await apiClient.GET("/api/v1/families/{family_id}/categories/", {
     params: { path: { family_id: familyId } },
   });
   if (error || !data) {
-    throw new Error("list_categories_failed");
+    throw buildApiError({
+      status: response.status,
+      payload: error,
+      fallbackCode: "list_categories_failed",
+      fallbackMessage: "Failed to list categories",
+    });
   }
   return data;
 }
 
-export async function createCategory(familyId: string, name: string): Promise<Category> {
-  const { data, error } = await apiClient.POST("/api/v1/families/{family_id}/categories/", {
+export async function createCategory(
+  familyId: string,
+  name: string,
+  icon?: string,
+): Promise<Category> {
+  const { data, error, response } = await apiClient.POST("/api/v1/families/{family_id}/categories/", {
     params: { path: { family_id: familyId } },
-    body: { name },
+    body: { name, icon: icon ?? null },
   });
   if (error || !data) {
-    throw new Error("create_category_failed");
+    throw buildApiError({
+      status: response.status,
+      payload: error,
+      fallbackCode: "create_category_failed",
+      fallbackMessage: "Failed to create category",
+    });
   }
   return data;
 }
@@ -46,7 +61,7 @@ export async function renameCategory(
   categoryId: string,
   name: string,
 ): Promise<Category> {
-  const { data, error } = await apiClient.PATCH(
+  const { data, error, response } = await apiClient.PATCH(
     "/api/v1/families/{family_id}/categories/{category_id}",
     {
       params: { path: { family_id: familyId, category_id: categoryId } },
@@ -54,7 +69,12 @@ export async function renameCategory(
     },
   );
   if (error || !data) {
-    throw new Error("rename_category_failed");
+    throw buildApiError({
+      status: response.status,
+      payload: error,
+      fallbackCode: "rename_category_failed",
+      fallbackMessage: "Failed to rename category",
+    });
   }
   return data;
 }
@@ -65,19 +85,29 @@ export async function deleteCategory(familyId: string, categoryId: string): Prom
     { params: { path: { family_id: familyId, category_id: categoryId } } },
   );
   if (error) {
-    if (response.status === 409) {
-      throw new Error("category_has_expenses");
-    }
-    throw new Error("delete_category_failed");
+    throw buildApiError({
+      status: response.status,
+      payload: error,
+      fallbackCode: "delete_category_failed",
+      fallbackMessage: "Failed to delete category",
+      codeMap: {
+        CATEGORY_HAS_EXPENSES: "category_has_expenses",
+      },
+    });
   }
 }
 
 export async function listExpenses(familyId: string): Promise<Expense[]> {
-  const { data, error } = await apiClient.GET("/api/v1/families/{family_id}/expenses/", {
+  const { data, error, response } = await apiClient.GET("/api/v1/families/{family_id}/expenses/", {
     params: { path: { family_id: familyId } },
   });
   if (error || !data) {
-    throw new Error("list_expenses_failed");
+    throw buildApiError({
+      status: response.status,
+      payload: error,
+      fallbackCode: "list_expenses_failed",
+      fallbackMessage: "Failed to list expenses",
+    });
   }
   return data;
 }
@@ -91,10 +121,16 @@ export async function createExpense(familyId: string, input: ExpenseInput): Prom
     },
   );
   if (error || !data) {
-    if (response.status === 422) {
-      throw new Error("invalid_payer_or_category");
-    }
-    throw new Error("create_expense_failed");
+    throw buildApiError({
+      status: response.status,
+      payload: error,
+      fallbackCode: "create_expense_failed",
+      fallbackMessage: "Failed to create expense",
+      codeMap: {
+        EXPENSE_PAYER_NOT_IN_FAMILY: "invalid_payer_or_category",
+        EXPENSE_CATEGORY_INVALID_FOR_FAMILY: "invalid_payer_or_category",
+      },
+    });
   }
   return data;
 }
@@ -112,22 +148,34 @@ export async function updateExpense(
     },
   );
   if (error || !data) {
-    if (response.status === 422) {
-      throw new Error("invalid_payer_or_category");
-    }
-    if (response.status === 403) {
-      throw new Error("not_permitted");
-    }
-    throw new Error("update_expense_failed");
+    throw buildApiError({
+      status: response.status,
+      payload: error,
+      fallbackCode: "update_expense_failed",
+      fallbackMessage: "Failed to update expense",
+      codeMap: {
+        EXPENSE_PAYER_NOT_IN_FAMILY: "invalid_payer_or_category",
+        EXPENSE_CATEGORY_INVALID_FOR_FAMILY: "invalid_payer_or_category",
+        PERMISSION_DENIED: "not_permitted",
+      },
+    });
   }
   return data;
 }
 
 export async function deleteExpense(familyId: string, expenseId: string): Promise<void> {
-  const { error } = await apiClient.DELETE("/api/v1/families/{family_id}/expenses/{expense_id}", {
-    params: { path: { family_id: familyId, expense_id: expenseId } },
-  });
+  const { error, response } = await apiClient.DELETE(
+    "/api/v1/families/{family_id}/expenses/{expense_id}",
+    {
+      params: { path: { family_id: familyId, expense_id: expenseId } },
+    },
+  );
   if (error) {
-    throw new Error("delete_expense_failed");
+    throw buildApiError({
+      status: response.status,
+      payload: error,
+      fallbackCode: "delete_expense_failed",
+      fallbackMessage: "Failed to delete expense",
+    });
   }
 }

@@ -12,6 +12,8 @@ venv/
 node_modules/
 dist/
 .vite/
+.pnpm-store/
+frontend/.pnpm-store/*
 
 # Env
 .env
@@ -28,5 +30,12 @@ dist/
 # Logs
 *.log
 
+# Playwright
+frontend/playwright-report/
+frontend/test-results/
+
 # Worktrees
 .worktrees/
+
+# Local agent metadata
+.serena/

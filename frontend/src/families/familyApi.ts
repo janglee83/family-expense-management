@@ -1,24 +1,51 @@
 import { apiClient } from "../api/client";
+import { buildApiError } from "../api/errors";
 import type { components } from "../api/schema.gen";
 
 export type Family = components["schemas"]["FamilyResponse"];
 export type FamilyDetail = components["schemas"]["FamilyDetailResponse"];
 export type FamilyMemberInfo = components["schemas"]["FamilyMemberResponse"];
+export type FamilyType = components["schemas"]["FamilyType"];
+export type CurrencyCode = components["schemas"]["CurrencyCode"];
+
+export interface CreateFamilyInput {
+  name: string;
+  family_type: FamilyType;
+  currency_code: CurrencyCode;
+  monthly_income_enabled: boolean;
+  member_emails: string[];
+  monthly_income?: number | null;
+  savings_goal_amount?: number | null;
+}
 
 export async function listMyFamilies(): Promise<Family[]> {
   const { data, error } = await apiClient.GET("/api/v1/families/");
   if (error || !data) {
-    throw new Error("list_families_failed");
+    throw buildApiError({
+      status: 500,
+      payload: error,
+      fallbackCode: "list_families_failed",
+      fallbackMessage: "Failed to list families",
+    });
   }
   return data;
 }
 
-export async function createFamily(name: string): Promise<Family> {
-  const { data, error } = await apiClient.POST("/api/v1/families/", {
-    body: { name },
+export async function createFamily(input: CreateFamilyInput): Promise<Family> {
+  const { data, error, response } = await apiClient.POST("/api/v1/families/", {
+    body: input,
   });
   if (error || !data) {
-    throw new Error("create_family_failed");
+    throw buildApiError({
+      status: response.status,
+      payload: error,
+      fallbackCode: "create_family_failed",
+      fallbackMessage: "Failed to create family",
+      codeMap: {
+        USER_NOT_FOUND_BY_EMAIL: "member_not_found",
+        REQUEST_VALIDATION_ERROR: "validation_failed",
+      },
+    });
   }
   return data;
 }
@@ -28,31 +55,46 @@ export async function getFamilyDetail(familyId: string): Promise<FamilyDetail> {
     params: { path: { family_id: familyId } },
   });
   if (error || !data) {
-    if (response.status === 403) {
-      throw new Error("not_a_member");
-    }
-    throw new Error("family_not_found");
+    throw buildApiError({
+      status: response.status,
+      payload: error,
+      fallbackCode: "family_not_found",
+      fallbackMessage: "Failed to fetch family detail",
+      codeMap: {
+        FAMILY_MEMBERSHIP_REQUIRED: "not_a_member",
+      },
+    });
   }
   return data;
 }
 
 export async function renameFamily(familyId: string, name: string): Promise<Family> {
-  const { data, error } = await apiClient.PATCH("/api/v1/families/{family_id}", {
+  const { data, error, response } = await apiClient.PATCH("/api/v1/families/{family_id}", {
     params: { path: { family_id: familyId } },
     body: { name },
   });
   if (error || !data) {
-    throw new Error("rename_family_failed");
+    throw buildApiError({
+      status: response.status,
+      payload: error,
+      fallbackCode: "rename_family_failed",
+      fallbackMessage: "Failed to rename family",
+    });
   }
   return data;
 }
 
 export async function deleteFamily(familyId: string): Promise<void> {
-  const { error } = await apiClient.DELETE("/api/v1/families/{family_id}", {
+  const { error, response } = await apiClient.DELETE("/api/v1/families/{family_id}", {
     params: { path: { family_id: familyId } },
   });
   if (error) {
-    throw new Error("delete_family_failed");
+    throw buildApiError({
+      status: response.status,
+      payload: error,
+      fallbackCode: "delete_family_failed",
+      fallbackMessage: "Failed to delete family",
+    });
   }
 }
 
@@ -65,23 +107,31 @@ export async function addMember(familyId: string, email: string): Promise<Family
     },
   );
   if (error || !data) {
-    if (response.status === 404) {
-      throw new Error("member_not_found");
-    }
-    if (response.status === 409) {
-      throw new Error("member_already_exists");
-    }
-    throw new Error("add_member_failed");
+    throw buildApiError({
+      status: response.status,
+      payload: error,
+      fallbackCode: "add_member_failed",
+      fallbackMessage: "Failed to add family member",
+      codeMap: {
+        USER_NOT_FOUND_BY_EMAIL: "member_not_found",
+        FAMILY_MEMBER_ALREADY_EXISTS: "member_already_exists",
+      },
+    });
   }
   return data;
 }
 
 export async function removeMember(familyId: string, userId: string): Promise<void> {
-  const { error } = await apiClient.DELETE("/api/v1/families/{family_id}/members/{user_id}", {
+  const { error, response } = await apiClient.DELETE("/api/v1/families/{family_id}/members/{user_id}", {
     params: { path: { family_id: familyId, user_id: userId } },
   });
   if (error) {
-    throw new Error("remove_member_failed");
+    throw buildApiError({
+      status: response.status,
+      payload: error,
+      fallbackCode: "remove_member_failed",
+      fallbackMessage: "Failed to remove family member",
+    });
   }
 }
 
@@ -90,7 +140,7 @@ export async function changeMemberRole(
   userId: string,
   role: "admin" | "member",
 ): Promise<FamilyMemberInfo> {
-  const { data, error } = await apiClient.PATCH(
+  const { data, error, response } = await apiClient.PATCH(
     "/api/v1/families/{family_id}/members/{user_id}",
     {
       params: { path: { family_id: familyId, user_id: userId } },
@@ -98,7 +148,12 @@ export async function changeMemberRole(
     },
   );
   if (error || !data) {
-    throw new Error("change_role_failed");
+    throw buildApiError({
+      status: response.status,
+      payload: error,
+      fallbackCode: "change_role_failed",
+      fallbackMessage: "Failed to change member role",
+    });
   }
   return data;
 }

@@ -3,6 +3,7 @@ import { ProtectedRoute } from "./auth/ProtectedRoute";
 import { HomePage } from "./routes/HomePage";
 import { LoginPage } from "./routes/LoginPage";
 import { RegisterPage } from "./routes/RegisterPage";
+import { FamilyCreatePage } from "./routes/FamilyCreatePage";
 import { FamilyList } from "./families/FamilyList";
 import { FamilyDetail } from "./families/FamilyDetail";
 import { ExpenseList } from "./expenses/ExpenseList";
@@ -26,6 +27,14 @@ export function AppRoutes() {
         element={
           <ProtectedRoute>
             <FamilyList />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/families/new"
+        element={
+          <ProtectedRoute>
+            <FamilyCreatePage />
           </ProtectedRoute>
         }
       />

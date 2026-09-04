@@ -43,6 +43,17 @@
             ],
             "title": "Family Id"
           },
+          "icon": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Icon"
+          },
           "id": {
             "format": "uuid",
             "title": "Id",
@@ -56,7 +67,8 @@
         "required": [
           "id",
           "family_id",
-          "name"
+          "name",
+          "icon"
         ],
         "title": "CategoryResponse",
         "type": "object"
@@ -80,6 +92,19 @@
       },
       "CreateCategoryRequest": {
         "properties": {
+          "icon": {
+            "anyOf": [
+              {
+                "maxLength": 32,
+                "minLength": 1,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Icon"
+          },
           "name": {
             "maxLength": 100,
             "minLength": 1,
@@ -145,11 +170,59 @@
       },
       "CreateFamilyRequest": {
         "properties": {
+          "currency_code": {
+            "$ref": "#/components/schemas/CurrencyCode",
+            "default": "jpy"
+          },
+          "family_type": {
+            "$ref": "#/components/schemas/FamilyType",
+            "default": "shared"
+          },
+          "member_emails": {
+            "items": {
+              "format": "email",
+              "type": "string"
+            },
+            "maxItems": 20,
+            "title": "Member Emails",
+            "type": "array"
+          },
+          "monthly_income": {
+            "anyOf": [
+              {
+                "exclusiveMinimum": 0.0,
+                "maximum": 2147483647.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Monthly Income"
+          },
+          "monthly_income_enabled": {
+            "default": false,
+            "title": "Monthly Income Enabled",
+            "type": "boolean"
+          },
           "name": {
             "maxLength": 200,
             "minLength": 1,
             "title": "Name",
             "type": "string"
+          },
+          "savings_goal_amount": {
+            "anyOf": [
+              {
+                "exclusiveMinimum": 0.0,
+                "maximum": 2147483647.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Savings Goal Amount"
           }
         },
         "required": [
@@ -157,6 +230,14 @@
         ],
         "title": "CreateFamilyRequest",
         "type": "object"
+      },
+      "CurrencyCode": {
+        "enum": [
+          "vnd",
+          "jpy"
+        ],
+        "title": "CurrencyCode",
+        "type": "string"
       },
       "ExpenseResponse": {
         "properties": {
@@ -226,6 +307,12 @@
       },
       "FamilyDetailResponse": {
         "properties": {
+          "currency_code": {
+            "$ref": "#/components/schemas/CurrencyCode"
+          },
+          "family_type": {
+            "$ref": "#/components/schemas/FamilyType"
+          },
           "id": {
             "format": "uuid",
             "title": "Id",
@@ -238,14 +325,45 @@
             "title": "Members",
             "type": "array"
           },
+          "monthly_income": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Monthly Income"
+          },
+          "monthly_income_enabled": {
+            "title": "Monthly Income Enabled",
+            "type": "boolean"
+          },
           "name": {
             "title": "Name",
             "type": "string"
+          },
+          "savings_goal_amount": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Savings Goal Amount"
           }
         },
         "required": [
           "id",
           "name",
+          "family_type",
+          "currency_code",
+          "monthly_income_enabled",
+          "monthly_income",
+          "savings_goal_amount",
           "members"
         ],
         "title": "FamilyDetailResponse",
@@ -262,8 +380,7 @@
             "type": "string"
           },
           "role": {
-            "title": "Role",
-            "type": "string"
+            "$ref": "#/components/schemas/FamilyRole"
           },
           "user_id": {
             "format": "uuid",
@@ -282,27 +399,80 @@
       },
       "FamilyResponse": {
         "properties": {
+          "currency_code": {
+            "$ref": "#/components/schemas/CurrencyCode"
+          },
+          "family_type": {
+            "$ref": "#/components/schemas/FamilyType"
+          },
           "id": {
             "format": "uuid",
             "title": "Id",
             "type": "string"
+          },
+          "monthly_income": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Monthly Income"
+          },
+          "monthly_income_enabled": {
+            "title": "Monthly Income Enabled",
+            "type": "boolean"
           },
           "name": {
             "title": "Name",
             "type": "string"
           },
           "role": {
-            "title": "Role",
-            "type": "string"
+            "$ref": "#/components/schemas/FamilyRole"
+          },
+          "savings_goal_amount": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Savings Goal Amount"
           }
         },
         "required": [
           "id",
           "name",
-          "role"
+          "role",
+          "family_type",
+          "currency_code",
+          "monthly_income_enabled",
+          "monthly_income",
+          "savings_goal_amount"
         ],
         "title": "FamilyResponse",
         "type": "object"
+      },
+      "FamilyRole": {
+        "enum": [
+          "owner",
+          "admin",
+          "member"
+        ],
+        "title": "FamilyRole",
+        "type": "string"
+      },
+      "FamilyType": {
+        "enum": [
+          "solo",
+          "shared"
+        ],
+        "title": "FamilyType",
+        "type": "string"
       },
       "HTTPValidationError": {
         "properties": {
@@ -334,6 +504,76 @@
           "password"
         ],
         "title": "LoginRequest",
+        "type": "object"
+      },
+      "NotificationResponse": {
+        "properties": {
+          "actor_user_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Actor User Id"
+          },
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "family_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Family Id"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "message": {
+            "title": "Message",
+            "type": "string"
+          },
+          "read_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Read At"
+          },
+          "user_id": {
+            "format": "uuid",
+            "title": "User Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "user_id",
+          "family_id",
+          "actor_user_id",
+          "message",
+          "read_at",
+          "created_at"
+        ],
+        "title": "NotificationResponse",
         "type": "object"
       },
       "PingResponse": {
@@ -1792,6 +2032,122 @@
         "summary": "Get Receipt Image",
         "tags": [
           "receipts"
+        ]
+      }
+    },
+    "/api/v1/notifications/": {
+      "get": {
+        "operationId": "list_notifications_api_v1_notifications__get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 30,
+              "maximum": 100,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "unread_only",
+            "required": false,
+            "schema": {
+              "default": false,
+              "title": "Unread Only",
+              "type": "boolean"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/NotificationResponse"
+                  },
+                  "title": "Response List Notifications Api V1 Notifications  Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "List Notifications",
+        "tags": [
+          "notifications"
+        ]
+      }
+    },
+    "/api/v1/notifications/read-all": {
+      "post": {
+        "operationId": "mark_all_notifications_read_api_v1_notifications_read_all_post",
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Mark All Notifications Read",
+        "tags": [
+          "notifications"
+        ]
+      }
+    },
+    "/api/v1/notifications/{notification_id}/read": {
+      "patch": {
+        "operationId": "mark_notification_read_api_v1_notifications__notification_id__read_patch",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "notification_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Notification Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NotificationResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Mark Notification Read",
+        "tags": [
+          "notifications"
         ]
       }
     },

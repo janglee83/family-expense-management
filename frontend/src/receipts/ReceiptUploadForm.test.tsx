@@ -1,7 +1,7 @@
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import "../i18n/i18n";
+import i18n from "../i18n/i18n";
 import { ReceiptUploadForm } from "./ReceiptUploadForm";
 import { uploadReceipt } from "./receiptApi";
 
@@ -13,9 +13,10 @@ vi.mock("./receiptApi", async () => {
 describe("ReceiptUploadForm", () => {
   const onUploaded = vi.fn();
 
-  beforeEach(() => {
+  beforeEach(async () => {
     onUploaded.mockReset();
     vi.mocked(uploadReceipt).mockReset();
+    await i18n.changeLanguage("ja");
   });
 
   it("rejects an oversized file client-side without calling the API", async () => {
@@ -25,7 +26,7 @@ describe("ReceiptUploadForm", () => {
       type: "image/jpeg",
     });
 
-    await user.upload(screen.getByLabelText("アップロード"), oversizedFile);
+    await user.upload(screen.getByLabelText(i18n.t("receipt.upload")), oversizedFile);
 
     expect(await screen.findByRole("alert")).toHaveTextContent(
       "ファイルサイズは10MB以下にしてください",
@@ -38,7 +39,7 @@ describe("ReceiptUploadForm", () => {
     render(<ReceiptUploadForm familyId="fam-1" onUploaded={onUploaded} />);
     const pdfFile = new File(["not an image"], "doc.pdf", { type: "application/pdf" });
 
-    await user.upload(screen.getByLabelText("アップロード"), pdfFile);
+    await user.upload(screen.getByLabelText(i18n.t("receipt.upload")), pdfFile);
 
     expect(await screen.findByRole("alert")).toHaveTextContent(
       "JPEG、PNG、HEIC形式のみアップロードできます",
@@ -62,8 +63,8 @@ describe("ReceiptUploadForm", () => {
     render(<ReceiptUploadForm familyId="fam-1" onUploaded={onUploaded} />);
     const validFile = new File(["fake jpeg content"], "receipt.jpg", { type: "image/jpeg" });
 
-    await user.upload(screen.getByLabelText("アップロード"), validFile);
-    await user.click(screen.getByRole("button", { name: "アップロード" }));
+    await user.upload(screen.getByLabelText(i18n.t("receipt.upload")), validFile);
+    await user.click(screen.getByRole("button", { name: i18n.t("receipt.upload") }));
 
     expect(uploadReceipt).toHaveBeenCalledWith("fam-1", validFile);
     expect(onUploaded).toHaveBeenCalled();

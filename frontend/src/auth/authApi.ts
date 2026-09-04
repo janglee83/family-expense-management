@@ -1,4 +1,5 @@
 import { apiClient } from "../api/client";
+import { buildApiError } from "../api/errors";
 import type { components } from "../api/schema.gen";
 
 export type AuthUser = components["schemas"]["UserResponse"];
@@ -12,10 +13,15 @@ export async function registerUser(
     body: { email, password, display_name: displayName },
   });
   if (error || !data) {
-    if (response.status === 409) {
-      throw new Error("email_in_use");
-    }
-    throw new Error("register_failed");
+    throw buildApiError({
+      status: response.status,
+      payload: error,
+      fallbackCode: "register_failed",
+      fallbackMessage: "Register failed",
+      codeMap: {
+        AUTH_EMAIL_ALREADY_REGISTERED: "email_in_use",
+      },
+    });
   }
   return data;
 }
@@ -25,13 +31,16 @@ export async function loginUser(email: string, password: string): Promise<AuthUs
     body: { email, password },
   });
   if (error || !data) {
-    if (response.status === 429) {
-      throw new Error("rate_limited");
-    }
-    if (response.status === 401) {
-      throw new Error("invalid_credentials");
-    }
-    throw new Error("login_failed");
+    throw buildApiError({
+      status: response.status,
+      payload: error,
+      fallbackCode: "login_failed",
+      fallbackMessage: "Login failed",
+      codeMap: {
+        AUTH_LOGIN_RATE_LIMITED: "rate_limited",
+        AUTH_INVALID_CREDENTIALS: "invalid_credentials",
+      },
+    });
   }
   return data;
 }
