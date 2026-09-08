@@ -27,6 +27,10 @@ from app.schemas.split_expenses import (
     SplitExpenseItemResponse,
     SplitExpenseResponse,
 )
+from app.services.finance_engine import (
+    resolve_equal_split_amounts,
+    resolve_percentage_split_amounts,
+)
 
 router = APIRouter()
 
@@ -106,24 +110,9 @@ async def _validate_participants(
         )
 
 
-def _build_equal_amounts(total_amount: int, participant_count: int) -> list[int]:
-    base_amount = total_amount // participant_count
-    remainder = total_amount % participant_count
-    return [base_amount + (1 if index < remainder else 0) for index in range(participant_count)]
-
-
-def _build_percentage_amounts(total_amount: int, percentages: list[int]) -> list[int]:
-    raw_amounts = [(total_amount * percentage) / 100 for percentage in percentages]
-    floored = [int(amount) for amount in raw_amounts]
-    delta = total_amount - sum(floored)
-    for index in range(delta):
-        floored[index % len(floored)] += 1
-    return floored
-
-
 def _resolve_split_amounts(payload: CreateSplitExpenseRequest, total_amount: int) -> list[tuple[uuid.UUID, int, int | None]]:
     if payload.method == SplitMethod.EQUAL:
-        amounts = _build_equal_amounts(total_amount, len(payload.participants))
+        amounts = resolve_equal_split_amounts(total_amount, len(payload.participants))
         return [
             (participant.participant_user_id, amounts[index], None)
             for index, participant in enumerate(payload.participants)
@@ -143,7 +132,7 @@ def _resolve_split_amounts(payload: CreateSplitExpenseRequest, total_amount: int
         ]
 
     percentages = [participant.percentage or 0 for participant in payload.participants]
-    amounts = _build_percentage_amounts(total_amount, percentages)
+    amounts = resolve_percentage_split_amounts(total_amount, percentages)
     if sum(amounts) != total_amount:
         raise_api_error(
             status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,

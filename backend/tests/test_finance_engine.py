@@ -17,6 +17,8 @@ from app.services.finance_engine import (
     calculate_net_worth,
     detect_spending_anomalies,
     forecast_month_end_spending,
+    resolve_equal_split_amounts,
+    resolve_percentage_split_amounts,
 )
 
 
@@ -244,3 +246,15 @@ def test_calculate_daily_spending_limit_raises_for_negative_input() -> None:
             current_variable_spending=0,
             remaining_days=10,
         )
+
+
+def test_resolve_equal_split_amounts_distributes_remainder_to_first_participants() -> None:
+    amounts = resolve_equal_split_amounts(total_amount=100, participant_count=3)
+    assert amounts == [34, 33, 33]
+    assert sum(amounts) == 100
+
+
+def test_resolve_percentage_split_amounts_sums_exactly_to_total() -> None:
+    amounts = resolve_percentage_split_amounts(total_amount=999, percentages=[50, 30, 20])
+    assert sum(amounts) == 999
+    assert amounts[0] >= amounts[1] >= amounts[2]

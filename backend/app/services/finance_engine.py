@@ -324,6 +324,21 @@ def build_subscription_totals(
     )
 
 
+def resolve_equal_split_amounts(total_amount: int, participant_count: int) -> list[int]:
+    base_amount = total_amount // participant_count
+    remainder = total_amount % participant_count
+    return [base_amount + (1 if index < remainder else 0) for index in range(participant_count)]
+
+
+def resolve_percentage_split_amounts(total_amount: int, percentages: list[int]) -> list[int]:
+    raw_amounts = [(total_amount * percentage) / 100 for percentage in percentages]
+    floored = [int(amount) for amount in raw_amounts]
+    delta = total_amount - sum(floored)
+    for index in range(delta):
+        floored[index % len(floored)] += 1
+    return floored
+
+
 def forecast_month_end_spending(
     *,
     current_spending: int,

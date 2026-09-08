@@ -19,6 +19,8 @@ from app.services.finance_engine import (
     calculate_net_worth,
     detect_spending_anomalies,
     forecast_month_end_spending,
+    resolve_equal_split_amounts,
+    resolve_percentage_split_amounts,
 )
 
 __all__ = [
@@ -42,4 +44,6 @@ __all__ = [
     "calculate_net_worth",
     "detect_spending_anomalies",
     "forecast_month_end_spending",
+    "resolve_equal_split_amounts",
+    "resolve_percentage_split_amounts",
 ]
