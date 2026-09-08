@@ -80,7 +80,7 @@ export function SplitExpensesPage() {
     return (
       <PageFrame>
         <main className="space-y-6">
-          <PageHeader title={t("finance.splitExpenses")} description={t("dashboard.description")} />
+          <PageHeader title={t("finance.splitExpenses")} description={t("finance.splitExpensesDescription")} />
           <LoadingState label={t("common.loading")} />
         </main>
       </PageFrame>

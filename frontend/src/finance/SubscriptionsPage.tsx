@@ -84,7 +84,7 @@ export function SubscriptionsPage() {
     return (
       <PageFrame>
         <main className="space-y-6">
-          <PageHeader title={t("finance.subscriptions")} description={t("dashboard.description")} />
+          <PageHeader title={t("finance.subscriptions")} description={t("finance.subscriptionsDescription")} />
           <LoadingState label={t("common.loading")} />
         </main>
       </PageFrame>

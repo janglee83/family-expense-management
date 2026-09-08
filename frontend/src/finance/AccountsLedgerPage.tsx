@@ -100,7 +100,7 @@ export function AccountsLedgerPage() {
     return (
       <PageFrame>
         <main className="space-y-6">
-          <PageHeader title={t("finance.accountsLedger")} description={t("dashboard.description")} />
+          <PageHeader title={t("finance.accountsLedger")} description={t("finance.accountsLedgerDescription")} />
           <LoadingState label={t("common.loading")} />
         </main>
       </PageFrame>

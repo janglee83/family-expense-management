@@ -110,7 +110,7 @@ export function DataOpsPage() {
     return (
       <PageFrame>
         <main className="space-y-6">
-          <PageHeader title={t("finance.dataOps")} description={t("dashboard.description")} />
+          <PageHeader title={t("finance.dataOps")} description={t("finance.dataOpsDescription")} />
           <LoadingState label={t("common.loading")} />
         </main>
       </PageFrame>

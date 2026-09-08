@@ -113,7 +113,7 @@ export function GoalsPage() {
     return (
       <PageFrame>
         <main className="space-y-6">
-          <PageHeader title={t("finance.goals")} description={t("dashboard.description")} />
+          <PageHeader title={t("finance.goals")} description={t("finance.goalsDescription")} />
           <LoadingState label={t("common.loading")} />
         </main>
       </PageFrame>
