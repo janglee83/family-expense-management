@@ -13,6 +13,7 @@ from app.api.v1 import (
     notifications,
     ping,
     receipts,
+    split_expense_groups,
     split_expenses,
     subscriptions,
 )
@@ -50,6 +51,11 @@ api_router.include_router(
     subscriptions.router,
     prefix="/families/{family_id}/subscriptions",
     tags=["subscriptions"],
+)
+api_router.include_router(
+    split_expense_groups.router,
+    prefix="/families/{family_id}/split-expense-groups",
+    tags=["split-expense-groups"],
 )
 api_router.include_router(
     split_expenses.router,
