@@ -8,15 +8,21 @@ export const TEST_FAMILY = {
   id: "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa",
   name: "Playwright Household",
   role: "owner",
+  currency_code: "jpy",
   family_type: "shared",
   monthly_income: null,
+  monthly_income_enabled: false,
+  savings_goal_amount: null,
 };
 
 export const TEST_FAMILY_DETAIL = {
   id: TEST_FAMILY.id,
   name: TEST_FAMILY.name,
+  currency_code: TEST_FAMILY.currency_code,
   family_type: TEST_FAMILY.family_type,
   monthly_income: TEST_FAMILY.monthly_income,
+  monthly_income_enabled: TEST_FAMILY.monthly_income_enabled,
+  savings_goal_amount: TEST_FAMILY.savings_goal_amount,
   members: [
     {
       user_id: TEST_USER.id,

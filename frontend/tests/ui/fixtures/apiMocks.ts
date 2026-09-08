@@ -66,7 +66,13 @@ export async function mockAuthLoggedIn(
 
 export async function mockLoginFailure(page: Page, status: 401 | 429 = 401): Promise<void> {
   await page.route(/\/api\/v1\/auth\/login(?:\?.*)?$/, async (route) => {
-    await fulfillJson(route, status, { detail: "auth_failed" });
+    const code = status === 429 ? "AUTH_LOGIN_RATE_LIMITED" : "AUTH_INVALID_CREDENTIALS";
+    await fulfillJson(route, status, {
+      error: {
+        code,
+        message: "auth_failed",
+      },
+    });
   });
 }
 

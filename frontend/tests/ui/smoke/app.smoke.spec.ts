@@ -18,9 +18,9 @@ test.describe("UI smoke", () => {
     await expect(submitButton).toBeVisible();
     await expect(submitButton).toBeEnabled();
 
-    const languageSelect = page.getByRole("combobox").first();
-    await languageSelect.focus();
-    await expect(languageSelect).toBeFocused();
+    const languageButton = page.getByRole("button", { name: /言語|Ngôn ngữ|Language/i }).first();
+    await languageButton.focus();
+    await expect(languageButton).toBeFocused();
 
     await expectNoHorizontalOverflow(page);
   });

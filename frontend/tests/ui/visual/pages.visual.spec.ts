@@ -73,8 +73,11 @@ test.describe("Visual regression", () => {
         body: JSON.stringify({
           id: TEST_FAMILY.id,
           name: TEST_FAMILY.name,
+          currency_code: "jpy",
           family_type: TEST_FAMILY.family_type,
           monthly_income: TEST_FAMILY.monthly_income,
+          monthly_income_enabled: false,
+          savings_goal_amount: null,
           members: [
             {
               user_id: "11111111-1111-1111-1111-111111111111",

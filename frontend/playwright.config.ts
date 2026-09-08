@@ -1,6 +1,6 @@
 import { defineConfig, devices } from "@playwright/test";
 
-const APP_PORT = 5173;
+const APP_PORT = 4173;
 const BASE_URL = process.env.PLAYWRIGHT_BASE_URL ?? `http://localhost:${APP_PORT}`;
 
 export default defineConfig({
@@ -60,9 +60,9 @@ export default defineConfig({
   webServer: process.env.PLAYWRIGHT_BASE_URL
     ? undefined
     : {
-        command: "pnpm dev",
+        command: `VITE_API_BASE_URL=/api pnpm dev --port ${APP_PORT}`,
         url: BASE_URL,
-        reuseExistingServer: !process.env.CI,
+        reuseExistingServer: false,
         timeout: 120_000,
       },
 });

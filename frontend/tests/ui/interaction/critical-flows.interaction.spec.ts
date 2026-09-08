@@ -64,7 +64,7 @@ test.describe("Critical interaction flows", () => {
 
     const expenseForm = page.locator("form").first();
     await expenseForm.getByLabel(/金額/).fill("0");
-    await expenseForm.getByRole("button", { name: "追加", exact: true }).click();
+    await expenseForm.getByRole("button", { name: "支出を追加", exact: true }).click();
 
     await expect(page.getByRole("alert")).toContainText("金額は1円以上で入力してください");
   });
@@ -75,7 +75,10 @@ test.describe("Critical interaction flows", () => {
 
     await page.goto(`/families/${TEST_FAMILY.id}/receipts`);
 
-    const uploadButton = page.getByRole("button", { name: "アップロード", exact: true });
+    const uploadButton = page.getByRole("button", {
+      name: "レシートをアップロード",
+      exact: true,
+    });
     await expect(uploadButton).toBeDisabled();
 
     await page.getByLabel(/アップロード/).setInputFiles({

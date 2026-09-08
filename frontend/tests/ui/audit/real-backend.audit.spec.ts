@@ -16,8 +16,22 @@ test.describe("Real backend UI audit", () => {
   test.setTimeout(180_000);
 
   test("audits all important routes with real database-backed data", async ({ page, request }, testInfo) => {
+    const baseUrl = (testInfo.project.use.baseURL ?? page.url()) || "http://localhost";
+    const frontendOrigin = new URL(baseUrl).origin;
+
     const backendHealth = await request.get("http://localhost:8000/api/v1/ping");
     expect(backendHealth.ok()).toBeTruthy();
+
+    const corsProbe = await request.get("http://localhost:8000/api/v1/ping", {
+      headers: {
+        Origin: frontendOrigin,
+      },
+    });
+    const allowedOrigin = corsProbe.headers()["access-control-allow-origin"];
+    test.skip(
+      allowedOrigin !== frontendOrigin,
+      `Backend CORS does not allow ${frontendOrigin}. Add this origin to CORS_ORIGINS to run real-backend UI audit.`,
+    );
 
     const consoleErrors: string[] = [];
     const api5xxErrors: string[] = [];
@@ -53,7 +67,7 @@ test.describe("Real backend UI audit", () => {
     await expect(passwordInput).toHaveAttribute("required", "");
 
     await page.keyboard.press("Tab");
-    const languageSwitcher = page.getByRole("combobox", { name: /言語/ });
+    const languageSwitcher = page.getByRole("button", { name: /言語|Ngôn ngữ|Language/ });
     await expect(languageSwitcher).toBeFocused();
     await expectVisibleFocusStyle(languageSwitcher);
 
@@ -71,11 +85,11 @@ test.describe("Real backend UI audit", () => {
     await expectNoHorizontalOverflow(page);
 
     await page.goto("/families/new");
-    await expect(page.getByRole("heading", { level: 1, name: "作成" })).toBeVisible();
+    await expect(page.getByRole("heading", { level: 1, name: "家族を作成" })).toBeVisible();
     await expectNoHorizontalOverflow(page);
 
     await page.getByLabel(/家族名/).fill(familyName);
-    await page.getByRole("button", { name: "作成", exact: true }).click();
+    await page.getByRole("button", { name: "家族を作成", exact: true }).click();
 
     await expect(page).toHaveURL(/\/families\/[0-9a-f-]+$/i);
     const familyUrlMatch = page.url().match(/\/families\/([0-9a-f-]+)$/i);
@@ -90,17 +104,17 @@ test.describe("Real backend UI audit", () => {
     await expect(page.getByRole("heading", { level: 1, name: "支出一覧" })).toBeVisible();
     await expectNoHorizontalOverflow(page);
 
-    await page.getByRole("button", { name: "追加", exact: true }).first().click();
+    await page.getByRole("button", { name: "支出を追加", exact: true }).first().click();
     const expenseForm = page.locator("form").first();
     await expenseForm.getByLabel(/金額/).fill("1234");
-    await expenseForm.getByRole("button", { name: "追加", exact: true }).click();
+    await expenseForm.getByRole("button", { name: "支出を追加", exact: true }).click();
     await expect(page.getByText(/1,234/)).toBeVisible();
 
     await page.goto(`/families/${familyId}/receipts`);
     await expect(page.getByRole("heading", { level: 1, name: "レシート一覧" })).toBeVisible();
     await expectNoHorizontalOverflow(page);
 
-    const uploadButton = page.getByRole("button", { name: "アップロード", exact: true });
+    const uploadButton = page.getByRole("button", { name: "レシートをアップロード", exact: true });
     await expect(uploadButton).toBeDisabled();
 
     const fileInput = page.locator('input[type="file"]').first();

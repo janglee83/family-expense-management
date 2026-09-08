@@ -25,9 +25,9 @@ test.describe("Accessibility and keyboard", () => {
     await page.goto("/login");
 
     await page.keyboard.press("Tab");
-    const languageField = page.locator('label[data-field="language"]');
-    await expect(languageField).toBeVisible();
-    await expectVisibleFocusStyle(languageField);
+    const languageButton = page.getByRole("button", { name: /言語|Ngôn ngữ|Language/i }).first();
+    await expect(languageButton).toBeFocused();
+    await expectVisibleFocusStyle(languageButton);
 
     await page.keyboard.press("Tab");
     const emailInput = page.getByLabel(/メールアドレス/);
@@ -50,8 +50,9 @@ test.describe("Accessibility and keyboard", () => {
 
     await page.goto("/login");
 
-    const languageSelect = page.getByRole("combobox", { name: /言語/ });
-    await languageSelect.selectOption("vi");
+    const languageButton = page.getByRole("button", { name: /言語|Ngôn ngữ|Language/i }).first();
+    await languageButton.click();
+    await page.getByRole("menuitemradio", { name: "Tiếng Việt" }).click();
 
     await expect(page.getByRole("heading", { level: 1, name: "Đăng nhập" })).toBeVisible();
   });
@@ -69,6 +70,11 @@ test.describe("Accessibility and keyboard", () => {
     await mockAuthLoggedIn(page);
 
     await page.goto("/");
+
+    const mobileSidebarToggle = page.getByRole("button", { name: "サイドバー" });
+    if (await mobileSidebarToggle.isVisible()) {
+      await mobileSidebarToggle.click();
+    }
 
     await expect(page.getByRole("navigation", { name: "サイドバー" })).toBeVisible();
     await expect(page.getByRole("link", { name: "ホーム" })).toBeVisible();
