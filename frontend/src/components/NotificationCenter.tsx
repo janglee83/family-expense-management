@@ -1,5 +1,5 @@
 import { DropdownContent, DropdownMenu } from "./ui/primitives";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Button } from "./ui/Button";
 import { Badge } from "./ui/Badge";
@@ -50,19 +50,23 @@ export function NotificationCenter() {
   const [isOpen, setIsOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [notifications, setNotifications] = useState<NotificationItem[]>([]);
+  const [unreadCount, setUnreadCount] = useState(0);
   const lastNotificationIdRef = useRef<string | null>(null);
   const hasLoadedRef = useRef(false);
-
-  const unreadCount = useMemo(
-    () => notifications.filter((item) => item.read_at === null).length,
-    [notifications],
-  );
 
   const fetchNotifications = useCallback(async () => {
     setIsLoading(true);
     try {
-      const latest = await listNotifications({ limit: 20 });
+      // The badge must reflect the TRUE unread total, not just how many of
+      // the 20 most-recently-fetched notifications happen to be unread —
+      // fetch it separately so unread items outside that recent window are
+      // still counted (up to the API's own max limit).
+      const [latest, unread] = await Promise.all([
+        listNotifications({ limit: 20 }),
+        listNotifications({ unreadOnly: true, limit: 100 }),
+      ]);
       setNotifications(latest);
+      setUnreadCount(unread.length);
 
       if (latest.length > 0 && hasLoadedRef.current) {
         const newest = latest[0];
@@ -93,10 +97,16 @@ export function NotificationCenter() {
 
   async function handleMarkRead(notificationId: string) {
     try {
+      const wasUnread = notifications.some(
+        (item) => item.id === notificationId && item.read_at === null,
+      );
       const updated = await markNotificationRead(notificationId);
       setNotifications((current) =>
         current.map((item) => (item.id === notificationId ? updated : item)),
       );
+      if (wasUnread) {
+        setUnreadCount((current) => Math.max(current - 1, 0));
+      }
     } catch {
       showSnackbar({ message: t("notification.actionFailed"), variant: "error" });
     }
@@ -108,6 +118,7 @@ export function NotificationCenter() {
       setNotifications((current) =>
         current.map((item) => ({ ...item, read_at: item.read_at ?? new Date().toISOString() })),
       );
+      setUnreadCount(0);
     } catch {
       showSnackbar({ message: t("notification.actionFailed"), variant: "error" });
     }
