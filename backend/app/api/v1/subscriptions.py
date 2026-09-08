@@ -1,4 +1,5 @@
 import uuid
+from datetime import date, timedelta
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, status
@@ -23,6 +24,7 @@ from app.schemas.subscriptions import (
     UpdateSubscriptionRequest,
 )
 from app.services.finance_engine import (
+    UPCOMING_RENEWAL_WINDOW_DAYS,
     SubscriptionBillingCycle as ServiceBillingCycle,
     SubscriptionPlan,
     build_subscription_totals,
@@ -219,6 +221,7 @@ async def get_subscription_summary(
         .order_by(Subscription.next_billing_date)
     )
     subscriptions = list(result.all())
+    today = date.today()
 
     totals = build_subscription_totals(
         [
@@ -229,11 +232,15 @@ async def get_subscription_summary(
                 next_billing_date=item.next_billing_date,
             )
             for item in subscriptions
-        ]
+        ],
+        as_of=today,
     )
 
+    window_end = today + timedelta(days=UPCOMING_RENEWAL_WINDOW_DAYS)
     return SubscriptionSummaryResponse(
         monthly_total=totals.monthly_total,
         yearly_total=totals.yearly_total,
-        upcoming_subscription_ids=[item.id for item in subscriptions],
+        upcoming_subscription_ids=[
+            item.id for item in subscriptions if today <= item.next_billing_date <= window_end
+        ],
     )

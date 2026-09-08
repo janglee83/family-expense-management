@@ -129,17 +129,20 @@ def test_build_goal_progress_marks_complete_when_current_reaches_target() -> Non
 
 
 def test_build_subscription_totals_and_upcoming_renewals() -> None:
+    # Cloud Backup renews 54 days out — well past UPCOMING_RENEWAL_WINDOW_DAYS
+    # (30) — so it must count toward the totals but not appear as "upcoming".
     totals = build_subscription_totals(
         [
             SubscriptionPlan("Netflix", 1_590, SubscriptionBillingCycle.MONTHLY, date(2026, 9, 15)),
             SubscriptionPlan("Spotify", 980, SubscriptionBillingCycle.MONTHLY, date(2026, 9, 18)),
             SubscriptionPlan("Cloud Backup", 12_000, SubscriptionBillingCycle.YEARLY, date(2026, 11, 1)),
-        ]
+        ],
+        as_of=date(2026, 9, 8),
     )
 
     assert totals.monthly_total == 3_570
     assert totals.yearly_total == 42_840
-    assert [item.name for item in totals.upcoming_renewals] == ["Netflix", "Spotify", "Cloud Backup"]
+    assert [item.name for item in totals.upcoming_renewals] == ["Netflix", "Spotify"]
 
 
 def test_forecast_month_end_spending_matches_deterministic_formula() -> None:

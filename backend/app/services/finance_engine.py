@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import calendar
 from dataclasses import dataclass
-from datetime import date
+from datetime import date, timedelta
 from enum import StrEnum
 from math import ceil, floor, sqrt
 from statistics import fmean
@@ -284,7 +284,15 @@ def build_goal_progress(
     )
 
 
-def build_subscription_totals(subscriptions: list[SubscriptionPlan]) -> SubscriptionTotals:
+# A subscription counts as an "upcoming renewal" only within this many days of
+# `as_of` — otherwise every active subscription would always show up as
+# "upcoming" regardless of how far away its actual renewal date is.
+UPCOMING_RENEWAL_WINDOW_DAYS = 30
+
+
+def build_subscription_totals(
+    subscriptions: list[SubscriptionPlan], *, as_of: date
+) -> SubscriptionTotals:
     monthly_total = 0
     yearly_total = 0
 
@@ -304,7 +312,11 @@ def build_subscription_totals(subscriptions: list[SubscriptionPlan]) -> Subscrip
         monthly_total += round((subscription.amount * 52) / 12)
         yearly_total += subscription.amount * 52
 
-    upcoming_renewals = sorted(subscriptions, key=lambda item: item.next_billing_date)
+    window_end = as_of + timedelta(days=UPCOMING_RENEWAL_WINDOW_DAYS)
+    upcoming_renewals = sorted(
+        (item for item in subscriptions if as_of <= item.next_billing_date <= window_end),
+        key=lambda item: item.next_billing_date,
+    )
     return SubscriptionTotals(
         monthly_total=monthly_total,
         yearly_total=yearly_total,

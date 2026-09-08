@@ -245,7 +245,8 @@ async def get_cash_flow_summary(
                 next_billing_date=item.next_billing_date,
             )
             for item in active_subscriptions.all()
-        ]
+        ],
+        as_of=resolved_end,
     )
 
     window_days = (resolved_end - resolved_start).days + 1
