@@ -206,6 +206,13 @@ async def test_create_rejects_when_no_eligible_expenses(client: AsyncClient) -> 
     owner = await _register(client, _unique_email(), "Owner")
     family_id = await _create_family(client)
 
+    member_email = _unique_email()
+    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as member_client:
+        member = await _register(member_client, member_email, "Bob")
+        assert (
+            await client.post(f"/api/v1/families/{family_id}/members", json={"email": member_email})
+        ).status_code == 201
+
     response = await client.post(
         f"/api/v1/families/{family_id}/split-expense-groups/",
         json={
@@ -214,11 +221,12 @@ async def test_create_rejects_when_no_eligible_expenses(client: AsyncClient) -> 
             "method": "equal",
             "participants": [
                 {"participant_user_id": owner["id"]},
-                {"participant_user_id": owner["id"]},
+                {"participant_user_id": member["id"]},
             ],
         },
     )
     assert response.status_code == 422
+    assert response.json()["error"]["code"] == "SPLIT_GROUP_NO_ELIGIBLE_EXPENSES"
 
 
 @pytest.mark.integration
