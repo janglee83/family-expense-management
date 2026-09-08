@@ -34,7 +34,7 @@ import { Alert } from "../components/ui/Alert";
 import { DropdownContent, DropdownMenu, Popover, PopoverContent } from "../components/ui/primitives";
 import { MonthPicker, type MonthPickerValue } from "../components/ui/MonthPicker";
 import { buttonClassName } from "../components/ui/buttonClassName";
-import { getCashFlowSummary, getNetWorth, type CashFlowSummary, type NetWorth } from "../finance/financeApi";
+import { getNetWorth, type NetWorth } from "../finance/financeApi";
 
 function toYearMonth(date: Date): string {
   return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
@@ -218,7 +218,6 @@ export function HomePage() {
   const [isFamiliesLoading, setIsFamiliesLoading] = useState(true);
   const [isExpensesLoading, setIsExpensesLoading] = useState(false);
   const [netWorthSnapshot, setNetWorthSnapshot] = useState<NetWorth | null>(null);
-  const [cashFlowSummary, setCashFlowSummary] = useState<CashFlowSummary | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -309,7 +308,6 @@ export function HomePage() {
   useEffect(() => {
     if (!selectedFamilyId) {
       setNetWorthSnapshot(null);
-      setCashFlowSummary(null);
       return;
     }
 
@@ -317,21 +315,16 @@ export function HomePage() {
     const startDate = toDateKey(rangeContext.startDate);
     const endDate = toDateKey(rangeContext.endDate);
 
-    Promise.all([
-      getNetWorth(selectedFamilyId, { startDate, endDate }),
-      getCashFlowSummary(selectedFamilyId, { startDate, endDate }),
-    ])
-      .then(([netWorthResult, cashFlowResult]) => {
+    getNetWorth(selectedFamilyId, { startDate, endDate })
+      .then((netWorthResult) => {
         if (cancelled) {
           return;
         }
         setNetWorthSnapshot(netWorthResult);
-        setCashFlowSummary(cashFlowResult);
       })
       .catch(() => {
         if (!cancelled) {
           setNetWorthSnapshot(null);
-          setCashFlowSummary(null);
         }
       });
 
@@ -370,8 +363,7 @@ export function HomePage() {
     }));
   }, [rangeContext, selectedPeriodExpenses]);
 
-  const selectedPeriodTotalFromExpenses = monthlyTotals.reduce((sum, item) => sum + item.total, 0);
-  const selectedPeriodTotal = cashFlowSummary?.expense_total ?? selectedPeriodTotalFromExpenses;
+  const selectedPeriodTotal = monthlyTotals.reduce((sum, item) => sum + item.total, 0);
   const averageMonthly = Math.round(selectedPeriodTotal / Math.max(rangeContext.monthKeys.length, 1));
   const monthlyChartData = monthlyTotals.map((item) => ({ month: item.label, total: item.total }));
 
