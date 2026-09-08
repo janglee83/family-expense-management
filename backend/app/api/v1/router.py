@@ -12,7 +12,7 @@ from app.api.v1 import (
     ledger_transactions,
     notifications,
     ping,
-    receipts,
+#    receipts,
     split_expenses,
     subscriptions,
 )
@@ -30,9 +30,9 @@ api_router.include_router(
 api_router.include_router(
     expenses.router, prefix="/families/{family_id}/expenses", tags=["expenses"]
 )
-api_router.include_router(
-    receipts.router, prefix="/families/{family_id}/receipts", tags=["receipts"]
-)
+# api_router.include_router(
+#     receipts.router, prefix="/families/{family_id}/receipts", tags=["receipts"]
+# )
 api_router.include_router(
     accounts.router, prefix="/families/{family_id}/accounts", tags=["accounts"]
 )
