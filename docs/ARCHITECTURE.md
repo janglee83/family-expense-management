@@ -15,7 +15,7 @@ client for now.
 
 | Concern | Choice | Why |
 |---|---|---|
-| Backend | Python + FastAPI | OCR stack (OpenCV/PaddleOCR/Ollama) is Python-native; sharing a language with the future OCR worker simplifies ops. |
+| Backend | Python + FastAPI | Async-first (SQLAlchemy 2.0 async, `httpx`) with a mature ecosystem for the domain's validation-heavy JSON APIs. |
 | DB | PostgreSQL | Rich constraint/transaction support needed for financial invariants (`sum(allocations) == source amount`). |
 | ORM | SQLAlchemy 2.0 (async) + Alembic | Explicit control over schema and constraints; versioned migrations. |
 | DB driver | `psycopg` v3 | Single driver for both sync (Alembic) and async (app) connections. |
@@ -51,8 +51,8 @@ never handles a token directly:
   invalidate a session server-side, not just delete a cookie.
 
 Login is rate-limited per email (5 failed attempts / 15 minutes) via a
-Redis fixed-window counter — the same Redis instance already provisioned
-for Celery.
+Redis fixed-window counter — Redis's only remaining use since
+Celery-as-broker was removed (see Deployment).
 
 `app/api/deps.py`'s `get_current_user` is the dependency every future
 protected route (family, expense, receipt endpoints) will depend on.
