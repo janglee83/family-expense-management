@@ -18,10 +18,11 @@ class Settings(BaseSettings):
     jwt_secret_key: str
     access_token_expire_minutes: int = 15
     refresh_token_expire_days: int = 7
-    minio_endpoint_url: str
-    minio_access_key: str
-    minio_secret_key: str
+    minio_endpoint_url: str | None = None
+    minio_access_key: str | None = None
+    minio_secret_key: str | None = None
     minio_bucket_name: str = "receipts"
+    aws_region: str = "ap-northeast-1"
 
     @field_validator("cors_origins")
     @classmethod
