@@ -1,6 +1,131 @@
 {
   "components": {
     "schemas": {
+      "AccountResponse": {
+        "properties": {
+          "account_type": {
+            "$ref": "#/components/schemas/AccountType"
+          },
+          "available_credit": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Available Credit"
+          },
+          "created_by_user_id": {
+            "format": "uuid",
+            "title": "Created By User Id",
+            "type": "string"
+          },
+          "credit_limit": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Credit Limit"
+          },
+          "currency_code": {
+            "$ref": "#/components/schemas/CurrencyCode"
+          },
+          "current_balance": {
+            "title": "Current Balance",
+            "type": "integer"
+          },
+          "family_id": {
+            "format": "uuid",
+            "title": "Family Id",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "is_active": {
+            "title": "Is Active",
+            "type": "boolean"
+          },
+          "minimum_payment": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Minimum Payment"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "payment_due_day": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Payment Due Day"
+          },
+          "statement_balance": {
+            "title": "Statement Balance",
+            "type": "integer"
+          },
+          "statement_closing_day": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Statement Closing Day"
+          }
+        },
+        "required": [
+          "id",
+          "family_id",
+          "created_by_user_id",
+          "name",
+          "account_type",
+          "currency_code",
+          "current_balance",
+          "is_active",
+          "credit_limit",
+          "statement_closing_day",
+          "payment_due_day",
+          "minimum_payment",
+          "statement_balance",
+          "available_credit"
+        ],
+        "title": "AccountResponse",
+        "type": "object"
+      },
+      "AccountType": {
+        "enum": [
+          "bank",
+          "cash",
+          "investment",
+          "credit_card",
+          "loan"
+        ],
+        "title": "AccountType",
+        "type": "string"
+      },
       "AddMemberRequest": {
         "properties": {
           "email": {
@@ -15,6 +140,36 @@
         "title": "AddMemberRequest",
         "type": "object"
       },
+      "BackupExportResponse": {
+        "properties": {
+          "expenses": {
+            "items": {
+              "$ref": "#/components/schemas/ExpenseExportRow"
+            },
+            "title": "Expenses",
+            "type": "array"
+          }
+        },
+        "required": [
+          "expenses"
+        ],
+        "title": "BackupExportResponse",
+        "type": "object"
+      },
+      "Body_preview_expense_import_api_v1_families__family_id__imports_expenses_preview_post": {
+        "properties": {
+          "file": {
+            "contentMediaType": "application/octet-stream",
+            "title": "File",
+            "type": "string"
+          }
+        },
+        "required": [
+          "file"
+        ],
+        "title": "Body_preview_expense_import_api_v1_families__family_id__imports_expenses_preview_post",
+        "type": "object"
+      },
       "Body_upload_receipt_api_v1_families__family_id__receipts__post": {
         "properties": {
           "file": {
@@ -27,6 +182,179 @@
           "file"
         ],
         "title": "Body_upload_receipt_api_v1_families__family_id__receipts__post",
+        "type": "object"
+      },
+      "CalendarAggregatesResponse": {
+        "properties": {
+          "days": {
+            "items": {
+              "$ref": "#/components/schemas/CalendarDayAggregate"
+            },
+            "title": "Days",
+            "type": "array"
+          },
+          "end_date": {
+            "format": "date",
+            "title": "End Date",
+            "type": "string"
+          },
+          "start_date": {
+            "format": "date",
+            "title": "Start Date",
+            "type": "string"
+          }
+        },
+        "required": [
+          "start_date",
+          "end_date",
+          "days"
+        ],
+        "title": "CalendarAggregatesResponse",
+        "type": "object"
+      },
+      "CalendarDayAggregate": {
+        "properties": {
+          "day": {
+            "format": "date",
+            "title": "Day",
+            "type": "string"
+          },
+          "expense_total": {
+            "title": "Expense Total",
+            "type": "integer"
+          },
+          "income_total": {
+            "title": "Income Total",
+            "type": "integer"
+          },
+          "net_cash_flow": {
+            "title": "Net Cash Flow",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "day",
+          "income_total",
+          "expense_total",
+          "net_cash_flow"
+        ],
+        "title": "CalendarDayAggregate",
+        "type": "object"
+      },
+      "CashFlowBucketResponse": {
+        "properties": {
+          "expense_total": {
+            "title": "Expense Total",
+            "type": "integer"
+          },
+          "income_total": {
+            "title": "Income Total",
+            "type": "integer"
+          },
+          "net_cash_flow": {
+            "title": "Net Cash Flow",
+            "type": "integer"
+          },
+          "period_key": {
+            "title": "Period Key",
+            "type": "string"
+          }
+        },
+        "required": [
+          "period_key",
+          "income_total",
+          "expense_total",
+          "net_cash_flow"
+        ],
+        "title": "CashFlowBucketResponse",
+        "type": "object"
+      },
+      "CashFlowBucketsResponse": {
+        "properties": {
+          "buckets": {
+            "items": {
+              "$ref": "#/components/schemas/CashFlowBucketResponse"
+            },
+            "title": "Buckets",
+            "type": "array"
+          },
+          "end_date": {
+            "format": "date",
+            "title": "End Date",
+            "type": "string"
+          },
+          "period": {
+            "$ref": "#/components/schemas/CashFlowPeriod"
+          },
+          "start_date": {
+            "format": "date",
+            "title": "Start Date",
+            "type": "string"
+          }
+        },
+        "required": [
+          "period",
+          "start_date",
+          "end_date",
+          "buckets"
+        ],
+        "title": "CashFlowBucketsResponse",
+        "type": "object"
+      },
+      "CashFlowPeriod": {
+        "enum": [
+          "daily",
+          "weekly",
+          "monthly"
+        ],
+        "title": "CashFlowPeriod",
+        "type": "string"
+      },
+      "CashFlowSummaryResponse": {
+        "properties": {
+          "expense_total": {
+            "title": "Expense Total",
+            "type": "integer"
+          },
+          "fixed_expense_estimate": {
+            "minimum": 0.0,
+            "title": "Fixed Expense Estimate",
+            "type": "integer"
+          },
+          "income_total": {
+            "title": "Income Total",
+            "type": "integer"
+          },
+          "net_cash_flow": {
+            "title": "Net Cash Flow",
+            "type": "integer"
+          },
+          "period_end": {
+            "format": "date",
+            "title": "Period End",
+            "type": "string"
+          },
+          "period_start": {
+            "format": "date",
+            "title": "Period Start",
+            "type": "string"
+          },
+          "variable_expense_estimate": {
+            "minimum": 0.0,
+            "title": "Variable Expense Estimate",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "period_start",
+          "period_end",
+          "income_total",
+          "expense_total",
+          "fixed_expense_estimate",
+          "variable_expense_estimate",
+          "net_cash_flow"
+        ],
+        "title": "CashFlowSummaryResponse",
         "type": "object"
       },
       "CategoryResponse": {
@@ -88,6 +416,88 @@
           "role"
         ],
         "title": "ChangeRoleRequest",
+        "type": "object"
+      },
+      "CreateAccountRequest": {
+        "properties": {
+          "account_type": {
+            "$ref": "#/components/schemas/AccountType"
+          },
+          "credit_limit": {
+            "anyOf": [
+              {
+                "exclusiveMinimum": 0.0,
+                "maximum": 2147483647.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Credit Limit"
+          },
+          "currency_code": {
+            "$ref": "#/components/schemas/CurrencyCode",
+            "default": "jpy"
+          },
+          "minimum_payment": {
+            "anyOf": [
+              {
+                "maximum": 2147483647.0,
+                "minimum": 0.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Minimum Payment"
+          },
+          "name": {
+            "maxLength": 200,
+            "minLength": 1,
+            "title": "Name",
+            "type": "string"
+          },
+          "opening_balance": {
+            "default": 0,
+            "maximum": 2147483647.0,
+            "minimum": -2147483648.0,
+            "title": "Opening Balance",
+            "type": "integer"
+          },
+          "payment_due_day": {
+            "anyOf": [
+              {
+                "maximum": 31.0,
+                "minimum": 1.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Payment Due Day"
+          },
+          "statement_closing_day": {
+            "anyOf": [
+              {
+                "maximum": 31.0,
+                "minimum": 1.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Statement Closing Day"
+          }
+        },
+        "required": [
+          "name",
+          "account_type"
+        ],
+        "title": "CreateAccountRequest",
         "type": "object"
       },
       "CreateCategoryRequest": {
@@ -231,6 +641,271 @@
         "title": "CreateFamilyRequest",
         "type": "object"
       },
+      "CreateGoalRequest": {
+        "properties": {
+          "current_amount": {
+            "default": 0,
+            "maximum": 2147483647.0,
+            "minimum": 0.0,
+            "title": "Current Amount",
+            "type": "integer"
+          },
+          "icon": {
+            "anyOf": [
+              {
+                "maxLength": 32,
+                "minLength": 1,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Icon"
+          },
+          "linked_account_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Linked Account Id"
+          },
+          "monthly_contribution": {
+            "anyOf": [
+              {
+                "exclusiveMinimum": 0.0,
+                "maximum": 2147483647.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Monthly Contribution"
+          },
+          "name": {
+            "maxLength": 200,
+            "minLength": 1,
+            "title": "Name",
+            "type": "string"
+          },
+          "target_amount": {
+            "exclusiveMinimum": 0.0,
+            "maximum": 2147483647.0,
+            "title": "Target Amount",
+            "type": "integer"
+          },
+          "target_date": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Target Date"
+          }
+        },
+        "required": [
+          "name",
+          "target_amount"
+        ],
+        "title": "CreateGoalRequest",
+        "type": "object"
+      },
+      "CreateLedgerTransactionRequest": {
+        "properties": {
+          "amount": {
+            "exclusiveMinimum": 0.0,
+            "maximum": 2147483647.0,
+            "title": "Amount",
+            "type": "integer"
+          },
+          "category_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Category Id"
+          },
+          "description": {
+            "anyOf": [
+              {
+                "maxLength": 500,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description"
+          },
+          "destination_account_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Destination Account Id"
+          },
+          "occurred_on": {
+            "format": "date",
+            "title": "Occurred On",
+            "type": "string"
+          },
+          "source_account_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source Account Id"
+          },
+          "transaction_type": {
+            "$ref": "#/components/schemas/LedgerTransactionType"
+          }
+        },
+        "required": [
+          "transaction_type",
+          "amount",
+          "occurred_on"
+        ],
+        "title": "CreateLedgerTransactionRequest",
+        "type": "object"
+      },
+      "CreateSplitExpenseRequest": {
+        "properties": {
+          "expense_id": {
+            "format": "uuid",
+            "title": "Expense Id",
+            "type": "string"
+          },
+          "method": {
+            "$ref": "#/components/schemas/SplitMethod"
+          },
+          "participants": {
+            "items": {
+              "$ref": "#/components/schemas/SplitParticipantInput"
+            },
+            "maxItems": 50,
+            "minItems": 2,
+            "title": "Participants",
+            "type": "array"
+          }
+        },
+        "required": [
+          "expense_id",
+          "method",
+          "participants"
+        ],
+        "title": "CreateSplitExpenseRequest",
+        "type": "object"
+      },
+      "CreateSubscriptionRequest": {
+        "properties": {
+          "account_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Account Id"
+          },
+          "amount": {
+            "exclusiveMinimum": 0.0,
+            "maximum": 2147483647.0,
+            "title": "Amount",
+            "type": "integer"
+          },
+          "billing_cycle": {
+            "$ref": "#/components/schemas/SubscriptionBillingCycle"
+          },
+          "cancellation_url": {
+            "anyOf": [
+              {
+                "format": "uri",
+                "maxLength": 2083,
+                "minLength": 1,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cancellation Url"
+          },
+          "category_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Category Id"
+          },
+          "currency_code": {
+            "$ref": "#/components/schemas/CurrencyCode",
+            "default": "jpy"
+          },
+          "merchant": {
+            "maxLength": 200,
+            "minLength": 1,
+            "title": "Merchant",
+            "type": "string"
+          },
+          "name": {
+            "maxLength": 200,
+            "minLength": 1,
+            "title": "Name",
+            "type": "string"
+          },
+          "next_billing_date": {
+            "format": "date",
+            "title": "Next Billing Date",
+            "type": "string"
+          },
+          "status": {
+            "$ref": "#/components/schemas/SubscriptionStatus",
+            "default": "active"
+          }
+        },
+        "required": [
+          "name",
+          "merchant",
+          "amount",
+          "billing_cycle",
+          "next_billing_date"
+        ],
+        "title": "CreateSubscriptionRequest",
+        "type": "object"
+      },
       "CurrencyCode": {
         "enum": [
           "vnd",
@@ -238,6 +913,303 @@
         ],
         "title": "CurrencyCode",
         "type": "string"
+      },
+      "ExpenseExportResponse": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/ExpenseExportRow"
+            },
+            "title": "Items",
+            "type": "array"
+          }
+        },
+        "required": [
+          "items"
+        ],
+        "title": "ExpenseExportResponse",
+        "type": "object"
+      },
+      "ExpenseExportRow": {
+        "properties": {
+          "amount": {
+            "title": "Amount",
+            "type": "integer"
+          },
+          "category_id": {
+            "format": "uuid",
+            "title": "Category Id",
+            "type": "string"
+          },
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "created_by_user_id": {
+            "format": "uuid",
+            "title": "Created By User Id",
+            "type": "string"
+          },
+          "description": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description"
+          },
+          "expense_date": {
+            "format": "date",
+            "title": "Expense Date",
+            "type": "string"
+          },
+          "family_id": {
+            "format": "uuid",
+            "title": "Family Id",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "is_shared": {
+            "title": "Is Shared",
+            "type": "boolean"
+          },
+          "payer_user_id": {
+            "format": "uuid",
+            "title": "Payer User Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "family_id",
+          "payer_user_id",
+          "created_by_user_id",
+          "category_id",
+          "amount",
+          "is_shared",
+          "description",
+          "expense_date",
+          "created_at"
+        ],
+        "title": "ExpenseExportRow",
+        "type": "object"
+      },
+      "ExpenseImportCommitRequest": {
+        "properties": {
+          "rows": {
+            "items": {
+              "$ref": "#/components/schemas/ExpenseImportRowInput"
+            },
+            "maxItems": 5000,
+            "title": "Rows",
+            "type": "array"
+          },
+          "skip_duplicates": {
+            "default": true,
+            "title": "Skip Duplicates",
+            "type": "boolean"
+          }
+        },
+        "title": "ExpenseImportCommitRequest",
+        "type": "object"
+      },
+      "ExpenseImportCommitResponse": {
+        "properties": {
+          "created_count": {
+            "title": "Created Count",
+            "type": "integer"
+          },
+          "skipped_duplicate_count": {
+            "title": "Skipped Duplicate Count",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "created_count",
+          "skipped_duplicate_count"
+        ],
+        "title": "ExpenseImportCommitResponse",
+        "type": "object"
+      },
+      "ExpenseImportIssue": {
+        "properties": {
+          "message": {
+            "title": "Message",
+            "type": "string"
+          },
+          "row_number": {
+            "title": "Row Number",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "row_number",
+          "message"
+        ],
+        "title": "ExpenseImportIssue",
+        "type": "object"
+      },
+      "ExpenseImportPreviewResponse": {
+        "properties": {
+          "duplicate_rows": {
+            "title": "Duplicate Rows",
+            "type": "integer"
+          },
+          "invalid_rows": {
+            "title": "Invalid Rows",
+            "type": "integer"
+          },
+          "issues": {
+            "items": {
+              "$ref": "#/components/schemas/ExpenseImportIssue"
+            },
+            "title": "Issues",
+            "type": "array"
+          },
+          "rows": {
+            "items": {
+              "$ref": "#/components/schemas/ExpenseImportPreviewRow"
+            },
+            "title": "Rows",
+            "type": "array"
+          },
+          "total_rows": {
+            "title": "Total Rows",
+            "type": "integer"
+          },
+          "valid_rows": {
+            "title": "Valid Rows",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "total_rows",
+          "valid_rows",
+          "invalid_rows",
+          "duplicate_rows",
+          "rows",
+          "issues"
+        ],
+        "title": "ExpenseImportPreviewResponse",
+        "type": "object"
+      },
+      "ExpenseImportPreviewRow": {
+        "properties": {
+          "amount": {
+            "exclusiveMinimum": 0.0,
+            "maximum": 2147483647.0,
+            "title": "Amount",
+            "type": "integer"
+          },
+          "category_id": {
+            "format": "uuid",
+            "title": "Category Id",
+            "type": "string"
+          },
+          "dedupe_key": {
+            "title": "Dedupe Key",
+            "type": "string"
+          },
+          "description": {
+            "anyOf": [
+              {
+                "maxLength": 500,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description"
+          },
+          "expense_date": {
+            "format": "date",
+            "title": "Expense Date",
+            "type": "string"
+          },
+          "is_duplicate": {
+            "title": "Is Duplicate",
+            "type": "boolean"
+          },
+          "is_shared": {
+            "title": "Is Shared",
+            "type": "boolean"
+          },
+          "payer_user_id": {
+            "format": "uuid",
+            "title": "Payer User Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "payer_user_id",
+          "category_id",
+          "amount",
+          "is_shared",
+          "expense_date",
+          "dedupe_key",
+          "is_duplicate"
+        ],
+        "title": "ExpenseImportPreviewRow",
+        "type": "object"
+      },
+      "ExpenseImportRowInput": {
+        "properties": {
+          "amount": {
+            "exclusiveMinimum": 0.0,
+            "maximum": 2147483647.0,
+            "title": "Amount",
+            "type": "integer"
+          },
+          "category_id": {
+            "format": "uuid",
+            "title": "Category Id",
+            "type": "string"
+          },
+          "description": {
+            "anyOf": [
+              {
+                "maxLength": 500,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description"
+          },
+          "expense_date": {
+            "format": "date",
+            "title": "Expense Date",
+            "type": "string"
+          },
+          "is_shared": {
+            "title": "Is Shared",
+            "type": "boolean"
+          },
+          "payer_user_id": {
+            "format": "uuid",
+            "title": "Payer User Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "payer_user_id",
+          "category_id",
+          "amount",
+          "is_shared",
+          "expense_date"
+        ],
+        "title": "ExpenseImportRowInput",
+        "type": "object"
       },
       "ExpenseResponse": {
         "properties": {
@@ -474,6 +1446,229 @@
         "title": "FamilyType",
         "type": "string"
       },
+      "GoalEntryRequest": {
+        "properties": {
+          "amount": {
+            "exclusiveMinimum": 0.0,
+            "maximum": 2147483647.0,
+            "title": "Amount",
+            "type": "integer"
+          },
+          "entry_type": {
+            "$ref": "#/components/schemas/GoalEntryType"
+          },
+          "note": {
+            "anyOf": [
+              {
+                "maxLength": 500,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Note"
+          },
+          "occurred_on": {
+            "format": "date",
+            "title": "Occurred On",
+            "type": "string"
+          }
+        },
+        "required": [
+          "entry_type",
+          "amount",
+          "occurred_on"
+        ],
+        "title": "GoalEntryRequest",
+        "type": "object"
+      },
+      "GoalEntryResponse": {
+        "properties": {
+          "amount": {
+            "title": "Amount",
+            "type": "integer"
+          },
+          "created_by_user_id": {
+            "format": "uuid",
+            "title": "Created By User Id",
+            "type": "string"
+          },
+          "entry_type": {
+            "$ref": "#/components/schemas/GoalEntryType"
+          },
+          "family_id": {
+            "format": "uuid",
+            "title": "Family Id",
+            "type": "string"
+          },
+          "goal_id": {
+            "format": "uuid",
+            "title": "Goal Id",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "note": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Note"
+          },
+          "occurred_on": {
+            "format": "date",
+            "title": "Occurred On",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "family_id",
+          "goal_id",
+          "created_by_user_id",
+          "entry_type",
+          "amount",
+          "occurred_on",
+          "note"
+        ],
+        "title": "GoalEntryResponse",
+        "type": "object"
+      },
+      "GoalEntryType": {
+        "enum": [
+          "contribution",
+          "withdrawal"
+        ],
+        "title": "GoalEntryType",
+        "type": "string"
+      },
+      "GoalResponse": {
+        "properties": {
+          "created_by_user_id": {
+            "format": "uuid",
+            "title": "Created By User Id",
+            "type": "string"
+          },
+          "current_amount": {
+            "title": "Current Amount",
+            "type": "integer"
+          },
+          "estimated_completion_date": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Estimated Completion Date"
+          },
+          "family_id": {
+            "format": "uuid",
+            "title": "Family Id",
+            "type": "string"
+          },
+          "icon": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Icon"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "is_paused": {
+            "title": "Is Paused",
+            "type": "boolean"
+          },
+          "linked_account_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Linked Account Id"
+          },
+          "monthly_contribution": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Monthly Contribution"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "progress_percentage": {
+            "title": "Progress Percentage",
+            "type": "integer"
+          },
+          "remaining_amount": {
+            "title": "Remaining Amount",
+            "type": "integer"
+          },
+          "target_amount": {
+            "title": "Target Amount",
+            "type": "integer"
+          },
+          "target_date": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Target Date"
+          }
+        },
+        "required": [
+          "id",
+          "family_id",
+          "created_by_user_id",
+          "name",
+          "icon",
+          "target_amount",
+          "current_amount",
+          "target_date",
+          "linked_account_id",
+          "monthly_contribution",
+          "is_paused",
+          "progress_percentage",
+          "remaining_amount",
+          "estimated_completion_date"
+        ],
+        "title": "GoalResponse",
+        "type": "object"
+      },
       "HTTPValidationError": {
         "properties": {
           "detail": {
@@ -486,6 +1681,111 @@
         },
         "title": "HTTPValidationError",
         "type": "object"
+      },
+      "LedgerTransactionResponse": {
+        "properties": {
+          "amount": {
+            "title": "Amount",
+            "type": "integer"
+          },
+          "category_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Category Id"
+          },
+          "created_by_user_id": {
+            "format": "uuid",
+            "title": "Created By User Id",
+            "type": "string"
+          },
+          "description": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description"
+          },
+          "destination_account_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Destination Account Id"
+          },
+          "family_id": {
+            "format": "uuid",
+            "title": "Family Id",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "occurred_on": {
+            "format": "date",
+            "title": "Occurred On",
+            "type": "string"
+          },
+          "source_account_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source Account Id"
+          },
+          "transaction_type": {
+            "$ref": "#/components/schemas/LedgerTransactionType"
+          }
+        },
+        "required": [
+          "id",
+          "family_id",
+          "created_by_user_id",
+          "transaction_type",
+          "amount",
+          "occurred_on",
+          "description",
+          "category_id",
+          "source_account_id",
+          "destination_account_id"
+        ],
+        "title": "LedgerTransactionResponse",
+        "type": "object"
+      },
+      "LedgerTransactionType": {
+        "enum": [
+          "expense",
+          "income",
+          "transfer",
+          "credit_card_purchase",
+          "credit_card_payment",
+          "goal_contribution",
+          "goal_withdrawal"
+        ],
+        "title": "LedgerTransactionType",
+        "type": "string"
       },
       "LoginRequest": {
         "properties": {
@@ -504,6 +1804,69 @@
           "password"
         ],
         "title": "LoginRequest",
+        "type": "object"
+      },
+      "NetWorthResponse": {
+        "properties": {
+          "as_of": {
+            "format": "date",
+            "title": "As Of",
+            "type": "string"
+          },
+          "assets_total": {
+            "title": "Assets Total",
+            "type": "integer"
+          },
+          "change_amount": {
+            "title": "Change Amount",
+            "type": "integer"
+          },
+          "change_percentage": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Change Percentage"
+          },
+          "current_net_worth": {
+            "title": "Current Net Worth",
+            "type": "integer"
+          },
+          "liabilities_total": {
+            "title": "Liabilities Total",
+            "type": "integer"
+          },
+          "period_end": {
+            "format": "date",
+            "title": "Period End",
+            "type": "string"
+          },
+          "period_start": {
+            "format": "date",
+            "title": "Period Start",
+            "type": "string"
+          },
+          "previous_net_worth": {
+            "title": "Previous Net Worth",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "as_of",
+          "current_net_worth",
+          "previous_net_worth",
+          "change_amount",
+          "change_percentage",
+          "assets_total",
+          "liabilities_total",
+          "period_start",
+          "period_end"
+        ],
+        "title": "NetWorthResponse",
         "type": "object"
       },
       "NotificationResponse": {
@@ -716,6 +2079,448 @@
         "title": "RenameFamilyRequest",
         "type": "object"
       },
+      "SettleSplitExpenseItemRequest": {
+        "properties": {
+          "is_settled": {
+            "default": true,
+            "title": "Is Settled",
+            "type": "boolean"
+          }
+        },
+        "title": "SettleSplitExpenseItemRequest",
+        "type": "object"
+      },
+      "SplitExpenseItemResponse": {
+        "properties": {
+          "amount": {
+            "title": "Amount",
+            "type": "integer"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "is_settled": {
+            "title": "Is Settled",
+            "type": "boolean"
+          },
+          "participant_user_id": {
+            "format": "uuid",
+            "title": "Participant User Id",
+            "type": "string"
+          },
+          "percentage": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Percentage"
+          },
+          "split_expense_id": {
+            "format": "uuid",
+            "title": "Split Expense Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "split_expense_id",
+          "participant_user_id",
+          "amount",
+          "percentage",
+          "is_settled"
+        ],
+        "title": "SplitExpenseItemResponse",
+        "type": "object"
+      },
+      "SplitExpenseResponse": {
+        "properties": {
+          "created_by_user_id": {
+            "format": "uuid",
+            "title": "Created By User Id",
+            "type": "string"
+          },
+          "expense_id": {
+            "format": "uuid",
+            "title": "Expense Id",
+            "type": "string"
+          },
+          "family_id": {
+            "format": "uuid",
+            "title": "Family Id",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/SplitExpenseItemResponse"
+            },
+            "title": "Items",
+            "type": "array"
+          },
+          "method": {
+            "$ref": "#/components/schemas/SplitMethod"
+          },
+          "outstanding_amount": {
+            "title": "Outstanding Amount",
+            "type": "integer"
+          },
+          "settled_amount": {
+            "title": "Settled Amount",
+            "type": "integer"
+          },
+          "status": {
+            "$ref": "#/components/schemas/SplitStatus"
+          },
+          "total_amount": {
+            "title": "Total Amount",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "id",
+          "family_id",
+          "expense_id",
+          "created_by_user_id",
+          "method",
+          "status",
+          "total_amount",
+          "settled_amount",
+          "outstanding_amount",
+          "items"
+        ],
+        "title": "SplitExpenseResponse",
+        "type": "object"
+      },
+      "SplitMethod": {
+        "enum": [
+          "equal",
+          "custom",
+          "percentage"
+        ],
+        "title": "SplitMethod",
+        "type": "string"
+      },
+      "SplitParticipantInput": {
+        "properties": {
+          "amount": {
+            "anyOf": [
+              {
+                "exclusiveMinimum": 0.0,
+                "maximum": 2147483647.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Amount"
+          },
+          "participant_user_id": {
+            "format": "uuid",
+            "title": "Participant User Id",
+            "type": "string"
+          },
+          "percentage": {
+            "anyOf": [
+              {
+                "maximum": 100.0,
+                "minimum": 0.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Percentage"
+          }
+        },
+        "required": [
+          "participant_user_id"
+        ],
+        "title": "SplitParticipantInput",
+        "type": "object"
+      },
+      "SplitStatus": {
+        "enum": [
+          "pending",
+          "settled"
+        ],
+        "title": "SplitStatus",
+        "type": "string"
+      },
+      "SubscriptionBillingCycle": {
+        "enum": [
+          "weekly",
+          "monthly",
+          "yearly"
+        ],
+        "title": "SubscriptionBillingCycle",
+        "type": "string"
+      },
+      "SubscriptionResponse": {
+        "properties": {
+          "account_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Account Id"
+          },
+          "amount": {
+            "title": "Amount",
+            "type": "integer"
+          },
+          "billing_cycle": {
+            "$ref": "#/components/schemas/SubscriptionBillingCycle"
+          },
+          "cancellation_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cancellation Url"
+          },
+          "category_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Category Id"
+          },
+          "created_by_user_id": {
+            "format": "uuid",
+            "title": "Created By User Id",
+            "type": "string"
+          },
+          "currency_code": {
+            "$ref": "#/components/schemas/CurrencyCode"
+          },
+          "family_id": {
+            "format": "uuid",
+            "title": "Family Id",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "merchant": {
+            "title": "Merchant",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "next_billing_date": {
+            "format": "date",
+            "title": "Next Billing Date",
+            "type": "string"
+          },
+          "status": {
+            "$ref": "#/components/schemas/SubscriptionStatus"
+          }
+        },
+        "required": [
+          "id",
+          "family_id",
+          "created_by_user_id",
+          "name",
+          "merchant",
+          "amount",
+          "currency_code",
+          "billing_cycle",
+          "next_billing_date",
+          "category_id",
+          "account_id",
+          "status",
+          "cancellation_url"
+        ],
+        "title": "SubscriptionResponse",
+        "type": "object"
+      },
+      "SubscriptionStatus": {
+        "enum": [
+          "active",
+          "paused",
+          "cancelled"
+        ],
+        "title": "SubscriptionStatus",
+        "type": "string"
+      },
+      "SubscriptionSummaryResponse": {
+        "properties": {
+          "monthly_total": {
+            "title": "Monthly Total",
+            "type": "integer"
+          },
+          "upcoming_subscription_ids": {
+            "items": {
+              "format": "uuid",
+              "type": "string"
+            },
+            "title": "Upcoming Subscription Ids",
+            "type": "array"
+          },
+          "yearly_total": {
+            "title": "Yearly Total",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "monthly_total",
+          "yearly_total",
+          "upcoming_subscription_ids"
+        ],
+        "title": "SubscriptionSummaryResponse",
+        "type": "object"
+      },
+      "UndoDeleteResponse": {
+        "properties": {
+          "deleted_expense_id": {
+            "format": "uuid",
+            "title": "Deleted Expense Id",
+            "type": "string"
+          },
+          "expires_at": {
+            "format": "date-time",
+            "title": "Expires At",
+            "type": "string"
+          },
+          "undo_token": {
+            "title": "Undo Token",
+            "type": "string"
+          }
+        },
+        "required": [
+          "undo_token",
+          "expires_at",
+          "deleted_expense_id"
+        ],
+        "title": "UndoDeleteResponse",
+        "type": "object"
+      },
+      "UndoRestoreResponse": {
+        "properties": {
+          "restored_expense_id": {
+            "format": "uuid",
+            "title": "Restored Expense Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "restored_expense_id"
+        ],
+        "title": "UndoRestoreResponse",
+        "type": "object"
+      },
+      "UpdateAccountRequest": {
+        "properties": {
+          "credit_limit": {
+            "anyOf": [
+              {
+                "exclusiveMinimum": 0.0,
+                "maximum": 2147483647.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Credit Limit"
+          },
+          "is_active": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Is Active"
+          },
+          "minimum_payment": {
+            "anyOf": [
+              {
+                "maximum": 2147483647.0,
+                "minimum": 0.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Minimum Payment"
+          },
+          "name": {
+            "anyOf": [
+              {
+                "maxLength": 200,
+                "minLength": 1,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Name"
+          },
+          "payment_due_day": {
+            "anyOf": [
+              {
+                "maximum": 31.0,
+                "minimum": 1.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Payment Due Day"
+          },
+          "statement_closing_day": {
+            "anyOf": [
+              {
+                "maximum": 31.0,
+                "minimum": 1.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Statement Closing Day"
+          }
+        },
+        "title": "UpdateAccountRequest",
+        "type": "object"
+      },
       "UpdateExpenseRequest": {
         "properties": {
           "amount": {
@@ -764,6 +2569,214 @@
           "expense_date"
         ],
         "title": "UpdateExpenseRequest",
+        "type": "object"
+      },
+      "UpdateGoalRequest": {
+        "properties": {
+          "icon": {
+            "anyOf": [
+              {
+                "maxLength": 32,
+                "minLength": 1,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Icon"
+          },
+          "is_paused": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Is Paused"
+          },
+          "linked_account_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Linked Account Id"
+          },
+          "monthly_contribution": {
+            "anyOf": [
+              {
+                "exclusiveMinimum": 0.0,
+                "maximum": 2147483647.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Monthly Contribution"
+          },
+          "name": {
+            "anyOf": [
+              {
+                "maxLength": 200,
+                "minLength": 1,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Name"
+          },
+          "target_amount": {
+            "anyOf": [
+              {
+                "exclusiveMinimum": 0.0,
+                "maximum": 2147483647.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Target Amount"
+          },
+          "target_date": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Target Date"
+          }
+        },
+        "title": "UpdateGoalRequest",
+        "type": "object"
+      },
+      "UpdateSubscriptionRequest": {
+        "properties": {
+          "account_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Account Id"
+          },
+          "amount": {
+            "anyOf": [
+              {
+                "exclusiveMinimum": 0.0,
+                "maximum": 2147483647.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Amount"
+          },
+          "billing_cycle": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/SubscriptionBillingCycle"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "cancellation_url": {
+            "anyOf": [
+              {
+                "format": "uri",
+                "maxLength": 2083,
+                "minLength": 1,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cancellation Url"
+          },
+          "category_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Category Id"
+          },
+          "merchant": {
+            "anyOf": [
+              {
+                "maxLength": 200,
+                "minLength": 1,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Merchant"
+          },
+          "name": {
+            "anyOf": [
+              {
+                "maxLength": 200,
+                "minLength": 1,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Name"
+          },
+          "next_billing_date": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Next Billing Date"
+          },
+          "status": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/SubscriptionStatus"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "title": "UpdateSubscriptionRequest",
         "type": "object"
       },
       "UserResponse": {
@@ -1165,6 +3178,535 @@
         "summary": "Rename Family",
         "tags": [
           "families"
+        ]
+      }
+    },
+    "/api/v1/families/{family_id}/accounts/": {
+      "get": {
+        "operationId": "list_accounts_api_v1_families__family_id__accounts__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "family_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Family Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/AccountResponse"
+                  },
+                  "title": "Response List Accounts Api V1 Families  Family Id  Accounts  Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "List Accounts",
+        "tags": [
+          "accounts"
+        ]
+      },
+      "post": {
+        "operationId": "create_account_api_v1_families__family_id__accounts__post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "family_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Family Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateAccountRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccountResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Create Account",
+        "tags": [
+          "accounts"
+        ]
+      }
+    },
+    "/api/v1/families/{family_id}/accounts/{account_id}": {
+      "get": {
+        "operationId": "get_account_api_v1_families__family_id__accounts__account_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "family_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Family Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "account_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Account Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccountResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Account",
+        "tags": [
+          "accounts"
+        ]
+      },
+      "patch": {
+        "operationId": "update_account_api_v1_families__family_id__accounts__account_id__patch",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "family_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Family Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "account_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Account Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateAccountRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccountResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Update Account",
+        "tags": [
+          "accounts"
+        ]
+      }
+    },
+    "/api/v1/families/{family_id}/analytics/calendar": {
+      "get": {
+        "operationId": "get_calendar_aggregates_api_v1_families__family_id__analytics_calendar_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "family_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Family Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "start_date",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "date",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Start Date"
+            }
+          },
+          {
+            "in": "query",
+            "name": "end_date",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "date",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "End Date"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CalendarAggregatesResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Calendar Aggregates",
+        "tags": [
+          "analytics"
+        ]
+      }
+    },
+    "/api/v1/families/{family_id}/analytics/cash-flow/buckets": {
+      "get": {
+        "operationId": "get_cash_flow_buckets_api_v1_families__family_id__analytics_cash_flow_buckets_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "family_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Family Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "period",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/CashFlowPeriod",
+              "default": "monthly"
+            }
+          },
+          {
+            "in": "query",
+            "name": "start_date",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "date",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Start Date"
+            }
+          },
+          {
+            "in": "query",
+            "name": "end_date",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "date",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "End Date"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CashFlowBucketsResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Cash Flow Buckets",
+        "tags": [
+          "analytics"
+        ]
+      }
+    },
+    "/api/v1/families/{family_id}/analytics/cash-flow/summary": {
+      "get": {
+        "operationId": "get_cash_flow_summary_api_v1_families__family_id__analytics_cash_flow_summary_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "family_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Family Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "start_date",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "date",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Start Date"
+            }
+          },
+          {
+            "in": "query",
+            "name": "end_date",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "date",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "End Date"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CashFlowSummaryResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Cash Flow Summary",
+        "tags": [
+          "analytics"
+        ]
+      }
+    },
+    "/api/v1/families/{family_id}/analytics/net-worth": {
+      "get": {
+        "operationId": "get_net_worth_api_v1_families__family_id__analytics_net_worth_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "family_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Family Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "start_date",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "date",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Start Date"
+            }
+          },
+          {
+            "in": "query",
+            "name": "end_date",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "date",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "End Date"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NetWorthResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Net Worth",
+        "tags": [
+          "analytics"
         ]
       }
     },
@@ -1629,6 +4171,660 @@
         ]
       }
     },
+    "/api/v1/families/{family_id}/exports/backup": {
+      "get": {
+        "operationId": "export_backup_api_v1_families__family_id__exports_backup_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "family_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Family Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BackupExportResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Export Backup",
+        "tags": [
+          "data-ops"
+        ]
+      }
+    },
+    "/api/v1/families/{family_id}/exports/expenses": {
+      "get": {
+        "operationId": "export_expenses_json_api_v1_families__family_id__exports_expenses_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "family_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Family Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExpenseExportResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Export Expenses Json",
+        "tags": [
+          "data-ops"
+        ]
+      }
+    },
+    "/api/v1/families/{family_id}/exports/expenses.csv": {
+      "get": {
+        "operationId": "export_expenses_csv_api_v1_families__family_id__exports_expenses_csv_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "family_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Family Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Export Expenses Csv",
+        "tags": [
+          "data-ops"
+        ]
+      }
+    },
+    "/api/v1/families/{family_id}/goals/": {
+      "get": {
+        "operationId": "list_goals_api_v1_families__family_id__goals__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "family_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Family Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/GoalResponse"
+                  },
+                  "title": "Response List Goals Api V1 Families  Family Id  Goals  Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "List Goals",
+        "tags": [
+          "goals"
+        ]
+      },
+      "post": {
+        "operationId": "create_goal_api_v1_families__family_id__goals__post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "family_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Family Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateGoalRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GoalResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Create Goal",
+        "tags": [
+          "goals"
+        ]
+      }
+    },
+    "/api/v1/families/{family_id}/goals/{goal_id}": {
+      "delete": {
+        "operationId": "delete_goal_api_v1_families__family_id__goals__goal_id__delete",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "family_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Family Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "goal_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Goal Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Delete Goal",
+        "tags": [
+          "goals"
+        ]
+      },
+      "patch": {
+        "operationId": "update_goal_api_v1_families__family_id__goals__goal_id__patch",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "family_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Family Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "goal_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Goal Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateGoalRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GoalResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Update Goal",
+        "tags": [
+          "goals"
+        ]
+      }
+    },
+    "/api/v1/families/{family_id}/goals/{goal_id}/entries": {
+      "get": {
+        "operationId": "list_goal_entries_api_v1_families__family_id__goals__goal_id__entries_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "family_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Family Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "goal_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Goal Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/GoalEntryResponse"
+                  },
+                  "title": "Response List Goal Entries Api V1 Families  Family Id  Goals  Goal Id  Entries Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "List Goal Entries",
+        "tags": [
+          "goals"
+        ]
+      },
+      "post": {
+        "operationId": "create_goal_entry_api_v1_families__family_id__goals__goal_id__entries_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "family_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Family Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "goal_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Goal Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GoalEntryRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GoalEntryResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Create Goal Entry",
+        "tags": [
+          "goals"
+        ]
+      }
+    },
+    "/api/v1/families/{family_id}/imports/expenses/commit": {
+      "post": {
+        "operationId": "commit_expense_import_api_v1_families__family_id__imports_expenses_commit_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "family_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Family Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ExpenseImportCommitRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExpenseImportCommitResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Commit Expense Import",
+        "tags": [
+          "data-ops"
+        ]
+      }
+    },
+    "/api/v1/families/{family_id}/imports/expenses/preview": {
+      "post": {
+        "operationId": "preview_expense_import_api_v1_families__family_id__imports_expenses_preview_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "family_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Family Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/Body_preview_expense_import_api_v1_families__family_id__imports_expenses_preview_post"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExpenseImportPreviewResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Preview Expense Import",
+        "tags": [
+          "data-ops"
+        ]
+      }
+    },
+    "/api/v1/families/{family_id}/ledger-transactions/": {
+      "get": {
+        "operationId": "list_ledger_transactions_api_v1_families__family_id__ledger_transactions__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "family_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Family Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/LedgerTransactionResponse"
+                  },
+                  "title": "Response List Ledger Transactions Api V1 Families  Family Id  Ledger Transactions  Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "List Ledger Transactions",
+        "tags": [
+          "ledger-transactions"
+        ]
+      },
+      "post": {
+        "operationId": "create_ledger_transaction_api_v1_families__family_id__ledger_transactions__post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "family_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Family Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateLedgerTransactionRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LedgerTransactionResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Create Ledger Transaction",
+        "tags": [
+          "ledger-transactions"
+        ]
+      }
+    },
     "/api/v1/families/{family_id}/members": {
       "post": {
         "operationId": "add_member_api_v1_families__family_id__members_post",
@@ -2032,6 +5228,583 @@
         "summary": "Get Receipt Image",
         "tags": [
           "receipts"
+        ]
+      }
+    },
+    "/api/v1/families/{family_id}/split-expenses/": {
+      "get": {
+        "operationId": "list_split_expenses_api_v1_families__family_id__split_expenses__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "family_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Family Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/SplitExpenseResponse"
+                  },
+                  "title": "Response List Split Expenses Api V1 Families  Family Id  Split Expenses  Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "List Split Expenses",
+        "tags": [
+          "split-expenses"
+        ]
+      },
+      "post": {
+        "operationId": "create_split_expense_api_v1_families__family_id__split_expenses__post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "family_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Family Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateSplitExpenseRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SplitExpenseResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Create Split Expense",
+        "tags": [
+          "split-expenses"
+        ]
+      }
+    },
+    "/api/v1/families/{family_id}/split-expenses/{split_expense_id}": {
+      "get": {
+        "operationId": "get_split_expense_api_v1_families__family_id__split_expenses__split_expense_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "family_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Family Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "split_expense_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Split Expense Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SplitExpenseResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Split Expense",
+        "tags": [
+          "split-expenses"
+        ]
+      }
+    },
+    "/api/v1/families/{family_id}/split-expenses/{split_expense_id}/items/{item_id}/settle": {
+      "patch": {
+        "operationId": "settle_split_expense_item_api_v1_families__family_id__split_expenses__split_expense_id__items__item_id__settle_patch",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "family_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Family Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "split_expense_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Split Expense Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "item_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Item Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SettleSplitExpenseItemRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SplitExpenseResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Settle Split Expense Item",
+        "tags": [
+          "split-expenses"
+        ]
+      }
+    },
+    "/api/v1/families/{family_id}/subscriptions/": {
+      "get": {
+        "operationId": "list_subscriptions_api_v1_families__family_id__subscriptions__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "family_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Family Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/SubscriptionResponse"
+                  },
+                  "title": "Response List Subscriptions Api V1 Families  Family Id  Subscriptions  Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "List Subscriptions",
+        "tags": [
+          "subscriptions"
+        ]
+      },
+      "post": {
+        "operationId": "create_subscription_api_v1_families__family_id__subscriptions__post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "family_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Family Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateSubscriptionRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SubscriptionResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Create Subscription",
+        "tags": [
+          "subscriptions"
+        ]
+      }
+    },
+    "/api/v1/families/{family_id}/subscriptions/summary": {
+      "get": {
+        "operationId": "get_subscription_summary_api_v1_families__family_id__subscriptions_summary_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "family_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Family Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SubscriptionSummaryResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Subscription Summary",
+        "tags": [
+          "subscriptions"
+        ]
+      }
+    },
+    "/api/v1/families/{family_id}/subscriptions/{subscription_id}": {
+      "delete": {
+        "operationId": "delete_subscription_api_v1_families__family_id__subscriptions__subscription_id__delete",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "family_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Family Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "subscription_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Subscription Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Delete Subscription",
+        "tags": [
+          "subscriptions"
+        ]
+      },
+      "patch": {
+        "operationId": "update_subscription_api_v1_families__family_id__subscriptions__subscription_id__patch",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "family_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Family Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "subscription_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Subscription Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateSubscriptionRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SubscriptionResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Update Subscription",
+        "tags": [
+          "subscriptions"
+        ]
+      }
+    },
+    "/api/v1/families/{family_id}/undo/expenses/{expense_id}": {
+      "post": {
+        "operationId": "delete_expense_with_undo_api_v1_families__family_id__undo_expenses__expense_id__post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "family_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Family Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "expense_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Expense Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UndoDeleteResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Delete Expense With Undo",
+        "tags": [
+          "data-ops"
+        ]
+      }
+    },
+    "/api/v1/families/{family_id}/undo/{undo_token}/restore": {
+      "post": {
+        "operationId": "restore_undo_action_api_v1_families__family_id__undo__undo_token__restore_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "family_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Family Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "undo_token",
+            "required": true,
+            "schema": {
+              "title": "Undo Token",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UndoRestoreResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Restore Undo Action",
+        "tags": [
+          "data-ops"
         ]
       }
     },

@@ -206,12 +206,42 @@ export function FamilyDetail() {
               >
                 {t("expense.myExpenses")}
               </Link>
-              <Link
+{/*              <Link
                 to={`/families/${familyId}/receipts`}
                 data-tour="family-go-receipts"
                 className={buttonClassName({ variant: "outline", className: "no-underline" })}
               >
                 {t("receipt.myReceipts")}
+              </Link>*/}
+              <Link
+                to={`/families/${familyId}/finance/accounts`}
+                className={buttonClassName({ variant: "outline", className: "no-underline" })}
+              >
+                {t("finance.accountsLedger")}
+              </Link>
+              <Link
+                to={`/families/${familyId}/finance/goals`}
+                className={buttonClassName({ variant: "outline", className: "no-underline" })}
+              >
+                {t("finance.goals")}
+              </Link>
+              <Link
+                to={`/families/${familyId}/finance/subscriptions`}
+                className={buttonClassName({ variant: "outline", className: "no-underline" })}
+              >
+                {t("finance.subscriptions")}
+              </Link>
+              <Link
+                to={`/families/${familyId}/finance/splits`}
+                className={buttonClassName({ variant: "outline", className: "no-underline" })}
+              >
+                {t("finance.splitExpenses")}
+              </Link>
+              <Link
+                to={`/families/${familyId}/finance/data`}
+                className={buttonClassName({ variant: "outline", className: "no-underline" })}
+              >
+                {t("finance.dataOps")}
               </Link>
               {isOwner && (
                 <Button type="button" variant="destructive" onClick={() => setIsDeleteModalOpen(true)}>

@@ -7,7 +7,12 @@ import { FamilyCreatePage } from "./routes/FamilyCreatePage";
 import { FamilyList } from "./families/FamilyList";
 import { FamilyDetail } from "./families/FamilyDetail";
 import { ExpenseList } from "./expenses/ExpenseList";
-import { ReceiptList } from "./receipts/ReceiptList";
+// import { ReceiptList } from "./receipts/ReceiptList";
+import { AccountsLedgerPage } from "./finance/AccountsLedgerPage";
+import { GoalsPage } from "./finance/GoalsPage";
+import { SubscriptionsPage } from "./finance/SubscriptionsPage";
+import { SplitExpensesPage } from "./finance/SplitExpensesPage";
+import { DataOpsPage } from "./finance/DataOpsPage";
 
 export function AppRoutes() {
   return (
@@ -54,11 +59,51 @@ export function AppRoutes() {
           </ProtectedRoute>
         }
       />
-      <Route
+{/*      <Route
         path="/families/:familyId/receipts"
         element={
           <ProtectedRoute>
             <ReceiptList />
+          </ProtectedRoute>
+        }
+      />*/}
+      <Route
+        path="/families/:familyId/finance/accounts"
+        element={
+          <ProtectedRoute>
+            <AccountsLedgerPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/families/:familyId/finance/goals"
+        element={
+          <ProtectedRoute>
+            <GoalsPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/families/:familyId/finance/subscriptions"
+        element={
+          <ProtectedRoute>
+            <SubscriptionsPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/families/:familyId/finance/splits"
+        element={
+          <ProtectedRoute>
+            <SplitExpensesPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/families/:familyId/finance/data"
+        element={
+          <ProtectedRoute>
+            <DataOpsPage />
           </ProtectedRoute>
         }
       />

@@ -34,6 +34,7 @@ import { Alert } from "../components/ui/Alert";
 import { DropdownContent, DropdownMenu, Popover, PopoverContent } from "../components/ui/primitives";
 import { MonthPicker, type MonthPickerValue } from "../components/ui/MonthPicker";
 import { buttonClassName } from "../components/ui/buttonClassName";
+import { getCashFlowSummary, getNetWorth, type CashFlowSummary, type NetWorth } from "../finance/financeApi";
 
 function toYearMonth(date: Date): string {
   return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
@@ -216,6 +217,8 @@ export function HomePage() {
   const [categories, setCategories] = useState<Category[]>([]);
   const [isFamiliesLoading, setIsFamiliesLoading] = useState(true);
   const [isExpensesLoading, setIsExpensesLoading] = useState(false);
+  const [netWorthSnapshot, setNetWorthSnapshot] = useState<NetWorth | null>(null);
+  const [cashFlowSummary, setCashFlowSummary] = useState<CashFlowSummary | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -303,12 +306,46 @@ export function HomePage() {
     };
   }, [fallbackDate, selectedRange.endMonth, selectedRange.startMonth]);
 
+  useEffect(() => {
+    if (!selectedFamilyId) {
+      setNetWorthSnapshot(null);
+      setCashFlowSummary(null);
+      return;
+    }
+
+    let cancelled = false;
+    const startDate = toDateKey(rangeContext.startDate);
+    const endDate = toDateKey(rangeContext.endDate);
+
+    Promise.all([
+      getNetWorth(selectedFamilyId, { startDate, endDate }),
+      getCashFlowSummary(selectedFamilyId, { startDate, endDate }),
+    ])
+      .then(([netWorthResult, cashFlowResult]) => {
+        if (cancelled) {
+          return;
+        }
+        setNetWorthSnapshot(netWorthResult);
+        setCashFlowSummary(cashFlowResult);
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setNetWorthSnapshot(null);
+          setCashFlowSummary(null);
+        }
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [rangeContext, selectedFamilyId]);
+
   const selectedPeriodExpenses = useMemo(
     () =>
       expenses
         .filter((expense) => isDateWithinRange(expense.expense_date, rangeContext.startDate, rangeContext.endDate))
         .sort((a, b) => b.expense_date.localeCompare(a.expense_date)),
-    [expenses, rangeContext.endDate, rangeContext.startDate],
+    [expenses, rangeContext],
   );
 
   const monthlyTotals = useMemo(() => {
@@ -331,9 +368,10 @@ export function HomePage() {
       label: monthKey.slice(2).replace("-", "/"),
       total: totals.get(monthKey) ?? 0,
     }));
-  }, [rangeContext.monthKeys, selectedPeriodExpenses]);
+  }, [rangeContext, selectedPeriodExpenses]);
 
-  const selectedPeriodTotal = monthlyTotals.reduce((sum, item) => sum + item.total, 0);
+  const selectedPeriodTotalFromExpenses = monthlyTotals.reduce((sum, item) => sum + item.total, 0);
+  const selectedPeriodTotal = cashFlowSummary?.expense_total ?? selectedPeriodTotalFromExpenses;
   const averageMonthly = Math.round(selectedPeriodTotal / Math.max(rangeContext.monthKeys.length, 1));
   const monthlyChartData = monthlyTotals.map((item) => ({ month: item.label, total: item.total }));
 
@@ -379,7 +417,7 @@ export function HomePage() {
         },
       ];
     }, []);
-  }, [rangeContext.endDate, rangeContext.startDate, selectedPeriodExpenses]);
+  }, [rangeContext, selectedPeriodExpenses]);
 
   const recentExpenses = selectedPeriodExpenses.slice(0, 8);
 
@@ -392,12 +430,6 @@ export function HomePage() {
       : 0;
   const savingsGoal = (selectedFamily?.savings_goal_amount ?? 0) * Math.max(rangeContext.monthKeys.length, 1);
   const remainingBalance = monthlyIncomeTarget - selectedPeriodTotal;
-  const highestExpense = selectedPeriodExpenses.reduce(
-    (currentMax, expense) => (expense.amount > currentMax ? expense.amount : currentMax),
-    0,
-  );
-  const transactionCount = selectedPeriodExpenses.length;
-
   const personalTotal = selectedPeriodExpenses
     .filter((expense) => !expense.is_shared)
     .reduce((sum, expense) => sum + expense.amount, 0);
@@ -446,53 +478,44 @@ export function HomePage() {
     .filter((expense) => expense.expense_date.startsWith(`${previousMonthKey}-`))
     .reduce((sum, expense) => sum + expense.amount, 0);
   const discretionaryLeft = monthlyIncomeTarget - savingsGoal - selectedPeriodTotal;
-  const insightMessages = useMemo(() => {
-    const messages: string[] = [];
+  const netWorthHint = netWorthSnapshot
+    ? `${t("finance.netWorthChange")}: ${formatMoney(netWorthSnapshot.change_amount, selectedCurrency)}`
+    : t("finance.netWorthUnavailable");
+  const insightMessages: string[] = [];
 
-    if (previousMonthTotal > 0) {
-      if (selectedPeriodTotal > previousMonthTotal) {
-        const increaseRatio = ((selectedPeriodTotal - previousMonthTotal) / previousMonthTotal) * 100;
-        messages.push(
-          t("dashboard.insightHigherThanLastMonth", {
-            percent: Math.round(increaseRatio),
-          }),
-        );
-      } else {
-        messages.push(
-          t("dashboard.insightLowerThanLastMonth", {
-            amount: formatMoney(previousMonthTotal - selectedPeriodTotal, selectedCurrency),
-          }),
-        );
-      }
-    }
-
-    if (topCategoriesThisMonth[0]) {
-      messages.push(
-        t("dashboard.insightTopCategory", {
-          category: topCategoriesThisMonth[0].name,
-          amount: formatMoney(topCategoriesThisMonth[0].total, selectedCurrency),
+  if (previousMonthTotal > 0) {
+    if (selectedPeriodTotal > previousMonthTotal) {
+      const increaseRatio = ((selectedPeriodTotal - previousMonthTotal) / previousMonthTotal) * 100;
+      insightMessages.push(
+        t("dashboard.insightHigherThanLastMonth", {
+          percent: Math.round(increaseRatio),
+        }),
+      );
+    } else {
+      insightMessages.push(
+        t("dashboard.insightLowerThanLastMonth", {
+          amount: formatMoney(previousMonthTotal - selectedPeriodTotal, selectedCurrency),
         }),
       );
     }
+  }
 
-    if (monthlyIncomeTarget > 0) {
-      messages.push(
-        t("dashboard.insightDiscretionaryLeft", {
-          amount: formatMoney(Math.max(discretionaryLeft, 0), selectedCurrency),
-        }),
-      );
-    }
+  if (topCategoriesThisMonth[0]) {
+    insightMessages.push(
+      t("dashboard.insightTopCategory", {
+        category: topCategoriesThisMonth[0].name,
+        amount: formatMoney(topCategoriesThisMonth[0].total, selectedCurrency),
+      }),
+    );
+  }
 
-    return messages.slice(0, 3);
-  }, [
-    discretionaryLeft,
-    monthlyIncomeTarget,
-    previousMonthTotal,
-    selectedCurrency,
-    selectedPeriodTotal,
-    t,
-    topCategoriesThisMonth,
-  ]);
+  if (monthlyIncomeTarget > 0) {
+    insightMessages.push(
+      t("dashboard.insightDiscretionaryLeft", {
+        amount: formatMoney(Math.max(discretionaryLeft, 0), selectedCurrency),
+      }),
+    );
+  }
 
   return (
     <PageFrame>
@@ -655,9 +678,9 @@ export function HomePage() {
                     tone="savings"
                   />
                   <MetricCard
-                    label={t("dashboard.highestExpense")}
-                    value={formatMoney(highestExpense, selectedCurrency)}
-                    hint={`${transactionCount} ${t("dashboard.transactionCountHint")}`}
+                    label={t("finance.netWorth")}
+                    value={formatMoney(netWorthSnapshot?.current_net_worth ?? 0, selectedCurrency)}
+                    hint={netWorthHint}
                     tone="info"
                   />
                 </section>

@@ -126,6 +126,110 @@ export interface paths {
         patch: operations["rename_family_api_v1_families__family_id__patch"];
         trace?: never;
     };
+    "/api/v1/families/{family_id}/accounts/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Accounts */
+        get: operations["list_accounts_api_v1_families__family_id__accounts__get"];
+        put?: never;
+        /** Create Account */
+        post: operations["create_account_api_v1_families__family_id__accounts__post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/families/{family_id}/accounts/{account_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Account */
+        get: operations["get_account_api_v1_families__family_id__accounts__account_id__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Update Account */
+        patch: operations["update_account_api_v1_families__family_id__accounts__account_id__patch"];
+        trace?: never;
+    };
+    "/api/v1/families/{family_id}/analytics/calendar": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Calendar Aggregates */
+        get: operations["get_calendar_aggregates_api_v1_families__family_id__analytics_calendar_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/families/{family_id}/analytics/cash-flow/buckets": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Cash Flow Buckets */
+        get: operations["get_cash_flow_buckets_api_v1_families__family_id__analytics_cash_flow_buckets_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/families/{family_id}/analytics/cash-flow/summary": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Cash Flow Summary */
+        get: operations["get_cash_flow_summary_api_v1_families__family_id__analytics_cash_flow_summary_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/families/{family_id}/analytics/net-worth": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Net Worth */
+        get: operations["get_net_worth_api_v1_families__family_id__analytics_net_worth_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/families/{family_id}/categories/": {
         parameters: {
             query?: never;
@@ -197,6 +301,163 @@ export interface paths {
         head?: never;
         /** Update Expense */
         patch: operations["update_expense_api_v1_families__family_id__expenses__expense_id__patch"];
+        trace?: never;
+    };
+    "/api/v1/families/{family_id}/exports/backup": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Export Backup */
+        get: operations["export_backup_api_v1_families__family_id__exports_backup_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/families/{family_id}/exports/expenses": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Export Expenses Json */
+        get: operations["export_expenses_json_api_v1_families__family_id__exports_expenses_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/families/{family_id}/exports/expenses.csv": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Export Expenses Csv */
+        get: operations["export_expenses_csv_api_v1_families__family_id__exports_expenses_csv_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/families/{family_id}/goals/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Goals */
+        get: operations["list_goals_api_v1_families__family_id__goals__get"];
+        put?: never;
+        /** Create Goal */
+        post: operations["create_goal_api_v1_families__family_id__goals__post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/families/{family_id}/goals/{goal_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** Delete Goal */
+        delete: operations["delete_goal_api_v1_families__family_id__goals__goal_id__delete"];
+        options?: never;
+        head?: never;
+        /** Update Goal */
+        patch: operations["update_goal_api_v1_families__family_id__goals__goal_id__patch"];
+        trace?: never;
+    };
+    "/api/v1/families/{family_id}/goals/{goal_id}/entries": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Goal Entries */
+        get: operations["list_goal_entries_api_v1_families__family_id__goals__goal_id__entries_get"];
+        put?: never;
+        /** Create Goal Entry */
+        post: operations["create_goal_entry_api_v1_families__family_id__goals__goal_id__entries_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/families/{family_id}/imports/expenses/commit": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Commit Expense Import */
+        post: operations["commit_expense_import_api_v1_families__family_id__imports_expenses_commit_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/families/{family_id}/imports/expenses/preview": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Preview Expense Import */
+        post: operations["preview_expense_import_api_v1_families__family_id__imports_expenses_preview_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/families/{family_id}/ledger-transactions/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Ledger Transactions */
+        get: operations["list_ledger_transactions_api_v1_families__family_id__ledger_transactions__get"];
+        put?: never;
+        /** Create Ledger Transaction */
+        post: operations["create_ledger_transaction_api_v1_families__family_id__ledger_transactions__post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
         trace?: never;
     };
     "/api/v1/families/{family_id}/members": {
@@ -281,6 +542,145 @@ export interface paths {
         get: operations["get_receipt_image_api_v1_families__family_id__receipts__receipt_id__image_get"];
         put?: never;
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/families/{family_id}/split-expenses/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Split Expenses */
+        get: operations["list_split_expenses_api_v1_families__family_id__split_expenses__get"];
+        put?: never;
+        /** Create Split Expense */
+        post: operations["create_split_expense_api_v1_families__family_id__split_expenses__post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/families/{family_id}/split-expenses/{split_expense_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Split Expense */
+        get: operations["get_split_expense_api_v1_families__family_id__split_expenses__split_expense_id__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/families/{family_id}/split-expenses/{split_expense_id}/items/{item_id}/settle": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Settle Split Expense Item */
+        patch: operations["settle_split_expense_item_api_v1_families__family_id__split_expenses__split_expense_id__items__item_id__settle_patch"];
+        trace?: never;
+    };
+    "/api/v1/families/{family_id}/subscriptions/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Subscriptions */
+        get: operations["list_subscriptions_api_v1_families__family_id__subscriptions__get"];
+        put?: never;
+        /** Create Subscription */
+        post: operations["create_subscription_api_v1_families__family_id__subscriptions__post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/families/{family_id}/subscriptions/summary": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Subscription Summary */
+        get: operations["get_subscription_summary_api_v1_families__family_id__subscriptions_summary_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/families/{family_id}/subscriptions/{subscription_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** Delete Subscription */
+        delete: operations["delete_subscription_api_v1_families__family_id__subscriptions__subscription_id__delete"];
+        options?: never;
+        head?: never;
+        /** Update Subscription */
+        patch: operations["update_subscription_api_v1_families__family_id__subscriptions__subscription_id__patch"];
+        trace?: never;
+    };
+    "/api/v1/families/{family_id}/undo/expenses/{expense_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Delete Expense With Undo */
+        post: operations["delete_expense_with_undo_api_v1_families__family_id__undo_expenses__expense_id__post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/families/{family_id}/undo/{undo_token}/restore": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Restore Undo Action */
+        post: operations["restore_undo_action_api_v1_families__family_id__undo__undo_token__restore_post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -376,6 +776,49 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        /** AccountResponse */
+        AccountResponse: {
+            account_type: components["schemas"]["AccountType"];
+            /** Available Credit */
+            available_credit: number | null;
+            /**
+             * Created By User Id
+             * Format: uuid
+             */
+            created_by_user_id: string;
+            /** Credit Limit */
+            credit_limit: number | null;
+            currency_code: components["schemas"]["CurrencyCode"];
+            /** Current Balance */
+            current_balance: number;
+            /**
+             * Family Id
+             * Format: uuid
+             */
+            family_id: string;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Is Active */
+            is_active: boolean;
+            /** Minimum Payment */
+            minimum_payment: number | null;
+            /** Name */
+            name: string;
+            /** Payment Due Day */
+            payment_due_day: number | null;
+            /** Statement Balance */
+            statement_balance: number;
+            /** Statement Closing Day */
+            statement_closing_day: number | null;
+        };
+        /**
+         * AccountType
+         * @enum {string}
+         */
+        AccountType: "bank" | "cash" | "investment" | "credit_card" | "loan";
         /** AddMemberRequest */
         AddMemberRequest: {
             /**
@@ -384,10 +827,104 @@ export interface components {
              */
             email: string;
         };
+        /** BackupExportResponse */
+        BackupExportResponse: {
+            /** Expenses */
+            expenses: components["schemas"]["ExpenseExportRow"][];
+        };
+        /** Body_preview_expense_import_api_v1_families__family_id__imports_expenses_preview_post */
+        Body_preview_expense_import_api_v1_families__family_id__imports_expenses_preview_post: {
+            /** File */
+            file: string;
+        };
         /** Body_upload_receipt_api_v1_families__family_id__receipts__post */
         Body_upload_receipt_api_v1_families__family_id__receipts__post: {
             /** File */
             file: string;
+        };
+        /** CalendarAggregatesResponse */
+        CalendarAggregatesResponse: {
+            /** Days */
+            days: components["schemas"]["CalendarDayAggregate"][];
+            /**
+             * End Date
+             * Format: date
+             */
+            end_date: string;
+            /**
+             * Start Date
+             * Format: date
+             */
+            start_date: string;
+        };
+        /** CalendarDayAggregate */
+        CalendarDayAggregate: {
+            /**
+             * Day
+             * Format: date
+             */
+            day: string;
+            /** Expense Total */
+            expense_total: number;
+            /** Income Total */
+            income_total: number;
+            /** Net Cash Flow */
+            net_cash_flow: number;
+        };
+        /** CashFlowBucketResponse */
+        CashFlowBucketResponse: {
+            /** Expense Total */
+            expense_total: number;
+            /** Income Total */
+            income_total: number;
+            /** Net Cash Flow */
+            net_cash_flow: number;
+            /** Period Key */
+            period_key: string;
+        };
+        /** CashFlowBucketsResponse */
+        CashFlowBucketsResponse: {
+            /** Buckets */
+            buckets: components["schemas"]["CashFlowBucketResponse"][];
+            /**
+             * End Date
+             * Format: date
+             */
+            end_date: string;
+            period: components["schemas"]["CashFlowPeriod"];
+            /**
+             * Start Date
+             * Format: date
+             */
+            start_date: string;
+        };
+        /**
+         * CashFlowPeriod
+         * @enum {string}
+         */
+        CashFlowPeriod: "daily" | "weekly" | "monthly";
+        /** CashFlowSummaryResponse */
+        CashFlowSummaryResponse: {
+            /** Expense Total */
+            expense_total: number;
+            /** Fixed Expense Estimate */
+            fixed_expense_estimate: number;
+            /** Income Total */
+            income_total: number;
+            /** Net Cash Flow */
+            net_cash_flow: number;
+            /**
+             * Period End
+             * Format: date
+             */
+            period_end: string;
+            /**
+             * Period Start
+             * Format: date
+             */
+            period_start: string;
+            /** Variable Expense Estimate */
+            variable_expense_estimate: number;
         };
         /** CategoryResponse */
         CategoryResponse: {
@@ -410,6 +947,27 @@ export interface components {
              * @enum {string}
              */
             role: "admin" | "member";
+        };
+        /** CreateAccountRequest */
+        CreateAccountRequest: {
+            account_type: components["schemas"]["AccountType"];
+            /** Credit Limit */
+            credit_limit?: number | null;
+            /** @default jpy */
+            currency_code: components["schemas"]["CurrencyCode"];
+            /** Minimum Payment */
+            minimum_payment?: number | null;
+            /** Name */
+            name: string;
+            /**
+             * Opening Balance
+             * @default 0
+             */
+            opening_balance: number;
+            /** Payment Due Day */
+            payment_due_day?: number | null;
+            /** Statement Closing Day */
+            statement_closing_day?: number | null;
         };
         /** CreateCategoryRequest */
         CreateCategoryRequest: {
@@ -462,11 +1020,226 @@ export interface components {
             /** Savings Goal Amount */
             savings_goal_amount?: number | null;
         };
+        /** CreateGoalRequest */
+        CreateGoalRequest: {
+            /**
+             * Current Amount
+             * @default 0
+             */
+            current_amount: number;
+            /** Icon */
+            icon?: string | null;
+            /** Linked Account Id */
+            linked_account_id?: string | null;
+            /** Monthly Contribution */
+            monthly_contribution?: number | null;
+            /** Name */
+            name: string;
+            /** Target Amount */
+            target_amount: number;
+            /** Target Date */
+            target_date?: string | null;
+        };
+        /** CreateLedgerTransactionRequest */
+        CreateLedgerTransactionRequest: {
+            /** Amount */
+            amount: number;
+            /** Category Id */
+            category_id?: string | null;
+            /** Description */
+            description?: string | null;
+            /** Destination Account Id */
+            destination_account_id?: string | null;
+            /**
+             * Occurred On
+             * Format: date
+             */
+            occurred_on: string;
+            /** Source Account Id */
+            source_account_id?: string | null;
+            transaction_type: components["schemas"]["LedgerTransactionType"];
+        };
+        /** CreateSplitExpenseRequest */
+        CreateSplitExpenseRequest: {
+            /**
+             * Expense Id
+             * Format: uuid
+             */
+            expense_id: string;
+            method: components["schemas"]["SplitMethod"];
+            /** Participants */
+            participants: components["schemas"]["SplitParticipantInput"][];
+        };
+        /** CreateSubscriptionRequest */
+        CreateSubscriptionRequest: {
+            /** Account Id */
+            account_id?: string | null;
+            /** Amount */
+            amount: number;
+            billing_cycle: components["schemas"]["SubscriptionBillingCycle"];
+            /** Cancellation Url */
+            cancellation_url?: string | null;
+            /** Category Id */
+            category_id?: string | null;
+            /** @default jpy */
+            currency_code: components["schemas"]["CurrencyCode"];
+            /** Merchant */
+            merchant: string;
+            /** Name */
+            name: string;
+            /**
+             * Next Billing Date
+             * Format: date
+             */
+            next_billing_date: string;
+            /** @default active */
+            status: components["schemas"]["SubscriptionStatus"];
+        };
         /**
          * CurrencyCode
          * @enum {string}
          */
         CurrencyCode: "vnd" | "jpy";
+        /** ExpenseExportResponse */
+        ExpenseExportResponse: {
+            /** Items */
+            items: components["schemas"]["ExpenseExportRow"][];
+        };
+        /** ExpenseExportRow */
+        ExpenseExportRow: {
+            /** Amount */
+            amount: number;
+            /**
+             * Category Id
+             * Format: uuid
+             */
+            category_id: string;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /**
+             * Created By User Id
+             * Format: uuid
+             */
+            created_by_user_id: string;
+            /** Description */
+            description: string | null;
+            /**
+             * Expense Date
+             * Format: date
+             */
+            expense_date: string;
+            /**
+             * Family Id
+             * Format: uuid
+             */
+            family_id: string;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Is Shared */
+            is_shared: boolean;
+            /**
+             * Payer User Id
+             * Format: uuid
+             */
+            payer_user_id: string;
+        };
+        /** ExpenseImportCommitRequest */
+        ExpenseImportCommitRequest: {
+            /** Rows */
+            rows?: components["schemas"]["ExpenseImportRowInput"][];
+            /**
+             * Skip Duplicates
+             * @default true
+             */
+            skip_duplicates: boolean;
+        };
+        /** ExpenseImportCommitResponse */
+        ExpenseImportCommitResponse: {
+            /** Created Count */
+            created_count: number;
+            /** Skipped Duplicate Count */
+            skipped_duplicate_count: number;
+        };
+        /** ExpenseImportIssue */
+        ExpenseImportIssue: {
+            /** Message */
+            message: string;
+            /** Row Number */
+            row_number: number;
+        };
+        /** ExpenseImportPreviewResponse */
+        ExpenseImportPreviewResponse: {
+            /** Duplicate Rows */
+            duplicate_rows: number;
+            /** Invalid Rows */
+            invalid_rows: number;
+            /** Issues */
+            issues: components["schemas"]["ExpenseImportIssue"][];
+            /** Rows */
+            rows: components["schemas"]["ExpenseImportPreviewRow"][];
+            /** Total Rows */
+            total_rows: number;
+            /** Valid Rows */
+            valid_rows: number;
+        };
+        /** ExpenseImportPreviewRow */
+        ExpenseImportPreviewRow: {
+            /** Amount */
+            amount: number;
+            /**
+             * Category Id
+             * Format: uuid
+             */
+            category_id: string;
+            /** Dedupe Key */
+            dedupe_key: string;
+            /** Description */
+            description?: string | null;
+            /**
+             * Expense Date
+             * Format: date
+             */
+            expense_date: string;
+            /** Is Duplicate */
+            is_duplicate: boolean;
+            /** Is Shared */
+            is_shared: boolean;
+            /**
+             * Payer User Id
+             * Format: uuid
+             */
+            payer_user_id: string;
+        };
+        /** ExpenseImportRowInput */
+        ExpenseImportRowInput: {
+            /** Amount */
+            amount: number;
+            /**
+             * Category Id
+             * Format: uuid
+             */
+            category_id: string;
+            /** Description */
+            description?: string | null;
+            /**
+             * Expense Date
+             * Format: date
+             */
+            expense_date: string;
+            /** Is Shared */
+            is_shared: boolean;
+            /**
+             * Payer User Id
+             * Format: uuid
+             */
+            payer_user_id: string;
+        };
         /** ExpenseResponse */
         ExpenseResponse: {
             /** Amount */
@@ -568,11 +1341,141 @@ export interface components {
          * @enum {string}
          */
         FamilyType: "solo" | "shared";
+        /** GoalEntryRequest */
+        GoalEntryRequest: {
+            /** Amount */
+            amount: number;
+            entry_type: components["schemas"]["GoalEntryType"];
+            /** Note */
+            note?: string | null;
+            /**
+             * Occurred On
+             * Format: date
+             */
+            occurred_on: string;
+        };
+        /** GoalEntryResponse */
+        GoalEntryResponse: {
+            /** Amount */
+            amount: number;
+            /**
+             * Created By User Id
+             * Format: uuid
+             */
+            created_by_user_id: string;
+            entry_type: components["schemas"]["GoalEntryType"];
+            /**
+             * Family Id
+             * Format: uuid
+             */
+            family_id: string;
+            /**
+             * Goal Id
+             * Format: uuid
+             */
+            goal_id: string;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Note */
+            note: string | null;
+            /**
+             * Occurred On
+             * Format: date
+             */
+            occurred_on: string;
+        };
+        /**
+         * GoalEntryType
+         * @enum {string}
+         */
+        GoalEntryType: "contribution" | "withdrawal";
+        /** GoalResponse */
+        GoalResponse: {
+            /**
+             * Created By User Id
+             * Format: uuid
+             */
+            created_by_user_id: string;
+            /** Current Amount */
+            current_amount: number;
+            /** Estimated Completion Date */
+            estimated_completion_date: string | null;
+            /**
+             * Family Id
+             * Format: uuid
+             */
+            family_id: string;
+            /** Icon */
+            icon: string | null;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Is Paused */
+            is_paused: boolean;
+            /** Linked Account Id */
+            linked_account_id: string | null;
+            /** Monthly Contribution */
+            monthly_contribution: number | null;
+            /** Name */
+            name: string;
+            /** Progress Percentage */
+            progress_percentage: number;
+            /** Remaining Amount */
+            remaining_amount: number;
+            /** Target Amount */
+            target_amount: number;
+            /** Target Date */
+            target_date: string | null;
+        };
         /** HTTPValidationError */
         HTTPValidationError: {
             /** Detail */
             detail?: components["schemas"]["ValidationError"][];
         };
+        /** LedgerTransactionResponse */
+        LedgerTransactionResponse: {
+            /** Amount */
+            amount: number;
+            /** Category Id */
+            category_id: string | null;
+            /**
+             * Created By User Id
+             * Format: uuid
+             */
+            created_by_user_id: string;
+            /** Description */
+            description: string | null;
+            /** Destination Account Id */
+            destination_account_id: string | null;
+            /**
+             * Family Id
+             * Format: uuid
+             */
+            family_id: string;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /**
+             * Occurred On
+             * Format: date
+             */
+            occurred_on: string;
+            /** Source Account Id */
+            source_account_id: string | null;
+            transaction_type: components["schemas"]["LedgerTransactionType"];
+        };
+        /**
+         * LedgerTransactionType
+         * @enum {string}
+         */
+        LedgerTransactionType: "expense" | "income" | "transfer" | "credit_card_purchase" | "credit_card_payment" | "goal_contribution" | "goal_withdrawal";
         /** LoginRequest */
         LoginRequest: {
             /**
@@ -582,6 +1485,36 @@ export interface components {
             email: string;
             /** Password */
             password: string;
+        };
+        /** NetWorthResponse */
+        NetWorthResponse: {
+            /**
+             * As Of
+             * Format: date
+             */
+            as_of: string;
+            /** Assets Total */
+            assets_total: number;
+            /** Change Amount */
+            change_amount: number;
+            /** Change Percentage */
+            change_percentage: number | null;
+            /** Current Net Worth */
+            current_net_worth: number;
+            /** Liabilities Total */
+            liabilities_total: number;
+            /**
+             * Period End
+             * Format: date
+             */
+            period_end: string;
+            /**
+             * Period Start
+             * Format: date
+             */
+            period_start: string;
+            /** Previous Net Worth */
+            previous_net_worth: number;
         };
         /** NotificationResponse */
         NotificationResponse: {
@@ -674,6 +1607,188 @@ export interface components {
             /** Name */
             name: string;
         };
+        /** SettleSplitExpenseItemRequest */
+        SettleSplitExpenseItemRequest: {
+            /**
+             * Is Settled
+             * @default true
+             */
+            is_settled: boolean;
+        };
+        /** SplitExpenseItemResponse */
+        SplitExpenseItemResponse: {
+            /** Amount */
+            amount: number;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Is Settled */
+            is_settled: boolean;
+            /**
+             * Participant User Id
+             * Format: uuid
+             */
+            participant_user_id: string;
+            /** Percentage */
+            percentage: number | null;
+            /**
+             * Split Expense Id
+             * Format: uuid
+             */
+            split_expense_id: string;
+        };
+        /** SplitExpenseResponse */
+        SplitExpenseResponse: {
+            /**
+             * Created By User Id
+             * Format: uuid
+             */
+            created_by_user_id: string;
+            /**
+             * Expense Id
+             * Format: uuid
+             */
+            expense_id: string;
+            /**
+             * Family Id
+             * Format: uuid
+             */
+            family_id: string;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Items */
+            items: components["schemas"]["SplitExpenseItemResponse"][];
+            method: components["schemas"]["SplitMethod"];
+            /** Outstanding Amount */
+            outstanding_amount: number;
+            /** Settled Amount */
+            settled_amount: number;
+            status: components["schemas"]["SplitStatus"];
+            /** Total Amount */
+            total_amount: number;
+        };
+        /**
+         * SplitMethod
+         * @enum {string}
+         */
+        SplitMethod: "equal" | "custom" | "percentage";
+        /** SplitParticipantInput */
+        SplitParticipantInput: {
+            /** Amount */
+            amount?: number | null;
+            /**
+             * Participant User Id
+             * Format: uuid
+             */
+            participant_user_id: string;
+            /** Percentage */
+            percentage?: number | null;
+        };
+        /**
+         * SplitStatus
+         * @enum {string}
+         */
+        SplitStatus: "pending" | "settled";
+        /**
+         * SubscriptionBillingCycle
+         * @enum {string}
+         */
+        SubscriptionBillingCycle: "weekly" | "monthly" | "yearly";
+        /** SubscriptionResponse */
+        SubscriptionResponse: {
+            /** Account Id */
+            account_id: string | null;
+            /** Amount */
+            amount: number;
+            billing_cycle: components["schemas"]["SubscriptionBillingCycle"];
+            /** Cancellation Url */
+            cancellation_url: string | null;
+            /** Category Id */
+            category_id: string | null;
+            /**
+             * Created By User Id
+             * Format: uuid
+             */
+            created_by_user_id: string;
+            currency_code: components["schemas"]["CurrencyCode"];
+            /**
+             * Family Id
+             * Format: uuid
+             */
+            family_id: string;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Merchant */
+            merchant: string;
+            /** Name */
+            name: string;
+            /**
+             * Next Billing Date
+             * Format: date
+             */
+            next_billing_date: string;
+            status: components["schemas"]["SubscriptionStatus"];
+        };
+        /**
+         * SubscriptionStatus
+         * @enum {string}
+         */
+        SubscriptionStatus: "active" | "paused" | "cancelled";
+        /** SubscriptionSummaryResponse */
+        SubscriptionSummaryResponse: {
+            /** Monthly Total */
+            monthly_total: number;
+            /** Upcoming Subscription Ids */
+            upcoming_subscription_ids: string[];
+            /** Yearly Total */
+            yearly_total: number;
+        };
+        /** UndoDeleteResponse */
+        UndoDeleteResponse: {
+            /**
+             * Deleted Expense Id
+             * Format: uuid
+             */
+            deleted_expense_id: string;
+            /**
+             * Expires At
+             * Format: date-time
+             */
+            expires_at: string;
+            /** Undo Token */
+            undo_token: string;
+        };
+        /** UndoRestoreResponse */
+        UndoRestoreResponse: {
+            /**
+             * Restored Expense Id
+             * Format: uuid
+             */
+            restored_expense_id: string;
+        };
+        /** UpdateAccountRequest */
+        UpdateAccountRequest: {
+            /** Credit Limit */
+            credit_limit?: number | null;
+            /** Is Active */
+            is_active?: boolean | null;
+            /** Minimum Payment */
+            minimum_payment?: number | null;
+            /** Name */
+            name?: string | null;
+            /** Payment Due Day */
+            payment_due_day?: number | null;
+            /** Statement Closing Day */
+            statement_closing_day?: number | null;
+        };
         /** UpdateExpenseRequest */
         UpdateExpenseRequest: {
             /** Amount */
@@ -697,6 +1812,42 @@ export interface components {
              * Format: uuid
              */
             payer_user_id: string;
+        };
+        /** UpdateGoalRequest */
+        UpdateGoalRequest: {
+            /** Icon */
+            icon?: string | null;
+            /** Is Paused */
+            is_paused?: boolean | null;
+            /** Linked Account Id */
+            linked_account_id?: string | null;
+            /** Monthly Contribution */
+            monthly_contribution?: number | null;
+            /** Name */
+            name?: string | null;
+            /** Target Amount */
+            target_amount?: number | null;
+            /** Target Date */
+            target_date?: string | null;
+        };
+        /** UpdateSubscriptionRequest */
+        UpdateSubscriptionRequest: {
+            /** Account Id */
+            account_id?: string | null;
+            /** Amount */
+            amount?: number | null;
+            billing_cycle?: components["schemas"]["SubscriptionBillingCycle"] | null;
+            /** Cancellation Url */
+            cancellation_url?: string | null;
+            /** Category Id */
+            category_id?: string | null;
+            /** Merchant */
+            merchant?: string | null;
+            /** Name */
+            name?: string | null;
+            /** Next Billing Date */
+            next_billing_date?: string | null;
+            status?: components["schemas"]["SubscriptionStatus"] | null;
         };
         /** UserResponse */
         UserResponse: {
@@ -991,6 +2142,277 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["FamilyResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_accounts_api_v1_families__family_id__accounts__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                family_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AccountResponse"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    create_account_api_v1_families__family_id__accounts__post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                family_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateAccountRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AccountResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_account_api_v1_families__family_id__accounts__account_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                family_id: string;
+                account_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AccountResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    update_account_api_v1_families__family_id__accounts__account_id__patch: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                family_id: string;
+                account_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateAccountRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AccountResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_calendar_aggregates_api_v1_families__family_id__analytics_calendar_get: {
+        parameters: {
+            query?: {
+                start_date?: string | null;
+                end_date?: string | null;
+            };
+            header?: never;
+            path: {
+                family_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CalendarAggregatesResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_cash_flow_buckets_api_v1_families__family_id__analytics_cash_flow_buckets_get: {
+        parameters: {
+            query?: {
+                period?: components["schemas"]["CashFlowPeriod"];
+                start_date?: string | null;
+                end_date?: string | null;
+            };
+            header?: never;
+            path: {
+                family_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CashFlowBucketsResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_cash_flow_summary_api_v1_families__family_id__analytics_cash_flow_summary_get: {
+        parameters: {
+            query?: {
+                start_date?: string | null;
+                end_date?: string | null;
+            };
+            header?: never;
+            path: {
+                family_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CashFlowSummaryResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_net_worth_api_v1_families__family_id__analytics_net_worth_get: {
+        parameters: {
+            query?: {
+                start_date?: string | null;
+                end_date?: string | null;
+            };
+            header?: never;
+            path: {
+                family_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["NetWorthResponse"];
                 };
             };
             /** @description Validation Error */
@@ -1300,6 +2722,435 @@ export interface operations {
             };
         };
     };
+    export_backup_api_v1_families__family_id__exports_backup_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                family_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BackupExportResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    export_expenses_json_api_v1_families__family_id__exports_expenses_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                family_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ExpenseExportResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    export_expenses_csv_api_v1_families__family_id__exports_expenses_csv_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                family_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_goals_api_v1_families__family_id__goals__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                family_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GoalResponse"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    create_goal_api_v1_families__family_id__goals__post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                family_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateGoalRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GoalResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    delete_goal_api_v1_families__family_id__goals__goal_id__delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                family_id: string;
+                goal_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    update_goal_api_v1_families__family_id__goals__goal_id__patch: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                family_id: string;
+                goal_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateGoalRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GoalResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_goal_entries_api_v1_families__family_id__goals__goal_id__entries_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                family_id: string;
+                goal_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GoalEntryResponse"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    create_goal_entry_api_v1_families__family_id__goals__goal_id__entries_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                family_id: string;
+                goal_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["GoalEntryRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GoalEntryResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    commit_expense_import_api_v1_families__family_id__imports_expenses_commit_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                family_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ExpenseImportCommitRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ExpenseImportCommitResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    preview_expense_import_api_v1_families__family_id__imports_expenses_preview_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                family_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "multipart/form-data": components["schemas"]["Body_preview_expense_import_api_v1_families__family_id__imports_expenses_preview_post"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ExpenseImportPreviewResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_ledger_transactions_api_v1_families__family_id__ledger_transactions__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                family_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LedgerTransactionResponse"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    create_ledger_transaction_api_v1_families__family_id__ledger_transactions__post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                family_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateLedgerTransactionRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LedgerTransactionResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     add_member_api_v1_families__family_id__members_post: {
         parameters: {
             query?: never;
@@ -1548,6 +3399,368 @@ export interface operations {
                 };
                 content: {
                     "application/json": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_split_expenses_api_v1_families__family_id__split_expenses__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                family_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SplitExpenseResponse"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    create_split_expense_api_v1_families__family_id__split_expenses__post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                family_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateSplitExpenseRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SplitExpenseResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_split_expense_api_v1_families__family_id__split_expenses__split_expense_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                family_id: string;
+                split_expense_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SplitExpenseResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    settle_split_expense_item_api_v1_families__family_id__split_expenses__split_expense_id__items__item_id__settle_patch: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                family_id: string;
+                split_expense_id: string;
+                item_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SettleSplitExpenseItemRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SplitExpenseResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_subscriptions_api_v1_families__family_id__subscriptions__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                family_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SubscriptionResponse"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    create_subscription_api_v1_families__family_id__subscriptions__post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                family_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateSubscriptionRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SubscriptionResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_subscription_summary_api_v1_families__family_id__subscriptions_summary_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                family_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SubscriptionSummaryResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    delete_subscription_api_v1_families__family_id__subscriptions__subscription_id__delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                family_id: string;
+                subscription_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    update_subscription_api_v1_families__family_id__subscriptions__subscription_id__patch: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                family_id: string;
+                subscription_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateSubscriptionRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SubscriptionResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    delete_expense_with_undo_api_v1_families__family_id__undo_expenses__expense_id__post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                family_id: string;
+                expense_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UndoDeleteResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    restore_undo_action_api_v1_families__family_id__undo__undo_token__restore_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                family_id: string;
+                undo_token: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UndoRestoreResponse"];
                 };
             };
             /** @description Validation Error */
