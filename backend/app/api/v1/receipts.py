@@ -11,7 +11,6 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.deps import get_current_user, get_family_membership
 from app.core.api_errors import raise_api_error
-from app.core.logging import get_logger
 from app.core.permissions import require_owner_admin_or_creator
 from app.core.storage import get_receipt_storage
 from app.db.session import get_session
@@ -20,10 +19,8 @@ from app.models.family_member import FamilyMember
 from app.models.receipt import Receipt, ReceiptStatus
 from app.models.user import User
 from app.schemas.receipt import ReceiptResponse
-from app.worker import process_receipt
 
 router = APIRouter()
-logger = get_logger(__name__)
 
 ALLOWED_CONTENT_TYPES = {"image/jpeg", "image/png", "image/heic", "image/heif"}
 MAX_FILE_SIZE_BYTES = 10 * 1024 * 1024
@@ -89,15 +86,10 @@ async def upload_receipt(
         storage_key=storage_key,
         content_type=content_type,
         file_size_bytes=len(content),
-        status=ReceiptStatus.UPLOAD.value,
+        status=ReceiptStatus.PROCESSING.value,
     )
     async with locked_write(session, tables=("receipts",)):
         session.add(receipt)
-
-    try:
-        await run_in_threadpool(process_receipt.delay, str(receipt.id))
-    except Exception:
-        logger.exception("Failed to enqueue receipt processing", receipt_id=str(receipt.id))
     return receipt
 
 

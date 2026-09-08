@@ -63,23 +63,6 @@ services:
       sh -c "uv run python scripts/safe_migrate.py &&
       uv run uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload"
 
-  worker:
-    build:
-      context: ./backend
-    env_file:
-      - .env
-    volumes:
-      - ./backend:/app
-      - /app/.venv
-    depends_on:
-      postgres:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
-#       minio:
-#         condition: service_healthy
-    command: uv run celery -A app.worker worker --loglevel=info
-
   frontend:
     build:
       context: ./frontend
