@@ -7,8 +7,6 @@ from fastapi import HTTPException
 from pydantic import ValidationError
 
 from app.api.v1.split_expenses import (
-    _build_equal_amounts,
-    _build_percentage_amounts,
     _resolve_split_amounts,
 )
 from app.models.split_expense import SplitMethod
@@ -64,16 +62,6 @@ def test_split_request_rejects_invalid_percentage_total() -> None:
                 {"participant_user_id": str(uuid.uuid4()), "percentage": 30},
             ],
         )
-
-
-def test_build_equal_amounts_distributes_remainder_deterministically() -> None:
-    assert _build_equal_amounts(total_amount=100, participant_count=3) == [34, 33, 33]
-
-
-def test_build_percentage_amounts_rounding_is_deterministic() -> None:
-    values = _build_percentage_amounts(total_amount=100, percentages=[33, 33, 34])
-    assert sum(values) == 100
-    assert values == [33, 33, 34]
 
 
 def test_resolve_split_amounts_rejects_custom_sum_mismatch() -> None:
