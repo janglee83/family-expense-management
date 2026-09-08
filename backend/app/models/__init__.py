@@ -9,6 +9,11 @@ from app.models.notification import Notification
 from app.models.receipt import Receipt, ReceiptStatus
 from app.models.refresh_token import RefreshToken
 from app.models.split_expense import SplitExpense, SplitExpenseItem, SplitMethod, SplitStatus
+from app.models.split_expense_group import (
+    SplitExpenseGroup,
+    SplitExpenseGroupItem,
+    SplitExpenseGroupParticipant,
+)
 from app.models.subscription import (
     Subscription,
     SubscriptionBillingCycle,
@@ -33,6 +38,9 @@ __all__ = [
     "GoalEntry",
     "GoalEntryType",
     "SplitExpense",
+    "SplitExpenseGroup",
+    "SplitExpenseGroupItem",
+    "SplitExpenseGroupParticipant",
     "SplitExpenseItem",
     "SplitMethod",
     "SplitStatus",
