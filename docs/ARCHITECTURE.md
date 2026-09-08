@@ -148,3 +148,54 @@ docs/       Architecture, product requirements, i18n glossary
 local development. Configuration is environment-variable driven
 (`.env`, copied from `.env.example`); the backend fails fast at startup if
 a required variable is missing.
+
+## Deployment
+
+The app deploys serverlessly on AWS rather than as an always-on server,
+because real traffic at this scale (a small number of family members) is
+low and sporadic — paying for compute that sits idle most of the day would
+dominate the cost for no benefit.
+
+- **Backend**: runs on AWS Lambda as a container image (ARM/Graviton),
+  behind API Gateway (HTTP API). The Lambda Web Adapter
+  (`backend/Dockerfile.lambda`) lets the existing FastAPI/Uvicorn app run
+  unmodified — it translates API Gateway events into real HTTP requests
+  against the app's own local Uvicorn server and back.
+- **Database**: Neon.tech (serverless Postgres) via its pooled connection
+  string — Lambda's per-invocation connection pattern needs pooling to
+  avoid exhausting Postgres's connection limit.
+- **Rate-limit store**: Upstash Redis (serverless, TLS) — Redis is kept
+  only for login rate-limiting; the Celery/Redis-as-broker pattern was
+  removed entirely (see below).
+- **Receipt storage**: S3, accessed via implicit IAM credentials from the
+  Lambda execution role (no explicit access key/secret in production —
+  `app/core/storage.py`'s `MinioReceiptStorage` only passes explicit
+  credentials when they're configured, which is a dev/MinIO-only case).
+- **Frontend**: a static build served through CloudFront, with a private
+  S3 origin restricted to CloudFront via Origin Access Control — never a
+  public S3 bucket.
+- **No background job processing**: the receipt-upload flow used to
+  enqueue a Celery task (`process_receipt`) that, since real OCR was
+  abandoned in an earlier phase, did nothing but flip a status flag. That
+  task and the entire Celery/worker service are gone — the status update
+  now happens synchronously in the same request/transaction that creates
+  the receipt row. If a future phase reintroduces genuinely heavy
+  background work, that phase should design its own serverless-async
+  pipeline (e.g. SQS + a dedicated Lambda) at that time.
+- **Infrastructure as code**: `infra/` (Terraform) provisions the ECR
+  repository, Lambda function, API Gateway, IAM roles/policies, S3
+  buckets, and CloudFront distribution. The Lambda function's container
+  image is deployed by CI (`aws lambda update-function-code`), not by
+  `terraform apply` — Terraform only sets the image at first creation and
+  is told to ignore later changes to it, so CI and Terraform don't fight
+  over the same field.
+- **CI/CD**: `.github/workflows/deploy.yml`, triggered on push to `main`,
+  authenticates to AWS via OIDC (no static credentials), builds and pushes
+  the backend image, updates the Lambda function, runs
+  `scripts/safe_migrate.py` against Neon, then builds and syncs the
+  frontend to S3 and invalidates the CloudFront cache.
+
+At the current low-traffic scale, this architecture costs roughly
+$0-3/month — every component either has a permanent free tier at this
+volume (Lambda, Neon, Upstash) or scales its cost with actual usage
+rather than charging for idle time (API Gateway, S3, CloudFront).
