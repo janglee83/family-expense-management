@@ -39,3 +39,15 @@ frontend/test-results/
 
 # Local agent metadata
 .serena/
+
+# Terraform
+# State and tfvars hold `sensitive = true` variables (database_url, redis_url,
+# jwt_secret_key) in plaintext. `.terraform.lock.hcl` is deliberately NOT
+# ignored — it's a dependency lockfile and belongs in version control.
+infra/.terraform/
+infra/*.tfstate
+infra/*.tfstate.*
+infra/*.tfvars
+infra/crash.log
+infra/override.tf
+infra/override.tf.json

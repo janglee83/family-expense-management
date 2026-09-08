@@ -3,11 +3,13 @@
 ## Overview
 
 A modular monolith: one FastAPI backend owns auth, family, expense, and
-settlement domains; a separate `worker` process (this phase adds it as a
-generic Celery/Redis consumer; Phase 6 specializes it into the real
-`ocr-worker`) handles background/OCR workloads, since those have very
-different resource and scaling characteristics from normal API traffic. A
-Vite/React SPA is the only frontend client for now.
+settlement domains. There is no separate worker process — an earlier phase
+abandoned OCR and the Celery/Redis-as-broker pattern was removed with it, so
+all backend work (including receipt-upload status updates) happens
+synchronously within the request/transaction that creates it. If a future
+phase reintroduces genuinely heavy background work, that phase should design
+its own async pipeline at that time. A Vite/React SPA is the only frontend
+client for now.
 
 ## Stack decisions
 
@@ -17,7 +19,7 @@ Vite/React SPA is the only frontend client for now.
 | DB | PostgreSQL | Rich constraint/transaction support needed for financial invariants (`sum(allocations) == source amount`). |
 | ORM | SQLAlchemy 2.0 (async) + Alembic | Explicit control over schema and constraints; versioned migrations. |
 | DB driver | `psycopg` v3 | Single driver for both sync (Alembic) and async (app) connections. |
-| Background jobs | Redis + Celery | Standard, well-documented retry/failure handling; fits the receipt processing state machine (UPLOAD → PROCESSING → ... → CONFIRMED). |
+| Redis | Login rate-limiting only | Lightweight, already-provisioned store for a fixed-window counter; the Celery-as-broker usage was removed once background OCR processing was abandoned. |
 | Frontend | Vite + React + TypeScript | No SSR/SEO need (authenticated app); fast dev server. |
 | Frontend i18n | react-i18next | Namespaced JSON translation files map directly onto the stable, semantic key architecture required for JA/VI. |
 | Repo layout | Plain-folder monorepo | Backend is Python, frontend is separate anyway — a JS-focused monorepo tool (Nx/Turborepo) buys little here. |
@@ -122,12 +124,14 @@ every view, not just the upload.
 
 A `receipts` row tracks `status` as a plain string (a `ReceiptStatus`
 StrEnum at the app layer, matching `FamilyRole`'s precedent) so later
-phases can add new states without a migration. This phase's Celery task
-(`process_receipt`, run by the new generic `worker` service) is a
-deliberate stub: it only advances `UPLOAD` → `PROCESSING`, proving the
-queue/worker infrastructure works end to end. Phase 6 replaces the task
-body with real OpenCV/PaddleOCR/Ollama extraction and advances the state
-machine further (toward `OCR_COMPLETED`/`FAILED`).
+phases can add new states without a migration. A receipt is written
+straight to `PROCESSING` synchronously, in the same request/transaction
+that creates it, and stays there — there is no Celery task, no worker, and
+no further automatic state transition. The enum's other values (`UPLOAD`,
+`FAILED`, `OCR_COMPLETED`, `PARSED`, `NEEDS_REVIEW`, `CONFIRMED`) remain
+defined but are not set by any code path today; they are reserved for a
+possible future phase that reintroduces real receipt processing, not a
+committed roadmap item.
 
 `receipts` has no FK to `expenses` in this phase — the two stay fully
 independent until a later phase has parsed OCR data to reconcile against
@@ -173,7 +177,13 @@ dominate the cost for no benefit.
   credentials when they're configured, which is a dev/MinIO-only case).
 - **Frontend**: a static build served through CloudFront, with a private
   S3 origin restricted to CloudFront via Origin Access Control — never a
-  public S3 bucket.
+  public S3 bucket. The same distribution also has an API Gateway origin
+  behind a `/api/*` cache behavior (caching disabled, cookies forwarded), so
+  the SPA and API are same-origin. That is a correctness requirement, not an
+  optimization: the auth cookies are `SameSite=Lax`, which browsers refuse
+  to attach to cross-site `fetch`/XHR, so a separate API domain would leave
+  every post-login request unauthenticated. The frontend build therefore
+  needs no `VITE_API_BASE_URL` — it calls `/api/v1/...` relatively.
 - **No background job processing**: the receipt-upload flow used to
   enqueue a Celery task (`process_receipt`) that, since real OCR was
   abandoned in an earlier phase, did nothing but flip a status flag. That
@@ -193,7 +203,13 @@ dominate the cost for no benefit.
   authenticates to AWS via OIDC (no static credentials), builds and pushes
   the backend image, updates the Lambda function, runs
   `scripts/safe_migrate.py` against Neon, then builds and syncs the
-  frontend to S3 and invalidates the CloudFront cache.
+  frontend to S3 and invalidates the CloudFront cache. That migration runs
+  with `--skip-backup`: the script's `pg_dump` backup would be written to
+  the runner's ephemeral filesystem and discarded when the job ends, so CI
+  relies on Neon's own branching / point-in-time recovery for migration
+  rollback safety instead. It also uses a separate direct (unpooled) Neon
+  connection secret, since `pg_dump` and session-scoped advisory locks are
+  unreliable through PgBouncer transaction pooling.
 
 At the current low-traffic scale, this architecture costs roughly
 $0-3/month — every component either has a permanent free tier at this

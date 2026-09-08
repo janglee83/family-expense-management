@@ -6,7 +6,7 @@ calculation.
 
 ## Stack
 
-- Backend: Python 3.12, FastAPI, SQLAlchemy 2.0 (async), Alembic, PostgreSQL, Celery/Redis
+- Backend: Python 3.12, FastAPI, SQLAlchemy 2.0 (async), Alembic, PostgreSQL, plus Redis for login rate-limiting
 - Frontend: Vite, React, TypeScript, react-i18next
 - See `docs/ARCHITECTURE.md` for the full rationale.
 

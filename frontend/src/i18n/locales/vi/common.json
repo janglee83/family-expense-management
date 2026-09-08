@@ -476,7 +476,7 @@
     "statusProcessing": "Đang xử lý",
     "statusFailed": "Thất bại",
     "invalidFileType": "Chỉ chấp nhận định dạng JPEG, PNG, HEIC",
-    "fileTooLarge": "Kích thước tệp phải nhỏ hơn 10MB",
+    "fileTooLarge": "Kích thước tệp phải nhỏ hơn 4MB",
     "uploadFailed": "Đã xảy ra lỗi. Vui lòng thử lại"
   }
 }

@@ -54,12 +54,23 @@ jobs:
 
       - run: uv sync --extra dev
 
+      # --skip-backup: safe_migrate.py's pg_dump backup would land on the
+      # runner's ephemeral filesystem and be discarded the moment this job ends,
+      # so it costs time and IO while retaining nothing to restore from. CI
+      # relies on Neon's own branching / point-in-time recovery for migration
+      # rollback safety instead.
       - name: Run database migration against Neon
+        # Migrations need the DIRECT (unpooled) Neon connection: pg_dump and the
+        # session-scoped pg_advisory_lock/unlock in safe_migrate.py are unsafe
+        # through PgBouncer transaction pooling, which can hand the lock acquire
+        # and release to different backend connections. NEON_DATABASE_URL (the
+        # pooled string) is what the Lambda itself uses, set via Terraform's
+        # var.database_url in infra/lambda.tf — this is a separate secret.
         env:
-          DATABASE_URL: ${{ secrets.NEON_DATABASE_URL }}
+          DATABASE_URL: ${{ secrets.NEON_DIRECT_DATABASE_URL }}
           REDIS_URL: ${{ secrets.UPSTASH_REDIS_URL }}
           JWT_SECRET_KEY: ${{ secrets.JWT_SECRET_KEY }}
-        run: uv run python scripts/safe_migrate.py
+        run: uv run python scripts/safe_migrate.py --skip-backup
 
   deploy-frontend:
     runs-on: ubuntu-latest
@@ -82,9 +93,9 @@ jobs:
 
       - run: pnpm install --frozen-lockfile
 
+      # No VITE_API_BASE_URL: the API is same-origin via CloudFront's "/api/*"
+      # routing, so the build's default empty base URL yields relative calls.
       - name: Build frontend
-        env:
-          VITE_API_BASE_URL: ${{ secrets.API_GATEWAY_URL }}
         run: pnpm run build
 
       - uses: aws-actions/configure-aws-credentials@v4

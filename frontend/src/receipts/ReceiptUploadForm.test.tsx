@@ -29,7 +29,7 @@ describe("ReceiptUploadForm", () => {
     await user.upload(screen.getByLabelText(i18n.t("receipt.upload")), oversizedFile);
 
     expect(await screen.findByRole("alert")).toHaveTextContent(
-      "ファイルサイズは10MB以下にしてください",
+      "ファイルサイズは4MB以下にしてください",
     );
     expect(uploadReceipt).not.toHaveBeenCalled();
   });

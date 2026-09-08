@@ -476,7 +476,7 @@
     "statusProcessing": "処理中",
     "statusFailed": "失敗",
     "invalidFileType": "JPEG、PNG、HEIC形式のみアップロードできます",
-    "fileTooLarge": "ファイルサイズは10MB以下にしてください",
+    "fileTooLarge": "ファイルサイズは4MB以下にしてください",
     "uploadFailed": "エラーが発生しました。もう一度お試しください"
   }
 }

@@ -5,6 +5,11 @@ FROM python:3.12-slim
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1
 
+# Plain TCP connect to port 8080 instead of the adapter's default GET / (which
+# this app doesn't route, so it would 404 on every cold start). Deliberately not
+# /health — that opens a DB connection per cold start for no benefit.
+ENV AWS_LWA_READINESS_CHECK_PROTOCOL=tcp
+
 COPY --from=lambda-adapter /lambda-adapter /opt/extensions/lambda-adapter
 
 RUN apt-get update && apt-get install -y --no-install-recommends libmagic1 \
@@ -20,4 +25,7 @@ RUN uv sync --no-install-project --frozen
 COPY . .
 RUN uv sync
 
-CMD ["uv", "run", "uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8080"]
+# Invoke the venv's uvicorn directly: `uv run` does an implicit sync check that
+# needs a writable venv/cache, but Lambda's filesystem is read-only except /tmp
+# at invoke time. `uv sync` above puts the venv at /app/.venv by default.
+CMD ["/app/.venv/bin/uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8080"]

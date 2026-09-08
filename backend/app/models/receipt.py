@@ -10,6 +10,9 @@ from app.db.base import Base
 
 
 class ReceiptStatus(StrEnum):
+    # Only PROCESSING is ever set: receipt handling is synchronous and always
+    # ends there. The rest are reserved for a possible future phase that
+    # reintroduces real receipt processing.
     UPLOAD = "upload"
     PROCESSING = "processing"
     FAILED = "failed"

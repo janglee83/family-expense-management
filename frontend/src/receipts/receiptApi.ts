@@ -4,7 +4,9 @@ import type { components } from "../api/schema.gen";
 
 export type Receipt = components["schemas"]["ReceiptResponse"];
 
-const MAX_FILE_SIZE_BYTES = 10 * 1024 * 1024;
+// Must match the backend's MAX_FILE_SIZE_BYTES (app/api/v1/receipts.py), which
+// is capped at 4MB by API Gateway/Lambda's base64-encoded payload limit.
+const MAX_FILE_SIZE_BYTES = 4 * 1024 * 1024;
 const ALLOWED_FILE_TYPES = ["image/jpeg", "image/png", "image/heic", "image/heif"];
 
 export function validateReceiptFile(file: File): "fileTooLarge" | "invalidFileType" | null {

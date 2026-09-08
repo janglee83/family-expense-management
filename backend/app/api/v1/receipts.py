@@ -23,7 +23,11 @@ from app.schemas.receipt import ReceiptResponse
 router = APIRouter()
 
 ALLOWED_CONTENT_TYPES = {"image/jpeg", "image/png", "image/heic", "image/heif"}
-MAX_FILE_SIZE_BYTES = 10 * 1024 * 1024
+# 4MB, not the 10MB this once was: a Lambda synchronous invocation's payload cap
+# is 6MB each way, and API Gateway's proxy integration base64-encodes the body,
+# leaving a real binary ceiling around 4.4MB. Above that the caller would get a
+# raw API Gateway/Lambda error instead of our RECEIPT_FILE_TOO_LARGE response.
+MAX_FILE_SIZE_BYTES = 4 * 1024 * 1024
 
 
 def _validate_receipt_content(content: bytes) -> str:
@@ -31,7 +35,7 @@ def _validate_receipt_content(content: bytes) -> str:
         raise_api_error(
             status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
             code="RECEIPT_FILE_TOO_LARGE",
-            message="File exceeds the 10MB size limit",
+            message="File exceeds the 4MB size limit",
         )
     content_type: str = magic.from_buffer(content, mime=True)
     if content_type not in ALLOWED_CONTENT_TYPES:
@@ -67,7 +71,7 @@ async def upload_receipt(
         raise_api_error(
             status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
             code="RECEIPT_FILE_TOO_LARGE",
-            message="File exceeds the 10MB size limit",
+            message="File exceeds the 4MB size limit",
         )
     content = await file.read()
     content_type = _validate_receipt_content(content)

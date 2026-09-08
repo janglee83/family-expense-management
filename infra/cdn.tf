@@ -15,6 +15,23 @@ resource "aws_cloudfront_distribution" "frontend" {
     origin_access_control_id = aws_cloudfront_origin_access_control.frontend.id
   }
 
+  # The API is served through this same distribution (see the "/api/*"
+  # ordered_cache_behavior below) so the SPA and API are same-origin.
+  # Otherwise the backend's SameSite=Lax auth cookies would never be attached
+  # to the SPA's fetch/XHR calls, and every request after login would be
+  # unauthenticated.
+  origin {
+    domain_name = replace(aws_apigatewayv2_api.backend.api_endpoint, "https://", "")
+    origin_id   = "backend-api"
+
+    custom_origin_config {
+      http_port              = 80
+      https_port             = 443
+      origin_protocol_policy = "https-only"
+      origin_ssl_protocols   = ["TLSv1.2"]
+    }
+  }
+
   default_cache_behavior {
     allowed_methods  = ["GET", "HEAD"]
     cached_methods   = ["GET", "HEAD"]
@@ -28,6 +45,30 @@ resource "aws_cloudfront_distribution" "frontend" {
         forward = "none"
       }
     }
+  }
+
+  # API traffic: no caching at all (TTLs pinned to 0) and cookies/Authorization
+  # forwarded verbatim, so auth state is never cached or shared between users.
+  ordered_cache_behavior {
+    path_pattern     = "/api/*"
+    target_origin_id = "backend-api"
+
+    allowed_methods = ["DELETE", "GET", "HEAD", "OPTIONS", "PATCH", "POST", "PUT"]
+    cached_methods  = ["GET", "HEAD"]
+
+    viewer_protocol_policy = "https-only"
+
+    forwarded_values {
+      query_string = true
+      headers      = ["Authorization", "Content-Type"]
+      cookies {
+        forward = "all"
+      }
+    }
+
+    min_ttl     = 0
+    default_ttl = 0
+    max_ttl     = 0
   }
 
   # Client-side routing (React Router): unknown paths should still serve
