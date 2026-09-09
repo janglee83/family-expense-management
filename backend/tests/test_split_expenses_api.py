@@ -148,3 +148,63 @@ async def test_create_custom_split_rejects_amount_mismatch(client: AsyncClient) 
 
     assert split_response.status_code == 422
     assert split_response.json()["error"]["code"] == "SPLIT_CUSTOM_AMOUNT_MISMATCH"
+
+
+@pytest.mark.integration
+async def test_create_rejects_expense_already_claimed_by_a_group(client: AsyncClient) -> None:
+    owner = await _register(client, _unique_email(), "Owner")
+    family_id = await _create_family(client)
+    category_id = await _get_global_category_id(client, family_id)
+
+    member_email = _unique_email()
+    async with AsyncClient(
+        transport=ASGITransport(app=app), base_url="http://test"
+    ) as member_client:
+        member = await _register(member_client, member_email, "Bob")
+        add_member_response = await client.post(
+            f"/api/v1/families/{family_id}/members", json={"email": member_email}
+        )
+        assert add_member_response.status_code == 201
+
+    expense_response = await client.post(
+        f"/api/v1/families/{family_id}/expenses/",
+        json={
+            "payer_user_id": owner["id"],
+            "category_id": category_id,
+            "amount": 5000,
+            "is_shared": True,
+            "description": "Groceries",
+            "expense_date": date(2026, 9, 10).isoformat(),
+        },
+    )
+    assert expense_response.status_code == 201
+    expense_id = expense_response.json()["id"]
+
+    group_response = await client.post(
+        f"/api/v1/families/{family_id}/split-expense-groups/",
+        json={
+            "period_start": "2026-09-01",
+            "period_end": "2026-09-30",
+            "method": "equal",
+            "participants": [
+                {"participant_user_id": owner["id"]},
+                {"participant_user_id": member["id"]},
+            ],
+        },
+    )
+    assert group_response.status_code == 201
+    assert [item["id"] for item in group_response.json()["expenses"]] == [expense_id]
+
+    split_response = await client.post(
+        f"/api/v1/families/{family_id}/split-expenses/",
+        json={
+            "expense_id": expense_id,
+            "method": "equal",
+            "participants": [
+                {"participant_user_id": owner["id"]},
+                {"participant_user_id": member["id"]},
+            ],
+        },
+    )
+    assert split_response.status_code == 409
+    assert split_response.json()["error"]["code"] == "SPLIT_EXPENSE_ALREADY_EXISTS"

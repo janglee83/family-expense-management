@@ -239,9 +239,20 @@ the existing `finance.split*` naming convention in
   existing feature (`SPLIT_PARTICIPANT_NOT_IN_FAMILY`,
   `SPLIT_CUSTOM_AMOUNT_MISMATCH`, `SPLIT_PERCENTAGE_AMOUNT_MISMATCH`),
   since they're the same shared validation logic.
-- Concurrent group creation for overlapping periods → the `locked_write`
-  table lock serializes creation; the second request's re-query naturally
-  excludes whatever the first request just claimed.
+- Concurrent group creation for overlapping periods → once the first
+  request has committed, a later request's re-query naturally excludes
+  whatever that request claimed. Note that `locked_write` does *not*
+  serialize truly concurrent writers: it issues
+  `LOCK TABLE ... IN ROW EXCLUSIVE MODE`, and in PostgreSQL that mode does
+  not conflict with itself, so two overlapping transactions can both pass
+  the eligibility re-query. The actual safety net is the database's
+  `UniqueConstraint`s (`split_expenses.expense_id`,
+  `split_expense_group_items.expense_id`), which do hold under
+  concurrency and reject the loser rather than double-claiming an expense.
+  On the per-expense create endpoint that loser's `IntegrityError` is
+  caught and converted to a clean `409 SPLIT_EXPENSE_ALREADY_EXISTS`;
+  group create does not yet have that conversion, so a losing concurrent
+  group create still surfaces as a 500 (tracked as follow-up work).
 
 ## Testing plan
 

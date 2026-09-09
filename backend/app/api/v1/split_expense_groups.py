@@ -78,14 +78,15 @@ async def _validate_participants(
 def _resolve_group_split_amounts(
     payload: CreateSplitExpenseGroupRequest, total_amount: int
 ) -> list[tuple[uuid.UUID, int, int | None]]:
+    resolved: list[tuple[uuid.UUID, int, int | None]]
+
     if payload.method == SplitMethod.EQUAL:
         amounts = resolve_equal_split_amounts(total_amount, len(payload.participants))
-        return [
+        resolved = [
             (participant.participant_user_id, amounts[index], None)
             for index, participant in enumerate(payload.participants)
         ]
-
-    if payload.method == SplitMethod.CUSTOM:
+    elif payload.method == SplitMethod.CUSTOM:
         amounts = [participant.amount or 0 for participant in payload.participants]
         if sum(amounts) != total_amount:
             raise_api_error(
@@ -93,23 +94,34 @@ def _resolve_group_split_amounts(
                 code="SPLIT_CUSTOM_AMOUNT_MISMATCH",
                 message="Custom split amounts must equal the group total",
             )
-        return [
+        resolved = [
             (participant.participant_user_id, participant.amount or 0, None)
             for participant in payload.participants
         ]
+    else:
+        percentages = [participant.percentage or 0 for participant in payload.participants]
+        amounts = resolve_percentage_split_amounts(total_amount, percentages)
+        if sum(amounts) != total_amount:
+            raise_api_error(
+                status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
+                code="SPLIT_PERCENTAGE_AMOUNT_MISMATCH",
+                message="Percentage split calculation failed",
+            )
+        resolved = [
+            (participant.participant_user_id, amounts[index], participant.percentage)
+            for index, participant in enumerate(payload.participants)
+        ]
 
-    percentages = [participant.percentage or 0 for participant in payload.participants]
-    amounts = resolve_percentage_split_amounts(total_amount, percentages)
-    if sum(amounts) != total_amount:
+    # Every participant row must satisfy the DB's `amount > 0` check constraint. A 0%
+    # participant, or an EQUAL split where the group total is smaller than the participant
+    # count, resolves to 0 and would otherwise fail as an unhandled IntegrityError (500).
+    if any(amount <= 0 for _, amount, _ in resolved):
         raise_api_error(
             status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
             code="SPLIT_PERCENTAGE_AMOUNT_MISMATCH",
-            message="Percentage split calculation failed",
+            message="Each participant's share must be greater than zero",
         )
-    return [
-        (participant.participant_user_id, amounts[index], participant.percentage)
-        for index, participant in enumerate(payload.participants)
-    ]
+    return resolved
 
 
 async def _get_group_or_404(

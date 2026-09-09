@@ -4,6 +4,7 @@ from typing import Annotated
 
 from fastapi import APIRouter, Depends, status
 from sqlalchemy import select
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.deps import get_current_user, get_family_membership
@@ -20,6 +21,7 @@ from app.models.split_expense import (
     SplitMethod,
     SplitStatus,
 )
+from app.models.split_expense_group import SplitExpenseGroupItem
 from app.models.user import User
 from app.schemas.split_expenses import (
     CreateSplitExpenseRequest,
@@ -228,51 +230,85 @@ async def create_split_expense(
     user: Annotated[User, Depends(get_current_user)],
     session: Annotated[AsyncSession, Depends(get_session)],
 ) -> SplitExpenseResponse:
-    async with locked_write(session, tables=("expenses", "split_expenses", "split_expense_items", "notifications")):
-        expense = await _get_expense_or_404(family_id, payload.expense_id, session)
-
-        existing = await session.scalar(
-            select(SplitExpense)
-            .where(SplitExpense.expense_id == payload.expense_id)
-            .with_for_update()
-        )
-        if existing is not None:
-            raise_api_error(
-                status_code=status.HTTP_409_CONFLICT,
-                code="SPLIT_EXPENSE_ALREADY_EXISTS",
-                message="This expense already has split details",
-            )
-
-        participant_ids = {item.participant_user_id for item in payload.participants}
-        await _validate_participants(family_id, participant_ids, session)
-        resolved_items = _resolve_split_amounts(payload, expense.amount)
-
-        split_expense = SplitExpense(
-            family_id=family_id,
-            expense_id=payload.expense_id,
-            created_by_user_id=user.id,
-            method=payload.method,
-            status=SplitStatus.PENDING,
-        )
-        session.add(split_expense)
-        await session.flush()
-
-        for participant_user_id, amount, percentage in resolved_items:
-            session.add(
-                SplitExpenseItem(
-                    split_expense_id=split_expense.id,
-                    participant_user_id=participant_user_id,
-                    amount=amount,
-                    percentage=percentage,
-                    is_settled=False,
-                )
-            )
-
-        await queue_family_notification(
+    try:
+        async with locked_write(
             session,
-            family_id,
-            message=f"{user.display_name} created split details for an expense.",
-            actor_user_id=user.id,
+            tables=(
+                "expenses",
+                "split_expenses",
+                "split_expense_items",
+                "split_expense_group_items",
+                "notifications",
+            ),
+        ):
+            expense = await _get_expense_or_404(family_id, payload.expense_id, session)
+
+            existing = await session.scalar(
+                select(SplitExpense)
+                .where(SplitExpense.expense_id == payload.expense_id)
+                .with_for_update()
+            )
+            if existing is not None:
+                raise_api_error(
+                    status_code=status.HTTP_409_CONFLICT,
+                    code="SPLIT_EXPENSE_ALREADY_EXISTS",
+                    message="This expense already has split details",
+                )
+
+            # An expense claimed by a monthly split-expense group must not also be split
+            # individually — otherwise the same amount is counted twice.
+            already_in_group = await session.scalar(
+                select(SplitExpenseGroupItem)
+                .where(SplitExpenseGroupItem.expense_id == payload.expense_id)
+                .with_for_update()
+            )
+            if already_in_group is not None:
+                raise_api_error(
+                    status_code=status.HTTP_409_CONFLICT,
+                    code="SPLIT_EXPENSE_ALREADY_EXISTS",
+                    message="This expense already has split details",
+                )
+
+            participant_ids = {item.participant_user_id for item in payload.participants}
+            await _validate_participants(family_id, participant_ids, session)
+            resolved_items = _resolve_split_amounts(payload, expense.amount)
+
+            split_expense = SplitExpense(
+                family_id=family_id,
+                expense_id=payload.expense_id,
+                created_by_user_id=user.id,
+                method=payload.method,
+                status=SplitStatus.PENDING,
+            )
+            session.add(split_expense)
+            await session.flush()
+
+            for participant_user_id, amount, percentage in resolved_items:
+                session.add(
+                    SplitExpenseItem(
+                        split_expense_id=split_expense.id,
+                        participant_user_id=participant_user_id,
+                        amount=amount,
+                        percentage=percentage,
+                        is_settled=False,
+                    )
+                )
+
+            await queue_family_notification(
+                session,
+                family_id,
+                message=f"{user.display_name} created split details for an expense.",
+                actor_user_id=user.id,
+            )
+    except IntegrityError:
+        # `locked_write` takes ROW EXCLUSIVE locks, which do not conflict with each other, so
+        # two concurrent requests can both pass the checks above. The unique constraints on
+        # `split_expenses.expense_id` / `split_expense_group_items.expense_id` are the real
+        # guard — surface a loser as the same clean 409 instead of an unhandled 500.
+        raise_api_error(
+            status_code=status.HTTP_409_CONFLICT,
+            code="SPLIT_EXPENSE_ALREADY_EXISTS",
+            message="This expense already has split details",
         )
 
     items = await _get_split_items(split_expense.id, session)

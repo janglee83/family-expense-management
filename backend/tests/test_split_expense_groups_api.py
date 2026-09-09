@@ -310,3 +310,196 @@ async def test_list_and_get_group_detail(client: AsyncClient) -> None:
     assert detail_response.status_code == 200
     assert detail_response.json()["id"] == group_id
     assert detail_response.json()["total_amount"] == 2000
+
+
+@pytest.mark.integration
+async def test_settling_all_participants_flips_group_status_to_settled(client: AsyncClient) -> None:
+    owner = await _register(client, _unique_email(), "Owner")
+    family_id = await _create_family(client)
+    category_id = await _get_global_category_id(client, family_id)
+
+    member_email = _unique_email()
+    async with AsyncClient(
+        transport=ASGITransport(app=app), base_url="http://test"
+    ) as member_client:
+        member = await _register(member_client, member_email, "Bob")
+        assert (
+            await client.post(f"/api/v1/families/{family_id}/members", json={"email": member_email})
+        ).status_code == 201
+
+    await _create_expense(
+        client, family_id, owner["id"], category_id, 1000, True, date(2026, 9, 5)
+    )
+
+    create_response = await client.post(
+        f"/api/v1/families/{family_id}/split-expense-groups/",
+        json={
+            "period_start": "2026-09-01",
+            "period_end": "2026-09-30",
+            "method": "equal",
+            "participants": [
+                {"participant_user_id": owner["id"]},
+                {"participant_user_id": member["id"]},
+            ],
+        },
+    )
+    assert create_response.status_code == 201
+    group = create_response.json()
+    assert group["status"] == "pending"
+    assert len(group["participants"]) == 2
+
+    for participant in group["participants"]:
+        settle_response = await client.patch(
+            f"/api/v1/families/{family_id}/split-expense-groups/"
+            f"{group['id']}/participants/{participant['id']}/settle",
+            json={"is_settled": True},
+        )
+        assert settle_response.status_code == 200
+
+    detail_response = await client.get(
+        f"/api/v1/families/{family_id}/split-expense-groups/{group['id']}"
+    )
+    assert detail_response.status_code == 200
+    assert detail_response.json()["status"] == "settled"
+    assert detail_response.json()["outstanding_amount"] == 0
+    assert detail_response.json()["settled_amount"] == 1000
+
+
+@pytest.mark.integration
+async def test_create_rejects_non_family_member_participant(client: AsyncClient) -> None:
+    owner = await _register(client, _unique_email(), "Owner")
+    family_id = await _create_family(client)
+    category_id = await _get_global_category_id(client, family_id)
+    await _create_expense(
+        client, family_id, owner["id"], category_id, 1000, True, date(2026, 9, 5)
+    )
+
+    response = await client.post(
+        f"/api/v1/families/{family_id}/split-expense-groups/",
+        json={
+            "period_start": "2026-09-01",
+            "period_end": "2026-09-30",
+            "method": "equal",
+            "participants": [
+                {"participant_user_id": owner["id"]},
+                {"participant_user_id": str(uuid.uuid4())},
+            ],
+        },
+    )
+    assert response.status_code == 422
+    assert response.json()["error"]["code"] == "SPLIT_PARTICIPANT_NOT_IN_FAMILY"
+
+
+@pytest.mark.integration
+async def test_expense_already_in_another_group_is_excluded_from_a_second_groups_preview(
+    client: AsyncClient,
+) -> None:
+    owner = await _register(client, _unique_email(), "Owner")
+    family_id = await _create_family(client)
+    category_id = await _get_global_category_id(client, family_id)
+
+    member_email = _unique_email()
+    async with AsyncClient(
+        transport=ASGITransport(app=app), base_url="http://test"
+    ) as member_client:
+        member = await _register(member_client, member_email, "Bob")
+        assert (
+            await client.post(f"/api/v1/families/{family_id}/members", json={"email": member_email})
+        ).status_code == 201
+
+    await _create_expense(
+        client, family_id, owner["id"], category_id, 1000, True, date(2026, 9, 5)
+    )
+
+    first_group_response = await client.post(
+        f"/api/v1/families/{family_id}/split-expense-groups/",
+        json={
+            "period_start": "2026-09-01",
+            "period_end": "2026-09-30",
+            "method": "equal",
+            "participants": [
+                {"participant_user_id": owner["id"]},
+                {"participant_user_id": member["id"]},
+            ],
+        },
+    )
+    assert first_group_response.status_code == 201
+    assert first_group_response.json()["total_amount"] == 1000
+
+    preview_response = await client.get(
+        f"/api/v1/families/{family_id}/split-expense-groups/preview",
+        params={"period_start": "2026-09-01", "period_end": "2026-09-30"},
+    )
+    assert preview_response.status_code == 200
+    assert preview_response.json()["total_amount"] == 0
+    assert preview_response.json()["expenses"] == []
+
+
+@pytest.mark.integration
+async def test_create_rejects_zero_percentage_participant(client: AsyncClient) -> None:
+    owner = await _register(client, _unique_email(), "Owner")
+    family_id = await _create_family(client)
+    category_id = await _get_global_category_id(client, family_id)
+
+    member_email = _unique_email()
+    async with AsyncClient(
+        transport=ASGITransport(app=app), base_url="http://test"
+    ) as member_client:
+        member = await _register(member_client, member_email, "Bob")
+        assert (
+            await client.post(f"/api/v1/families/{family_id}/members", json={"email": member_email})
+        ).status_code == 201
+
+    await _create_expense(
+        client, family_id, owner["id"], category_id, 1000, True, date(2026, 9, 5)
+    )
+
+    response = await client.post(
+        f"/api/v1/families/{family_id}/split-expense-groups/",
+        json={
+            "period_start": "2026-09-01",
+            "period_end": "2026-09-30",
+            "method": "percentage",
+            "participants": [
+                {"participant_user_id": owner["id"], "percentage": 100},
+                {"participant_user_id": member["id"], "percentage": 0},
+            ],
+        },
+    )
+    assert response.status_code == 422
+    assert response.json()["error"]["code"] == "SPLIT_PERCENTAGE_AMOUNT_MISMATCH"
+
+
+@pytest.mark.integration
+async def test_create_rejects_equal_split_total_smaller_than_participant_count(
+    client: AsyncClient,
+) -> None:
+    owner = await _register(client, _unique_email(), "Owner")
+    family_id = await _create_family(client)
+    category_id = await _get_global_category_id(client, family_id)
+
+    member_email = _unique_email()
+    async with AsyncClient(
+        transport=ASGITransport(app=app), base_url="http://test"
+    ) as member_client:
+        member = await _register(member_client, member_email, "Bob")
+        assert (
+            await client.post(f"/api/v1/families/{family_id}/members", json={"email": member_email})
+        ).status_code == 201
+
+    await _create_expense(client, family_id, owner["id"], category_id, 1, True, date(2026, 9, 5))
+
+    response = await client.post(
+        f"/api/v1/families/{family_id}/split-expense-groups/",
+        json={
+            "period_start": "2026-09-01",
+            "period_end": "2026-09-30",
+            "method": "equal",
+            "participants": [
+                {"participant_user_id": owner["id"]},
+                {"participant_user_id": member["id"]},
+            ],
+        },
+    )
+    assert response.status_code == 422
+    assert response.json()["error"]["code"] == "SPLIT_PERCENTAGE_AMOUNT_MISMATCH"
