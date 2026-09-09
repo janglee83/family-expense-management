@@ -265,3 +265,48 @@ async def test_expense_already_individually_split_is_excluded_from_group(client:
     )
     assert preview_response.status_code == 200
     assert preview_response.json()["total_amount"] == 0
+
+
+@pytest.mark.integration
+async def test_list_and_get_group_detail(client: AsyncClient) -> None:
+    owner = await _register(client, _unique_email(), "Owner")
+    family_id = await _create_family(client)
+    category_id = await _get_global_category_id(client, family_id)
+    await _create_expense(
+        client, family_id, owner["id"], category_id, 2000, True, date(2026, 10, 3)
+    )
+
+    member_email = _unique_email()
+    async with AsyncClient(
+        transport=ASGITransport(app=app), base_url="http://test"
+    ) as member_client:
+        member = await _register(member_client, member_email, "Bob")
+        assert (
+            await client.post(f"/api/v1/families/{family_id}/members", json={"email": member_email})
+        ).status_code == 201
+
+    create_response = await client.post(
+        f"/api/v1/families/{family_id}/split-expense-groups/",
+        json={
+            "period_start": "2026-10-01",
+            "period_end": "2026-10-31",
+            "method": "equal",
+            "participants": [
+                {"participant_user_id": owner["id"]},
+                {"participant_user_id": member["id"]},
+            ],
+        },
+    )
+    assert create_response.status_code == 201
+    group_id = create_response.json()["id"]
+
+    list_response = await client.get(f"/api/v1/families/{family_id}/split-expense-groups/")
+    assert list_response.status_code == 200
+    assert any(item["id"] == group_id for item in list_response.json())
+
+    detail_response = await client.get(
+        f"/api/v1/families/{family_id}/split-expense-groups/{group_id}"
+    )
+    assert detail_response.status_code == 200
+    assert detail_response.json()["id"] == group_id
+    assert detail_response.json()["total_amount"] == 2000

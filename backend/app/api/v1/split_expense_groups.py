@@ -329,6 +329,34 @@ async def create_split_expense_group(
     return await _to_group_response(group, session)
 
 
+@router.get("/")
+async def list_split_expense_groups(
+    family_id: uuid.UUID,
+    _membership: Annotated[FamilyMember, Depends(get_family_membership)],
+    session: Annotated[AsyncSession, Depends(get_session)],
+) -> list[SplitExpenseGroupResponse]:
+    groups = await session.scalars(
+        select(SplitExpenseGroup)
+        .where(SplitExpenseGroup.family_id == family_id)
+        .order_by(SplitExpenseGroup.created_at.desc())
+    )
+    return [await _to_group_response(group, session) for group in groups.all()]
+
+
+# NOTE: this route MUST stay declared after `GET /preview` above — otherwise Starlette
+# would match the literal path "preview" against this `{group_id}` path parameter
+# before FastAPI gets a chance to validate it as a UUID.
+@router.get("/{group_id}")
+async def get_split_expense_group(
+    family_id: uuid.UUID,
+    group_id: uuid.UUID,
+    _membership: Annotated[FamilyMember, Depends(get_family_membership)],
+    session: Annotated[AsyncSession, Depends(get_session)],
+) -> SplitExpenseGroupResponse:
+    group = await _get_group_or_404(family_id, group_id, session)
+    return await _to_group_response(group, session)
+
+
 # NOTE: this route is required for this task's own "create + settle" integration test
 # (`test_create_equal_split_group_and_settle_each_participant`), even though the plan's
 # Interfaces section describes settle as a Task 4 addition. It follows the exact same

@@ -548,6 +548,75 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/families/{family_id}/split-expense-groups/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Split Expense Groups */
+        get: operations["list_split_expense_groups_api_v1_families__family_id__split_expense_groups__get"];
+        put?: never;
+        /** Create Split Expense Group */
+        post: operations["create_split_expense_group_api_v1_families__family_id__split_expense_groups__post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/families/{family_id}/split-expense-groups/preview": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Preview Split Expense Group */
+        get: operations["preview_split_expense_group_api_v1_families__family_id__split_expense_groups_preview_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/families/{family_id}/split-expense-groups/{group_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Split Expense Group */
+        get: operations["get_split_expense_group_api_v1_families__family_id__split_expense_groups__group_id__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/families/{family_id}/split-expense-groups/{group_id}/participants/{participant_id}/settle": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Settle Split Expense Group Participant */
+        patch: operations["settle_split_expense_group_participant_api_v1_families__family_id__split_expense_groups__group_id__participants__participant_id__settle_patch"];
+        trace?: never;
+    };
     "/api/v1/families/{family_id}/split-expenses/": {
         parameters: {
             query?: never;
@@ -1058,6 +1127,22 @@ export interface components {
             /** Source Account Id */
             source_account_id?: string | null;
             transaction_type: components["schemas"]["LedgerTransactionType"];
+        };
+        /** CreateSplitExpenseGroupRequest */
+        CreateSplitExpenseGroupRequest: {
+            method: components["schemas"]["SplitMethod"];
+            /** Participants */
+            participants: components["schemas"]["SplitParticipantInput"][];
+            /**
+             * Period End
+             * Format: date
+             */
+            period_end: string;
+            /**
+             * Period Start
+             * Format: date
+             */
+            period_start: string;
         };
         /** CreateSplitExpenseRequest */
         CreateSplitExpenseRequest: {
@@ -1607,6 +1692,14 @@ export interface components {
             /** Name */
             name: string;
         };
+        /** SettleSplitExpenseGroupParticipantRequest */
+        SettleSplitExpenseGroupParticipantRequest: {
+            /**
+             * Is Settled
+             * @default true
+             */
+            is_settled: boolean;
+        };
         /** SettleSplitExpenseItemRequest */
         SettleSplitExpenseItemRequest: {
             /**
@@ -1614,6 +1707,99 @@ export interface components {
              * @default true
              */
             is_settled: boolean;
+        };
+        /** SplitExpenseGroupExpenseSummary */
+        SplitExpenseGroupExpenseSummary: {
+            /** Amount */
+            amount: number;
+            /**
+             * Category Id
+             * Format: uuid
+             */
+            category_id: string;
+            /** Description */
+            description: string | null;
+            /**
+             * Expense Date
+             * Format: date
+             */
+            expense_date: string;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+        };
+        /** SplitExpenseGroupParticipantResponse */
+        SplitExpenseGroupParticipantResponse: {
+            /** Amount */
+            amount: number;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Is Settled */
+            is_settled: boolean;
+            /**
+             * Participant User Id
+             * Format: uuid
+             */
+            participant_user_id: string;
+            /** Percentage */
+            percentage: number | null;
+            /**
+             * Split Expense Group Id
+             * Format: uuid
+             */
+            split_expense_group_id: string;
+        };
+        /** SplitExpenseGroupPreviewResponse */
+        SplitExpenseGroupPreviewResponse: {
+            /** Expenses */
+            expenses: components["schemas"]["SplitExpenseGroupExpenseSummary"][];
+            /** Total Amount */
+            total_amount: number;
+        };
+        /** SplitExpenseGroupResponse */
+        SplitExpenseGroupResponse: {
+            /**
+             * Created By User Id
+             * Format: uuid
+             */
+            created_by_user_id: string;
+            /** Expenses */
+            expenses: components["schemas"]["SplitExpenseGroupExpenseSummary"][];
+            /**
+             * Family Id
+             * Format: uuid
+             */
+            family_id: string;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            method: components["schemas"]["SplitMethod"];
+            /** Outstanding Amount */
+            outstanding_amount: number;
+            /** Participants */
+            participants: components["schemas"]["SplitExpenseGroupParticipantResponse"][];
+            /**
+             * Period End
+             * Format: date
+             */
+            period_end: string;
+            /**
+             * Period Start
+             * Format: date
+             */
+            period_start: string;
+            /** Settled Amount */
+            settled_amount: number;
+            status: components["schemas"]["SplitStatus"];
+            /** Total Amount */
+            total_amount: number;
         };
         /** SplitExpenseItemResponse */
         SplitExpenseItemResponse: {
@@ -3399,6 +3585,175 @@ export interface operations {
                 };
                 content: {
                     "application/json": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_split_expense_groups_api_v1_families__family_id__split_expense_groups__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                family_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SplitExpenseGroupResponse"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    create_split_expense_group_api_v1_families__family_id__split_expense_groups__post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                family_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateSplitExpenseGroupRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SplitExpenseGroupResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    preview_split_expense_group_api_v1_families__family_id__split_expense_groups_preview_get: {
+        parameters: {
+            query: {
+                period_start: string;
+                period_end: string;
+            };
+            header?: never;
+            path: {
+                family_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SplitExpenseGroupPreviewResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_split_expense_group_api_v1_families__family_id__split_expense_groups__group_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                family_id: string;
+                group_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SplitExpenseGroupResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    settle_split_expense_group_participant_api_v1_families__family_id__split_expense_groups__group_id__participants__participant_id__settle_patch: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                family_id: string;
+                group_id: string;
+                participant_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SettleSplitExpenseGroupParticipantRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SplitExpenseGroupResponse"];
                 };
             };
             /** @description Validation Error */
