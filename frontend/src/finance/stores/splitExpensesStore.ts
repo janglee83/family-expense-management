@@ -233,7 +233,10 @@ export const useSplitExpensesStore = create<SplitExpensesStore>((set, get) => ({
   groupForm: defaultGroupForm,
 
   setGroupForm: (patch) => {
-    set((state) => ({ groupForm: { ...state.groupForm, ...patch }, groupPreview: null }));
+    set((state) => ({
+      groupForm: { ...state.groupForm, ...patch },
+      groupPreview: "month" in patch ? null : state.groupPreview,
+    }));
   },
 
   toggleGroupParticipant: (userId) => {
