@@ -120,7 +120,10 @@ def parse_expense_import_csv(content: str) -> ExpenseParseResult:
 
 def build_expenses_csv_rows(rows: list[dict[str, object]]) -> str:
     if not rows:
-        return "id,family_id,payer_user_id,created_by_user_id,category_id,amount,is_shared,description,expense_date,created_at\n"
+        return (
+            "id,family_id,payer_user_id,created_by_user_id,category_id,amount,"
+            "is_shared,description,expense_date,created_at\n"
+        )
 
     fieldnames = [
         "id",

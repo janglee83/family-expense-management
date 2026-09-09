@@ -25,9 +25,11 @@ from app.schemas.subscriptions import (
 )
 from app.services.finance_engine import (
     UPCOMING_RENEWAL_WINDOW_DAYS,
-    SubscriptionBillingCycle as ServiceBillingCycle,
     SubscriptionPlan,
     build_subscription_totals,
+)
+from app.services.finance_engine import (
+    SubscriptionBillingCycle as ServiceBillingCycle,
 )
 
 router = APIRouter()

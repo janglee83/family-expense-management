@@ -143,7 +143,8 @@ def upgrade() -> None:
             name="ck_ledger_transactions_amount_positive",
         ),
         sa.CheckConstraint(
-            "source_account_id IS NULL OR destination_account_id IS NULL OR source_account_id <> destination_account_id",
+            "source_account_id IS NULL OR destination_account_id IS NULL"
+            " OR source_account_id <> destination_account_id",
             name="ck_ledger_transactions_distinct_accounts",
         ),
     )

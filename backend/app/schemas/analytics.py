@@ -17,7 +17,7 @@ class AnalyticsWindowParams(BaseModel):
     end_date: date
 
     @model_validator(mode="after")
-    def _validate_range(self) -> "AnalyticsWindowParams":
+    def _validate_range(self) -> AnalyticsWindowParams:
         if self.end_date < self.start_date:
             raise ValueError("end_date must be >= start_date")
         return self

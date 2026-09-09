@@ -420,7 +420,7 @@ async def restore_undo_action(
             payer_user_id=uuid.UUID(str(payload["payer_user_id"])),
             created_by_user_id=uuid.UUID(str(payload["created_by_user_id"])),
             category_id=uuid.UUID(str(payload["category_id"])),
-            amount=int(payload["amount"]),
+            amount=int(str(payload["amount"])),
             is_shared=bool(payload["is_shared"]),
             description=(
                 str(payload["description"]) if payload.get("description") is not None else None

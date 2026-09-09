@@ -1,5 +1,5 @@
 import uuid
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, status
@@ -112,7 +112,9 @@ async def _validate_participants(
         )
 
 
-def _resolve_split_amounts(payload: CreateSplitExpenseRequest, total_amount: int) -> list[tuple[uuid.UUID, int, int | None]]:
+def _resolve_split_amounts(
+    payload: CreateSplitExpenseRequest, total_amount: int
+) -> list[tuple[uuid.UUID, int, int | None]]:
     if payload.method == SplitMethod.EQUAL:
         amounts = resolve_equal_split_amounts(total_amount, len(payload.participants))
         return [
@@ -333,7 +335,7 @@ async def settle_split_expense_item(
             require_owner_admin_or_creator(membership, split_expense.created_by_user_id)
 
         split_item.is_settled = payload.is_settled
-        split_item.settled_at = datetime.now(timezone.utc) if payload.is_settled else None
+        split_item.settled_at = datetime.now(UTC) if payload.is_settled else None
 
         await _refresh_split_status(split_expense, session)
         await queue_family_notification(

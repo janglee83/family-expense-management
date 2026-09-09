@@ -35,7 +35,8 @@ def upgrade() -> None:
     op.create_check_constraint(
         "ck_families_monthly_income_enabled_consistent",
         "families",
-        "(NOT monthly_income_enabled AND monthly_income IS NULL) OR (monthly_income_enabled AND monthly_income IS NOT NULL)",
+        "(NOT monthly_income_enabled AND monthly_income IS NULL)"
+        " OR (monthly_income_enabled AND monthly_income IS NOT NULL)",
     )
 
 

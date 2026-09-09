@@ -28,7 +28,8 @@ class LedgerTransaction(Base):
     __table_args__ = (
         CheckConstraint("amount > 0", name="ck_ledger_transactions_amount_positive"),
         CheckConstraint(
-            "source_account_id IS NULL OR destination_account_id IS NULL OR source_account_id <> destination_account_id",
+            "source_account_id IS NULL OR destination_account_id IS NULL"
+            " OR source_account_id <> destination_account_id",
             name="ck_ledger_transactions_distinct_accounts",
         ),
     )
