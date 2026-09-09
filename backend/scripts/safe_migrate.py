@@ -237,6 +237,12 @@ def main() -> int:
         try:
             alembic_config.attributes["connection"] = connection
             command.upgrade(alembic_config, target_revision)
+            # Alembic's "shared connection" recipe leaves commit to the caller:
+            # env.py's run_migrations_online() only calls context.begin_transaction()
+            # around the upgrade, it never commits. Without this, the engine
+            # Connection (SQLAlchemy 2.0, non-autocommit) silently rolls back
+            # every DDL statement when the `with` block below closes it.
+            connection.commit()
         finally:
             _release_advisory_lock(connection)
 
