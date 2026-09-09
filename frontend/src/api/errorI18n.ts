@@ -1,5 +1,6 @@
-import type { TFunction } from "i18next";
 import { ApiError } from "./errors";
+
+type TranslateFn = (key: string, options?: Record<string, unknown>) => string;
 
 const ERROR_TRANSLATION_KEYS: Record<string, string> = {
   AUTH_EMAIL_ALREADY_REGISTERED: "auth.emailInUse",
@@ -17,6 +18,10 @@ const ERROR_TRANSLATION_KEYS: Record<string, string> = {
   SPLIT_PERCENTAGE_AMOUNT_MISMATCH: "finance.splitPercentageAmountMismatch",
   SPLIT_EXPENSE_NOT_FOUND: "finance.splitExpenseNotFound",
   SPLIT_EXPENSE_ITEM_NOT_FOUND: "finance.splitItemNotFound",
+  SPLIT_GROUP_NO_ELIGIBLE_EXPENSES: "finance.splitGroupNoEligibleExpenses",
+  SPLIT_GROUP_INVALID_PERIOD: "finance.splitGroupInvalidPeriod",
+  SPLIT_EXPENSE_GROUP_NOT_FOUND: "finance.splitGroupNotFound",
+  SPLIT_EXPENSE_GROUP_PARTICIPANT_NOT_FOUND: "finance.splitGroupParticipantNotFound",
   UNDO_ACTION_NOT_FOUND: "finance.undoActionNotFound",
   UNDO_ACTION_EXPIRED: "finance.undoActionExpired",
   UNDO_ACTION_ALREADY_USED: "finance.undoActionAlreadyUsed",
@@ -44,7 +49,7 @@ function resolveCode(error: unknown): string | null {
 }
 
 export function translateApiError(
-  t: TFunction,
+  t: TranslateFn,
   error: unknown,
   fallbackKey: string,
 ): string {
