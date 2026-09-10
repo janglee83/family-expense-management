@@ -118,3 +118,38 @@ class SplitExpenseGroupParticipant(Base):
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), nullable=False
     )
+
+
+class SplitExpenseGroupSettlement(Base):
+    __tablename__ = "split_expense_group_settlements"
+    __table_args__ = (
+        CheckConstraint(
+            "amount > 0", name="ck_split_expense_group_settlements_amount_positive"
+        ),
+        CheckConstraint(
+            "from_user_id <> to_user_id",
+            name="ck_split_expense_group_settlements_distinct_users",
+        ),
+    )
+
+    id: Mapped[uuid.UUID] = mapped_column(
+        PGUUID(as_uuid=True), primary_key=True, default=uuid.uuid4
+    )
+    split_expense_group_id: Mapped[uuid.UUID] = mapped_column(
+        PGUUID(as_uuid=True),
+        ForeignKey("split_expense_groups.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    from_user_id: Mapped[uuid.UUID] = mapped_column(
+        PGUUID(as_uuid=True), ForeignKey("users.id"), nullable=False
+    )
+    to_user_id: Mapped[uuid.UUID] = mapped_column(
+        PGUUID(as_uuid=True), ForeignKey("users.id"), nullable=False
+    )
+    amount: Mapped[int] = mapped_column(Integer, nullable=False)
+    is_settled: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+    settled_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), nullable=False
+    )

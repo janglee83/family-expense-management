@@ -13,6 +13,7 @@ from app.models.split_expense_group import (
     SplitExpenseGroup,
     SplitExpenseGroupItem,
     SplitExpenseGroupParticipant,
+    SplitExpenseGroupSettlement,
 )
 from app.models.subscription import (
     Subscription,
@@ -41,6 +42,7 @@ __all__ = [
     "SplitExpenseGroup",
     "SplitExpenseGroupItem",
     "SplitExpenseGroupParticipant",
+    "SplitExpenseGroupSettlement",
     "SplitExpenseItem",
     "SplitMethod",
     "SplitStatus",
