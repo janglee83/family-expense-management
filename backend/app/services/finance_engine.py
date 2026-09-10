@@ -6,7 +6,7 @@ from datetime import date, timedelta
 from enum import StrEnum
 from math import ceil, floor, sqrt
 from statistics import fmean
-from typing import Generic, Literal, TypeVar
+from typing import Literal
 
 
 class LedgerTransactionType(StrEnum):
@@ -339,25 +339,22 @@ def resolve_percentage_split_amounts(total_amount: int, percentages: list[int]) 
     return floored
 
 
-T = TypeVar("T")
-
-
 @dataclass(frozen=True)
-class DebtSettlement(Generic[T]):
+class DebtSettlement[T]:
     from_id: T
     to_id: T
     amount: int
 
 
 @dataclass
-class _BalanceRecord(Generic[T]):
+class _BalanceRecord[T]:
     """Internal mutable record for tracking participant balance during settlement."""
 
     id: T
     amount: int
 
 
-def compute_debt_settlements(net_balance_by_id: dict[T, int]) -> list[DebtSettlement[T]]:
+def compute_debt_settlements[T](net_balance_by_id: dict[T, int]) -> list[DebtSettlement[T]]:
     """Greedy largest-creditor/largest-debtor matching.
 
     `net_balance_by_id` is `paid - fair_share` per person: positive means the
