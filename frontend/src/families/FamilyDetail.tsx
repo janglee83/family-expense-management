@@ -198,61 +198,64 @@ export function FamilyDetail() {
           title={detail.name}
           description={summaryText}
           actions={
-            <div className="flex flex-wrap items-center gap-2" data-tour="family-detail-actions">
+            <nav className="surface-card flex flex-wrap items-center gap-2 p-2" data-tour="family-detail-actions" aria-label={t("finance.sections")}>
               <Link
                 to={`/families/${familyId}/expenses`}
                 data-tour="family-go-expenses"
-                className={buttonClassName({ variant: "outline", className: "no-underline" })}
+                className={buttonClassName({ variant: "ghost", size: "sm", className: "no-underline" })}
               >
                 {t("expense.myExpenses")}
               </Link>
 {/*              <Link
                 to={`/families/${familyId}/receipts`}
                 data-tour="family-go-receipts"
-                className={buttonClassName({ variant: "outline", className: "no-underline" })}
+                className={buttonClassName({ variant: "ghost", size: "sm", className: "no-underline" })}
               >
                 {t("receipt.myReceipts")}
               </Link>*/}
-
-              <nav className="surface-card flex flex-wrap gap-2 p-2" aria-label={t("finance.sections")}>
-                <Link
-                  to={`/families/${familyId}/finance/accounts`}
-                  className={buttonClassName({ variant: "ghost", size: "sm", className: "no-underline" })}
-                >
-                  {t("finance.accountsLedger")}
-                </Link>
-                <Link
-                  to={`/families/${familyId}/finance/goals`}
-                  className={buttonClassName({ variant: "ghost", size: "sm", className: "no-underline" })}
-                >
-                  {t("finance.goals")}
-                </Link>
-                <Link
-                  to={`/families/${familyId}/finance/subscriptions`}
-                  className={buttonClassName({ variant: "ghost", size: "sm", className: "no-underline" })}
-                >
-                  {t("finance.subscriptions")}
-                </Link>
-                <Link
-                  to={`/families/${familyId}/finance/splits`}
-                  className={buttonClassName({ variant: "ghost", size: "sm", className: "no-underline" })}
-                >
-                  {t("finance.splitExpenses")}
-                </Link>
-                <Link
-                  to={`/families/${familyId}/finance/data`}
-                  className={buttonClassName({ variant: "ghost", size: "sm", className: "no-underline" })}
-                >
-                  {t("finance.dataOps")}
-                </Link>
-              </nav>
+              <Link
+                to={`/families/${familyId}/finance/accounts`}
+                className={buttonClassName({ variant: "ghost", size: "sm", className: "no-underline" })}
+              >
+                {t("finance.accountsLedger")}
+              </Link>
+              <Link
+                to={`/families/${familyId}/finance/goals`}
+                className={buttonClassName({ variant: "ghost", size: "sm", className: "no-underline" })}
+              >
+                {t("finance.goals")}
+              </Link>
+              <Link
+                to={`/families/${familyId}/finance/subscriptions`}
+                className={buttonClassName({ variant: "ghost", size: "sm", className: "no-underline" })}
+              >
+                {t("finance.subscriptions")}
+              </Link>
+              <Link
+                to={`/families/${familyId}/finance/splits`}
+                className={buttonClassName({ variant: "ghost", size: "sm", className: "no-underline" })}
+              >
+                {t("finance.splitExpenses")}
+              </Link>
+              <Link
+                to={`/families/${familyId}/finance/data`}
+                className={buttonClassName({ variant: "ghost", size: "sm", className: "no-underline" })}
+              >
+                {t("finance.dataOps")}
+              </Link>
 
               {isOwner && (
-                <Button type="button" variant="destructive" onClick={() => setIsDeleteModalOpen(true)}>
+                <Button
+                  type="button"
+                  variant="destructive"
+                  size="sm"
+                  className="sm:ml-auto"
+                  onClick={() => setIsDeleteModalOpen(true)}
+                >
                   {t("family.delete")}
                 </Button>
               )}
-            </div>
+            </nav>
           }
         />
 
