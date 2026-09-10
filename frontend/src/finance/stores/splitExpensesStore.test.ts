@@ -68,6 +68,67 @@ describe("splitExpensesStore", () => {
     expect(state.groupForm.participantIds).toEqual(["u1", "u2"]);
   });
 
+  it("saveGroup calls createSplitExpenseGroup when not editing", async () => {
+    vi.mocked(financeApi.createSplitExpenseGroup).mockResolvedValue({} as never);
+    vi.mocked(financeApi.listSplitExpenseGroups).mockResolvedValue([]);
+    useSplitExpensesStore.setState({
+      groupPreview: { total_amount: 100, expenses: [] },
+      editingGroupId: null,
+      groupForm: {
+        fromMonth: "2026-09",
+        toMonth: "2026-09",
+        method: "equal",
+        participantIds: ["u1", "u2"],
+        customAmountByParticipant: {},
+        percentageByParticipant: {},
+      },
+    });
+
+    await useSplitExpensesStore.getState().saveGroup("family-1", identityT, () => {});
+
+    expect(financeApi.createSplitExpenseGroup).toHaveBeenCalledWith(
+      "family-1",
+      expect.objectContaining({
+        period_start: "2026-09-01",
+        period_end: "2026-09-30",
+        method: "equal",
+        participants: [{ participant_user_id: "u1" }, { participant_user_id: "u2" }],
+      }),
+    );
+    expect(financeApi.updateSplitExpenseGroup).not.toHaveBeenCalled();
+  });
+
+  it("saveGroup calls updateSplitExpenseGroup with the full payload when editing", async () => {
+    vi.mocked(financeApi.updateSplitExpenseGroup).mockResolvedValue({} as never);
+    vi.mocked(financeApi.listSplitExpenseGroups).mockResolvedValue([]);
+    useSplitExpensesStore.setState({
+      groupPreview: { total_amount: 100, expenses: [] },
+      editingGroupId: "group-1",
+      groupForm: {
+        fromMonth: "2026-09",
+        toMonth: "2026-10",
+        method: "equal",
+        participantIds: ["u1", "u2"],
+        customAmountByParticipant: {},
+        percentageByParticipant: {},
+      },
+    });
+
+    await useSplitExpensesStore.getState().saveGroup("family-1", identityT, () => {});
+
+    expect(financeApi.updateSplitExpenseGroup).toHaveBeenCalledWith(
+      "family-1",
+      "group-1",
+      expect.objectContaining({
+        period_start: "2026-09-01",
+        period_end: "2026-10-31",
+        method: "equal",
+        participants: [{ participant_user_id: "u1" }, { participant_user_id: "u2" }],
+      }),
+    );
+    expect(financeApi.createSplitExpenseGroup).not.toHaveBeenCalled();
+  });
+
   it("cancelEditGroup clears editingGroupId and resets the form", () => {
     useSplitExpensesStore.setState({ editingGroupId: "group-1" });
 

@@ -28,6 +28,19 @@ describe("MonthRangePicker", () => {
     expect(onChange).toHaveBeenCalledWith({ fromMonth: "2026-12", toMonth: "2026-12" });
   });
 
+  it("resyncs both year grids when the from/to month props change after mount", () => {
+    const { rerender } = render(<MonthRangePicker fromMonth="2026-09" toMonth="2026-09" onChange={vi.fn()} />);
+
+    fireEvent.click(screen.getByRole("button", { name: /2026-09/ }));
+    expect(within(screen.getByRole("group", { name: /from/i })).getByText("2026")).toBeInTheDocument();
+
+    // e.g. starting an edit on a group whose period is in different years.
+    rerender(<MonthRangePicker fromMonth="2024-03" toMonth="2025-11" onChange={vi.fn()} />);
+
+    expect(within(screen.getByRole("group", { name: /from/i })).getByText("2024")).toBeInTheDocument();
+    expect(within(screen.getByRole("group", { name: /to/i })).getByText("2025")).toBeInTheDocument();
+  });
+
   it("selecting a to-month before the current from-month pulls the from-month back", () => {
     const onChange = vi.fn();
     render(<MonthRangePicker fromMonth="2026-09" toMonth="2026-09" onChange={onChange} />);

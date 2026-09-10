@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Popover, PopoverContent } from "../components/ui/primitives";
 import { Button } from "../components/ui/Button";
@@ -30,6 +30,17 @@ export function MonthRangePicker({ fromMonth, toMonth, onChange }: MonthRangePic
   const [isOpen, setIsOpen] = useState(false);
   const [fromYear, setFromYear] = useState(() => parseYearMonth(fromMonth).year);
   const [toYear, setToYear] = useState(() => parseYearMonth(toMonth).year);
+
+  // The year grids are local state so the user can browse years without changing the
+  // selection, but they must follow the props when the parent replaces the range
+  // outright (e.g. starting an edit on a group from a different year).
+  useEffect(() => {
+    setFromYear(parseYearMonth(fromMonth).year);
+  }, [fromMonth]);
+
+  useEffect(() => {
+    setToYear(parseYearMonth(toMonth).year);
+  }, [toMonth]);
 
   function selectFrom(month: string) {
     const nextFrom = `${fromYear}-${month}`;

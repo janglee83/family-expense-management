@@ -397,13 +397,20 @@ export async function previewSplitExpenseGroup(
   familyId: string,
   periodStart: string,
   periodEnd: string,
+  excludeGroupId?: string,
 ): Promise<SplitExpenseGroupPreview> {
   const { data, error, response } = await apiClient.GET(
     "/api/v1/families/{family_id}/split-expense-groups/preview",
     {
       params: {
         path: { family_id: familyId },
-        query: { period_start: periodStart, period_end: periodEnd },
+        query: {
+          period_start: periodStart,
+          period_end: periodEnd,
+          // Keeps the edited group's own expenses eligible instead of filtered
+          // out as "already claimed by a group".
+          group_id: excludeGroupId ?? null,
+        },
       },
     },
   );
@@ -459,11 +466,17 @@ export async function listSplitExpenseGroups(familyId: string): Promise<SplitExp
 export async function previewSplitExpenseGroupSettlement(
   familyId: string,
   input: CreateSplitExpenseGroupInput,
+  excludeGroupId?: string,
 ): Promise<SplitExpenseGroupSettlementPreview> {
   const { data, error, response } = await apiClient.POST(
     "/api/v1/families/{family_id}/split-expense-groups/preview-settlement",
     {
-      params: { path: { family_id: familyId } },
+      params: {
+        path: { family_id: familyId },
+        // Same purpose as in `previewSplitExpenseGroup`: keep the edited group's
+        // own expenses in the settlement plan.
+        query: { group_id: excludeGroupId ?? null },
+      },
       body: input,
     },
   );

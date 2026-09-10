@@ -301,12 +301,17 @@ export const useSplitExpensesStore = create<SplitExpensesStore>((set, get) => ({
   },
 
   previewGroup: async (familyId, t) => {
-    const { groupForm } = get();
+    const { groupForm, editingGroupId } = get();
     const { periodStart, periodEnd } = rangeToDateRange(groupForm.fromMonth, groupForm.toMonth);
 
     set({ isPreviewLoading: true, error: null, settlementPreview: null });
     try {
-      const preview = await previewSplitExpenseGroup(familyId, periodStart, periodEnd);
+      const preview = await previewSplitExpenseGroup(
+        familyId,
+        periodStart,
+        periodEnd,
+        editingGroupId ?? undefined,
+      );
       set({ groupPreview: preview });
     } catch (error) {
       set({ error: translateApiError(t, error, "expense.actionFailed") });
@@ -316,7 +321,7 @@ export const useSplitExpensesStore = create<SplitExpensesStore>((set, get) => ({
   },
 
   previewGroupSettlement: async (familyId, t) => {
-    const { groupForm } = get();
+    const { groupForm, editingGroupId } = get();
     const { periodStart, periodEnd } = rangeToDateRange(groupForm.fromMonth, groupForm.toMonth);
     const participants = groupForm.participantIds.map((participantId) => {
       const base = { participant_user_id: participantId };
@@ -331,12 +336,16 @@ export const useSplitExpensesStore = create<SplitExpensesStore>((set, get) => ({
 
     set({ isSettlementPreviewLoading: true, error: null });
     try {
-      const preview = await previewSplitExpenseGroupSettlement(familyId, {
-        period_start: periodStart,
-        period_end: periodEnd,
-        method: groupForm.method,
-        participants,
-      });
+      const preview = await previewSplitExpenseGroupSettlement(
+        familyId,
+        {
+          period_start: periodStart,
+          period_end: periodEnd,
+          method: groupForm.method,
+          participants,
+        },
+        editingGroupId ?? undefined,
+      );
       set({ settlementPreview: preview });
     } catch (error) {
       set({ error: translateApiError(t, error, "expense.actionFailed") });
@@ -348,7 +357,9 @@ export const useSplitExpensesStore = create<SplitExpensesStore>((set, get) => ({
   startEditGroup: (group) => {
     set({
       editingGroupId: group.id,
-      groupPreview: null,
+      // Seed the preview from the group itself so the edit form renders immediately
+      // with the right expense list, without waiting on (or racing) a preview call.
+      groupPreview: { total_amount: group.total_amount, expenses: group.expenses },
       settlementPreview: null,
       groupForm: {
         fromMonth: dateToYearMonth(group.period_start),
