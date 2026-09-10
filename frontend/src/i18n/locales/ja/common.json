@@ -228,6 +228,10 @@
     "noExpenses": "まだ支出データがありません"
   },
   "finance": {
+    "fromMonth": "開始月",
+    "toMonth": "終了月",
+    "previousYear": "前年",
+    "nextYear": "翌年",
     "sections": "家計セクション",
     "backToFamily": "家族へ戻る",
     "accountsLedger": "口座と台帳",

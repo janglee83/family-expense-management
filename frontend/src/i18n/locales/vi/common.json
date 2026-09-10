@@ -228,6 +228,10 @@
     "noExpenses": "Chưa có dữ liệu chi tiêu"
   },
   "finance": {
+    "fromMonth": "Từ tháng",
+    "toMonth": "Đến tháng",
+    "previousYear": "Năm trước",
+    "nextYear": "Năm sau",
     "sections": "Các mục tài chính",
     "backToFamily": "Trở về gia đình",
     "accountsLedger": "Tài khoản và sổ cái",
