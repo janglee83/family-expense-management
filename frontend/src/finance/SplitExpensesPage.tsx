@@ -73,6 +73,14 @@ export function SplitExpensesPage() {
 
   const memberName = (userId: string) => memberNameById[userId] ?? userId;
 
+  const myRole = family?.members.find((member) => member.user_id === user?.id)?.role;
+
+  // Mirrors the backend's `require_owner_admin_or_creator`: the group's creator, or
+  // anyone with an owner/admin role, may edit the group and settle any of its edges.
+  function canManageGroup(group: SplitExpenseGroup): boolean {
+    return group.created_by_user_id === user?.id || myRole === "owner" || myRole === "admin";
+  }
+
   const splitMethodLabel = (methodValue: SplitMethod) => t(`finance.splitMethodValues.${methodValue}`);
   const splitStatusLabel = (statusValue: SplitExpense["status"]) => t(`finance.splitStatusValues.${statusValue}`);
 
@@ -360,9 +368,11 @@ export function SplitExpensesPage() {
                         <span className="font-mono text-sm text-foreground">
                           {formatMoney(group.total_amount, currencyCode)}
                         </span>
-                        <Button type="button" size="sm" variant="outline" onClick={() => handleEditGroupClick(group)}>
-                          {t("finance.editGroupSplit")}
-                        </Button>
+                        {canManageGroup(group) ? (
+                          <Button type="button" size="sm" variant="outline" onClick={() => handleEditGroupClick(group)}>
+                            {t("finance.editGroupSplit")}
+                          </Button>
+                        ) : null}
                       </div>
                     </div>
                     <p className="text-sm text-muted-foreground">
@@ -410,7 +420,9 @@ export function SplitExpensesPage() {
                               <Badge variant={settlement.is_settled ? "success" : "warning"}>
                                 {settlement.is_settled ? t("finance.settled") : t("finance.unsettled")}
                               </Badge>
-                              {settlement.from_user_id === user?.id || settlement.to_user_id === user?.id ? (
+                              {settlement.from_user_id === user?.id ||
+                              settlement.to_user_id === user?.id ||
+                              canManageGroup(group) ? (
                                 <Button
                                   type="button"
                                   size="sm"
