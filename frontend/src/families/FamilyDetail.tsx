@@ -213,36 +213,40 @@ export function FamilyDetail() {
               >
                 {t("receipt.myReceipts")}
               </Link>*/}
-              <Link
-                to={`/families/${familyId}/finance/accounts`}
-                className={buttonClassName({ variant: "outline", className: "no-underline" })}
-              >
-                {t("finance.accountsLedger")}
-              </Link>
-              <Link
-                to={`/families/${familyId}/finance/goals`}
-                className={buttonClassName({ variant: "outline", className: "no-underline" })}
-              >
-                {t("finance.goals")}
-              </Link>
-              <Link
-                to={`/families/${familyId}/finance/subscriptions`}
-                className={buttonClassName({ variant: "outline", className: "no-underline" })}
-              >
-                {t("finance.subscriptions")}
-              </Link>
-              <Link
-                to={`/families/${familyId}/finance/splits`}
-                className={buttonClassName({ variant: "outline", className: "no-underline" })}
-              >
-                {t("finance.splitExpenses")}
-              </Link>
-              <Link
-                to={`/families/${familyId}/finance/data`}
-                className={buttonClassName({ variant: "outline", className: "no-underline" })}
-              >
-                {t("finance.dataOps")}
-              </Link>
+
+              <nav className="surface-card flex flex-wrap gap-2 p-2" aria-label={t("finance.sections")}>
+                <Link
+                  to={`/families/${familyId}/finance/accounts`}
+                  className={buttonClassName({ variant: "ghost", size: "sm", className: "no-underline" })}
+                >
+                  {t("finance.accountsLedger")}
+                </Link>
+                <Link
+                  to={`/families/${familyId}/finance/goals`}
+                  className={buttonClassName({ variant: "ghost", size: "sm", className: "no-underline" })}
+                >
+                  {t("finance.goals")}
+                </Link>
+                <Link
+                  to={`/families/${familyId}/finance/subscriptions`}
+                  className={buttonClassName({ variant: "ghost", size: "sm", className: "no-underline" })}
+                >
+                  {t("finance.subscriptions")}
+                </Link>
+                <Link
+                  to={`/families/${familyId}/finance/splits`}
+                  className={buttonClassName({ variant: "ghost", size: "sm", className: "no-underline" })}
+                >
+                  {t("finance.splitExpenses")}
+                </Link>
+                <Link
+                  to={`/families/${familyId}/finance/data`}
+                  className={buttonClassName({ variant: "ghost", size: "sm", className: "no-underline" })}
+                >
+                  {t("finance.dataOps")}
+                </Link>
+              </nav>
+
               {isOwner && (
                 <Button type="button" variant="destructive" onClick={() => setIsDeleteModalOpen(true)}>
                   {t("family.delete")}

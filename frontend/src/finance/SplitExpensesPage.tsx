@@ -27,15 +27,8 @@ export function SplitExpensesPage() {
     expenses,
     splits,
     isLoading,
-    isSaving,
     error,
-    form,
-    setForm,
-    toggleParticipant,
-    setCustomAmount,
-    setPercentage,
     load,
-    createSplit,
     toggleSettle,
     groups,
     groupPreview,
@@ -70,15 +63,6 @@ export function SplitExpensesPage() {
 
   const splitMethodLabel = (methodValue: SplitMethod) => t(`finance.splitMethodValues.${methodValue}`);
   const splitStatusLabel = (statusValue: SplitExpense["status"]) => t(`finance.splitStatusValues.${statusValue}`);
-
-  function handleCreateSplit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    if (!familyId) {
-      return;
-    }
-
-    void createSplit(familyId, t, showSnackbar);
-  }
 
   function handleToggleSettle(splitId: string, itemId: string, currentState: boolean) {
     if (!familyId) {
@@ -157,85 +141,6 @@ export function SplitExpensesPage() {
             </CardHeader>
           </Card>
         </section>
-
-        <Card>
-          <CardHeader>
-            <CardTitle>{t("finance.createSplit")}</CardTitle>
-            <CardDescription>{t("finance.createSplitDescription")}</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <form className="space-y-4" onSubmit={handleCreateSplit}>
-              <Field label={t("finance.expense")} htmlFor="finance-split-expense" required>
-                <select
-                  id="finance-split-expense"
-                  value={form.expenseId}
-                  onChange={(event) => setForm({ expenseId: event.target.value })}
-                  required
-                >
-                  <option value="">-</option>
-                  {expenses.map((expense) => (
-                    <option key={expense.id} value={expense.id}>
-                      {expense.expense_date} • {formatMoney(expense.amount, currencyCode)}
-                    </option>
-                  ))}
-                </select>
-              </Field>
-
-              <Field label={t("finance.splitMethod")} htmlFor="finance-split-method" required>
-                <select
-                  id="finance-split-method"
-                  value={form.method}
-                  onChange={(event) => setForm({ method: event.target.value as SplitMethod })}
-                >
-                  {SPLIT_METHODS.map((item) => (
-                    <option key={item} value={item}>
-                      {splitMethodLabel(item)}
-                    </option>
-                  ))}
-                </select>
-              </Field>
-
-              <fieldset className="space-y-3 rounded-md border border-border/80 p-3">
-                <legend className="px-1 text-sm font-medium text-foreground">{t("finance.participants")}</legend>
-                {family?.members.map((member) => (
-                  <label key={member.user_id} className="flex flex-wrap items-center gap-3">
-                    <input
-                      type="checkbox"
-                      checked={form.participantIds.includes(member.user_id)}
-                      onChange={() => toggleParticipant(member.user_id)}
-                    />
-                    <span className="text-sm text-foreground">{member.display_name}</span>
-                    {form.method === "custom" && form.participantIds.includes(member.user_id) ? (
-                      <input
-                        type="number"
-                        className="max-w-36"
-                        min={0}
-                        placeholder={t("expense.amount")}
-                        value={form.customAmountByParticipant[member.user_id] ?? ""}
-                        onChange={(event) => setCustomAmount(member.user_id, event.target.value)}
-                      />
-                    ) : null}
-                    {form.method === "percentage" && form.participantIds.includes(member.user_id) ? (
-                      <input
-                        type="number"
-                        className="max-w-28"
-                        min={0}
-                        max={100}
-                        placeholder="%"
-                        value={form.percentageByParticipant[member.user_id] ?? ""}
-                        onChange={(event) => setPercentage(member.user_id, event.target.value)}
-                      />
-                    ) : null}
-                  </label>
-                ))}
-              </fieldset>
-
-              <Button type="submit" loading={isSaving}>
-                {t("finance.createSplit")}
-              </Button>
-            </form>
-          </CardContent>
-        </Card>
 
         <Card>
           <CardHeader>

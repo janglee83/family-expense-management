@@ -6,6 +6,7 @@ import { useAuth } from "../../auth/useAuth";
 import { LanguageSwitcher } from "../LanguageSwitcher";
 import { NotificationCenter } from "../NotificationCenter";
 import { OnboardingGuide } from "../OnboardingGuide";
+import { ThemeToggle } from "../ThemeToggle";
 import { buttonClassName } from "./buttonClassName";
 
 function SidebarLink({
@@ -187,6 +188,7 @@ export function PageFrame({ children }: { children: ReactNode }) {
                 </svg>
               </button>
               <LanguageSwitcher />
+              <ThemeToggle />
               <NotificationCenter />
               <OnboardingGuide />
             </header>
