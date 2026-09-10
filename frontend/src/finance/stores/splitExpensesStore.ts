@@ -8,11 +8,14 @@ import {
   listSplitExpenseGroups,
   listSplitExpenses,
   previewSplitExpenseGroup,
-  settleSplitExpenseGroupParticipant,
+  previewSplitExpenseGroupSettlement,
+  settleSplitExpenseGroupSettlement,
   settleSplitExpenseItem,
+  updateSplitExpenseGroup,
   type SplitExpense,
   type SplitExpenseGroup,
   type SplitExpenseGroupPreview,
+  type SplitExpenseGroupSettlementPreview,
   type SplitMethod,
 } from "../financeApi";
 import type { Notify, Translate } from "./types";
@@ -26,7 +29,8 @@ interface SplitFormState {
 }
 
 interface GroupFormState {
-  month: string;
+  fromMonth: string;
+  toMonth: string;
   method: SplitMethod;
   participantIds: string[];
   customAmountByParticipant: Record<string, string>;
@@ -38,15 +42,18 @@ function currentYearMonth(): string {
   return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
 }
 
-function monthToDateRange(month: string): { periodStart: string; periodEnd: string } {
-  const [yearText, monthText] = month.split("-");
-  const year = Number(yearText);
-  const monthIndex = Number(monthText) - 1;
-  const start = new Date(year, monthIndex, 1);
-  const end = new Date(year, monthIndex + 1, 0);
+function rangeToDateRange(fromMonth: string, toMonth: string): { periodStart: string; periodEnd: string } {
+  const [fromYearText, fromMonthText] = fromMonth.split("-");
+  const [toYearText, toMonthText] = toMonth.split("-");
+  const start = new Date(Number(fromYearText), Number(fromMonthText) - 1, 1);
+  const end = new Date(Number(toYearText), Number(toMonthText), 0);
   const toIso = (date: Date) =>
     `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
   return { periodStart: toIso(start), periodEnd: toIso(end) };
+}
+
+function dateToYearMonth(isoDate: string): string {
+  return isoDate.slice(0, 7);
 }
 
 interface SplitExpensesStore {
@@ -77,16 +84,23 @@ interface SplitExpensesStore {
   isPreviewLoading: boolean;
   isGroupSaving: boolean;
   groupForm: GroupFormState;
-  setGroupForm: (patch: Partial<GroupFormState>) => void;
+  editingGroupId: string | null;
+  settlementPreview: SplitExpenseGroupSettlementPreview | null;
+  isSettlementPreviewLoading: boolean;
+  setGroupRange: (range: { fromMonth: string; toMonth: string }) => void;
+  setGroupForm: (patch: Partial<Omit<GroupFormState, "fromMonth" | "toMonth">>) => void;
   toggleGroupParticipant: (userId: string) => void;
   setGroupCustomAmount: (userId: string, amount: string) => void;
   setGroupPercentage: (userId: string, percentage: string) => void;
   previewGroup: (familyId: string, t: Translate) => Promise<void>;
-  createGroup: (familyId: string, t: Translate, notify: Notify) => Promise<void>;
-  toggleGroupParticipantSettle: (
+  previewGroupSettlement: (familyId: string, t: Translate) => Promise<void>;
+  startEditGroup: (group: SplitExpenseGroup) => void;
+  cancelEditGroup: () => void;
+  saveGroup: (familyId: string, t: Translate, notify: Notify) => Promise<void>;
+  settleGroupSettlement: (
     familyId: string,
     groupId: string,
-    participantId: string,
+    settlementId: string,
     currentState: boolean,
     t: Translate,
     notify: Notify,
@@ -102,7 +116,8 @@ const defaultForm: SplitFormState = {
 };
 
 const defaultGroupForm: GroupFormState = {
-  month: currentYearMonth(),
+  fromMonth: currentYearMonth(),
+  toMonth: currentYearMonth(),
   method: "equal",
   participantIds: [],
   customAmountByParticipant: {},
@@ -231,11 +246,22 @@ export const useSplitExpensesStore = create<SplitExpensesStore>((set, get) => ({
   isPreviewLoading: false,
   isGroupSaving: false,
   groupForm: defaultGroupForm,
+  editingGroupId: null,
+  settlementPreview: null,
+  isSettlementPreviewLoading: false,
+
+  setGroupRange: (range) => {
+    set((state) => ({
+      groupForm: { ...state.groupForm, ...range },
+      groupPreview: null,
+      settlementPreview: null,
+    }));
+  },
 
   setGroupForm: (patch) => {
     set((state) => ({
       groupForm: { ...state.groupForm, ...patch },
-      groupPreview: "month" in patch ? null : state.groupPreview,
+      settlementPreview: null,
     }));
   },
 
@@ -249,6 +275,7 @@ export const useSplitExpensesStore = create<SplitExpensesStore>((set, get) => ({
             ? state.groupForm.participantIds.filter((id) => id !== userId)
             : [...state.groupForm.participantIds, userId],
         },
+        settlementPreview: null,
       };
     });
   },
@@ -259,6 +286,7 @@ export const useSplitExpensesStore = create<SplitExpensesStore>((set, get) => ({
         ...state.groupForm,
         customAmountByParticipant: { ...state.groupForm.customAmountByParticipant, [userId]: amount },
       },
+      settlementPreview: null,
     }));
   },
 
@@ -268,14 +296,15 @@ export const useSplitExpensesStore = create<SplitExpensesStore>((set, get) => ({
         ...state.groupForm,
         percentageByParticipant: { ...state.groupForm.percentageByParticipant, [userId]: percentage },
       },
+      settlementPreview: null,
     }));
   },
 
   previewGroup: async (familyId, t) => {
     const { groupForm } = get();
-    const { periodStart, periodEnd } = monthToDateRange(groupForm.month);
+    const { periodStart, periodEnd } = rangeToDateRange(groupForm.fromMonth, groupForm.toMonth);
 
-    set({ isPreviewLoading: true, error: null });
+    set({ isPreviewLoading: true, error: null, settlementPreview: null });
     try {
       const preview = await previewSplitExpenseGroup(familyId, periodStart, periodEnd);
       set({ groupPreview: preview });
@@ -286,45 +315,105 @@ export const useSplitExpensesStore = create<SplitExpensesStore>((set, get) => ({
     }
   },
 
-  createGroup: async (familyId, t, notify) => {
-    const { groupForm, groupPreview } = get();
+  previewGroupSettlement: async (familyId, t) => {
+    const { groupForm } = get();
+    const { periodStart, periodEnd } = rangeToDateRange(groupForm.fromMonth, groupForm.toMonth);
+    const participants = groupForm.participantIds.map((participantId) => {
+      const base = { participant_user_id: participantId };
+      if (groupForm.method === "custom") {
+        return { ...base, amount: Number(groupForm.customAmountByParticipant[participantId] ?? 0) };
+      }
+      if (groupForm.method === "percentage") {
+        return { ...base, percentage: Number(groupForm.percentageByParticipant[participantId] ?? 0) };
+      }
+      return base;
+    });
+
+    set({ isSettlementPreviewLoading: true, error: null });
+    try {
+      const preview = await previewSplitExpenseGroupSettlement(familyId, {
+        period_start: periodStart,
+        period_end: periodEnd,
+        method: groupForm.method,
+        participants,
+      });
+      set({ settlementPreview: preview });
+    } catch (error) {
+      set({ error: translateApiError(t, error, "expense.actionFailed") });
+    } finally {
+      set({ isSettlementPreviewLoading: false });
+    }
+  },
+
+  startEditGroup: (group) => {
+    set({
+      editingGroupId: group.id,
+      groupPreview: null,
+      settlementPreview: null,
+      groupForm: {
+        fromMonth: dateToYearMonth(group.period_start),
+        toMonth: dateToYearMonth(group.period_end),
+        method: group.method,
+        participantIds: group.participants.map((participant) => participant.participant_user_id),
+        customAmountByParticipant: Object.fromEntries(
+          group.participants.map((participant) => [participant.participant_user_id, String(participant.amount)]),
+        ),
+        percentageByParticipant: Object.fromEntries(
+          group.participants
+            .filter((participant) => participant.percentage !== null)
+            .map((participant) => [participant.participant_user_id, String(participant.percentage)]),
+        ),
+      },
+    });
+  },
+
+  cancelEditGroup: () => {
+    set({ editingGroupId: null, groupForm: defaultGroupForm, groupPreview: null, settlementPreview: null });
+  },
+
+  saveGroup: async (familyId, t, notify) => {
+    const { groupForm, groupPreview, editingGroupId } = get();
 
     if (!groupPreview || groupForm.participantIds.length === 0) {
       set({ error: t("expense.actionFailed") });
       return;
     }
 
-    const { periodStart, periodEnd } = monthToDateRange(groupForm.month);
+    const { periodStart, periodEnd } = rangeToDateRange(groupForm.fromMonth, groupForm.toMonth);
     const participants = groupForm.participantIds.map((participantId) => {
       const base = { participant_user_id: participantId };
-
       if (groupForm.method === "custom") {
         return { ...base, amount: Number(groupForm.customAmountByParticipant[participantId] ?? 0) };
       }
-
       if (groupForm.method === "percentage") {
         return { ...base, percentage: Number(groupForm.percentageByParticipant[participantId] ?? 0) };
       }
-
       return base;
     });
 
     set({ error: null, isGroupSaving: true });
 
     try {
-      await createSplitExpenseGroup(familyId, {
+      const input = {
         period_start: periodStart,
         period_end: periodEnd,
         method: groupForm.method,
         participants,
-      });
+      };
+      if (editingGroupId) {
+        await updateSplitExpenseGroup(familyId, editingGroupId, input);
+      } else {
+        await createSplitExpenseGroup(familyId, input);
+      }
 
       set({
-        groupForm: { ...defaultGroupForm, month: groupForm.month },
+        groupForm: defaultGroupForm,
+        editingGroupId: null,
         groupPreview: null,
+        settlementPreview: null,
         groups: await listSplitExpenseGroups(familyId),
       });
-      notify({ message: t("finance.splitCreated"), variant: "success" });
+      notify({ message: t(editingGroupId ? "finance.splitUpdated" : "finance.splitCreated"), variant: "success" });
     } catch (error) {
       const message = translateApiError(t, error, "expense.actionFailed");
       set({ error: message });
@@ -334,16 +423,11 @@ export const useSplitExpensesStore = create<SplitExpensesStore>((set, get) => ({
     }
   },
 
-  toggleGroupParticipantSettle: async (familyId, groupId, participantId, currentState, t, notify) => {
+  settleGroupSettlement: async (familyId, groupId, settlementId, currentState, t, notify) => {
     set({ error: null });
 
     try {
-      const updated = await settleSplitExpenseGroupParticipant(
-        familyId,
-        groupId,
-        participantId,
-        !currentState,
-      );
+      const updated = await settleSplitExpenseGroupSettlement(familyId, groupId, settlementId, !currentState);
       set((state) => ({
         groups: state.groups.map((group) => (group.id === updated.id ? updated : group)),
       }));
