@@ -1,4 +1,5 @@
 import uuid
+from dataclasses import dataclass
 from datetime import UTC, date, datetime
 from typing import Annotated
 
@@ -19,6 +20,7 @@ from app.models.split_expense_group import (
     SplitExpenseGroup,
     SplitExpenseGroupItem,
     SplitExpenseGroupParticipant,
+    SplitExpenseGroupSettlement,
 )
 from app.models.user import User
 from app.schemas.split_expense_groups import (
@@ -28,8 +30,12 @@ from app.schemas.split_expense_groups import (
     SplitExpenseGroupParticipantResponse,
     SplitExpenseGroupPreviewResponse,
     SplitExpenseGroupResponse,
+    SplitExpenseGroupSettlementResponse,
 )
+from app.schemas.split_expenses import SplitParticipantInput
 from app.services.finance_engine import (
+    DebtSettlement,
+    compute_debt_settlements,
     resolve_equal_split_amounts,
     resolve_percentage_split_amounts,
 )
@@ -38,10 +44,19 @@ router = APIRouter()
 
 
 async def _find_eligible_expenses(
-    family_id: uuid.UUID, period_start: date, period_end: date, session: AsyncSession
+    family_id: uuid.UUID,
+    period_start: date,
+    period_end: date,
+    session: AsyncSession,
+    *,
+    exclude_group_id: uuid.UUID | None = None,
 ) -> list[Expense]:
     already_split_individually = select(SplitExpense.expense_id)
     already_in_a_group = select(SplitExpenseGroupItem.expense_id)
+    if exclude_group_id is not None:
+        already_in_a_group = already_in_a_group.where(
+            SplitExpenseGroupItem.split_expense_group_id != exclude_group_id
+        )
 
     result = await session.scalars(
         select(Expense)
@@ -75,8 +90,24 @@ async def _validate_participants(
         )
 
 
+def _validate_all_payers_included(expenses: list[Expense], participant_ids: set[uuid.UUID]) -> None:
+    payer_ids = {expense.payer_user_id for expense in expenses}
+    if not payer_ids.issubset(participant_ids):
+        raise_api_error(
+            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
+            code="SPLIT_GROUP_PAYER_NOT_IN_PARTICIPANTS",
+            message="Every payer of an included expense must be a participant",
+        )
+
+
+@dataclass(frozen=True)
+class _SplitAmountsPayload:
+    method: SplitMethod
+    participants: list[SplitParticipantInput]
+
+
 def _resolve_group_split_amounts(
-    payload: CreateSplitExpenseGroupRequest, total_amount: int
+    payload: CreateSplitExpenseGroupRequest | _SplitAmountsPayload, total_amount: int
 ) -> list[tuple[uuid.UUID, int, int | None]]:
     resolved: list[tuple[uuid.UUID, int, int | None]]
 
@@ -124,6 +155,53 @@ def _resolve_group_split_amounts(
     return resolved
 
 
+async def _build_settlement_plan(
+    family_id: uuid.UUID,
+    period_start: date,
+    period_end: date,
+    method: SplitMethod,
+    participants: list[SplitParticipantInput],
+    session: AsyncSession,
+    *,
+    exclude_group_id: uuid.UUID | None = None,
+) -> tuple[list[Expense], list[tuple[uuid.UUID, int, int | None]], list[DebtSettlement[uuid.UUID]]]:
+    expenses = await _find_eligible_expenses(
+        family_id, period_start, period_end, session, exclude_group_id=exclude_group_id
+    )
+    if not expenses:
+        raise_api_error(
+            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
+            code="SPLIT_GROUP_NO_ELIGIBLE_EXPENSES",
+            message="No eligible expenses found for this period",
+        )
+
+    participant_ids = {item.participant_user_id for item in participants}
+    await _validate_participants(family_id, participant_ids, session)
+    _validate_all_payers_included(expenses, participant_ids)
+
+    total_amount = sum(expense.amount for expense in expenses)
+    # `_resolve_group_split_amounts` only reads `.method`/`.participants` off its
+    # payload argument, so a tiny local shim avoids requiring a full
+    # CreateSplitExpenseGroupRequest here (edit's payload isn't always one).
+    resolved_items = _resolve_group_split_amounts(
+        _SplitAmountsPayload(method=method, participants=participants), total_amount
+    )
+
+    paid_by_user: dict[uuid.UUID, int] = {}
+    for expense in expenses:
+        paid_by_user[expense.payer_user_id] = paid_by_user.get(expense.payer_user_id, 0) + expense.amount
+
+    fair_share_by_user = {
+        participant_user_id: amount for participant_user_id, amount, _ in resolved_items
+    }
+    net_balance_by_user = {
+        uid: paid_by_user.get(uid, 0) - fair_share_by_user[uid] for uid in participant_ids
+    }
+    settlements = compute_debt_settlements(net_balance_by_user)
+
+    return expenses, resolved_items, settlements
+
+
 async def _get_group_or_404(
     family_id: uuid.UUID, group_id: uuid.UUID, session: AsyncSession
 ) -> SplitExpenseGroup:
@@ -162,6 +240,17 @@ async def _get_group_participants(
     return list(result.all())
 
 
+async def _get_group_settlements(
+    group_id: uuid.UUID, session: AsyncSession
+) -> list[SplitExpenseGroupSettlement]:
+    result = await session.scalars(
+        select(SplitExpenseGroupSettlement)
+        .where(SplitExpenseGroupSettlement.split_expense_group_id == group_id)
+        .order_by(SplitExpenseGroupSettlement.created_at)
+    )
+    return list(result.all())
+
+
 async def _get_group_participant_or_404(
     group_id: uuid.UUID, participant_id: uuid.UUID, session: AsyncSession
 ) -> SplitExpenseGroupParticipant:
@@ -183,11 +272,9 @@ async def _get_group_participant_or_404(
 
 
 async def _refresh_group_status(group: SplitExpenseGroup, session: AsyncSession) -> None:
-    participants = await _get_group_participants(group.id, session)
+    settlements = await _get_group_settlements(group.id, session)
     group.status = (
-        SplitStatus.SETTLED
-        if participants and all(item.is_settled for item in participants)
-        else SplitStatus.PENDING
+        SplitStatus.SETTLED if all(item.is_settled for item in settlements) else SplitStatus.PENDING
     )
 
 
@@ -196,8 +283,11 @@ async def _to_group_response(
 ) -> SplitExpenseGroupResponse:
     expenses = await _get_group_expenses(group.id, session)
     participants = await _get_group_participants(group.id, session)
-    total_amount = sum(item.amount for item in participants)
-    settled_amount = sum(item.amount for item in participants if item.is_settled)
+    settlements = await _get_group_settlements(group.id, session)
+
+    total_amount = sum(expense.amount for expense in expenses)
+    settled_amount = sum(item.amount for item in settlements if item.is_settled)
+    outstanding_amount = sum(item.amount for item in settlements if not item.is_settled)
 
     return SplitExpenseGroupResponse(
         id=group.id,
@@ -209,7 +299,7 @@ async def _to_group_response(
         status=group.status,
         total_amount=total_amount,
         settled_amount=settled_amount,
-        outstanding_amount=total_amount - settled_amount,
+        outstanding_amount=outstanding_amount,
         expenses=[
             SplitExpenseGroupExpenseSummary(
                 id=expense.id,
@@ -217,6 +307,7 @@ async def _to_group_response(
                 category_id=expense.category_id,
                 amount=expense.amount,
                 expense_date=expense.expense_date,
+                payer_user_id=expense.payer_user_id,
             )
             for expense in expenses
         ],
@@ -230,6 +321,18 @@ async def _to_group_response(
                 is_settled=item.is_settled,
             )
             for item in participants
+        ],
+        settlements=[
+            SplitExpenseGroupSettlementResponse(
+                id=item.id,
+                split_expense_group_id=item.split_expense_group_id,
+                from_user_id=item.from_user_id,
+                to_user_id=item.to_user_id,
+                amount=item.amount,
+                is_settled=item.is_settled,
+                settled_at=item.settled_at,
+            )
+            for item in settlements
         ],
     )
 
@@ -261,6 +364,7 @@ async def preview_split_expense_group(
                 category_id=expense.category_id,
                 amount=expense.amount,
                 expense_date=expense.expense_date,
+                payer_user_id=expense.payer_user_id,
             )
             for expense in expenses
         ],
@@ -283,23 +387,13 @@ async def create_split_expense_group(
             "split_expense_groups",
             "split_expense_group_items",
             "split_expense_group_participants",
+            "split_expense_group_settlements",
             "notifications",
         ),
     ):
-        expenses = await _find_eligible_expenses(
-            family_id, payload.period_start, payload.period_end, session
+        expenses, resolved_items, settlements = await _build_settlement_plan(
+            family_id, payload.period_start, payload.period_end, payload.method, payload.participants, session
         )
-        if not expenses:
-            raise_api_error(
-                status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
-                code="SPLIT_GROUP_NO_ELIGIBLE_EXPENSES",
-                message="No eligible expenses found for this period",
-            )
-
-        total_amount = sum(expense.amount for expense in expenses)
-        participant_ids = {item.participant_user_id for item in payload.participants}
-        await _validate_participants(family_id, participant_ids, session)
-        resolved_items = _resolve_group_split_amounts(payload, total_amount)
 
         group = SplitExpenseGroup(
             family_id=family_id,
@@ -307,7 +401,11 @@ async def create_split_expense_group(
             period_end=payload.period_end,
             created_by_user_id=user.id,
             method=payload.method,
-            status=SplitStatus.PENDING,
+            # Empty `settlements` means every participant's paid amount already
+            # equals their fair share — nothing to settle, so the group starts
+            # SETTLED rather than stuck PENDING waiting for a payment that will
+            # never exist (mirrors `_refresh_group_status`'s `all([]) is True` rule).
+            status=SplitStatus.SETTLED if not settlements else SplitStatus.PENDING,
         )
         session.add(group)
         await session.flush()
@@ -324,6 +422,17 @@ async def create_split_expense_group(
                     participant_user_id=participant_user_id,
                     amount=amount,
                     percentage=percentage,
+                    is_settled=False,
+                )
+            )
+
+        for settlement in settlements:
+            session.add(
+                SplitExpenseGroupSettlement(
+                    split_expense_group_id=group.id,
+                    from_user_id=settlement.from_id,
+                    to_user_id=settlement.to_id,
+                    amount=settlement.amount,
                     is_settled=False,
                 )
             )
@@ -369,12 +478,10 @@ async def get_split_expense_group(
     return await _to_group_response(group, session)
 
 
-# NOTE: this route is required for this task's own "create + settle" integration test
-# (`test_create_equal_split_group_and_settle_each_participant`), even though the plan's
-# Interfaces section describes settle as a Task 4 addition. It follows the exact same
-# shape as the existing per-expense `PATCH /{split_expense_id}/items/{item_id}/settle`
-# route in `split_expenses.py`. Flagged in the task report for the plan/Task 4 author to
-# reconcile so Task 4 does not attempt to redeclare this same route.
+# NOTE: this per-participant settle route predates debt settlements (`total_amount`/
+# `settled_amount`/`outstanding_amount`/`status` no longer read from participant rows
+# as of this task) and is scheduled for removal in Task 4, which adds an equivalent
+# settle-by-settlement route in its place. Left in place here untouched.
 @router.patch("/{group_id}/participants/{participant_id}/settle")
 async def settle_split_expense_group_participant(
     family_id: uuid.UUID,

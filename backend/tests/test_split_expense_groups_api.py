@@ -66,6 +66,19 @@ async def _create_expense(
     return response.json()  # type: ignore[no-any-return]
 
 
+async def _register_and_add_member(
+    owner_client: AsyncClient, family_id: str, display_name: str
+) -> tuple[AsyncClient, dict[str, Any]]:
+    email = _unique_email()
+    member_client = AsyncClient(transport=ASGITransport(app=app), base_url="http://test")
+    member = await _register(member_client, email, display_name)
+    add_response = await owner_client.post(
+        f"/api/v1/families/{family_id}/members", json={"email": email}
+    )
+    assert add_response.status_code == 201
+    return member_client, member
+
+
 @pytest.mark.integration
 async def test_preview_excludes_personal_expenses_and_sums_shared_ones(client: AsyncClient) -> None:
     owner = await _register(client, _unique_email(), "Owner")
@@ -87,23 +100,19 @@ async def test_preview_excludes_personal_expenses_and_sums_shared_ones(client: A
 
 
 @pytest.mark.integration
-async def test_create_equal_split_group_and_settle_each_participant(client: AsyncClient) -> None:
+async def test_create_group_computes_and_persists_debt_settlements(client: AsyncClient) -> None:
     owner = await _register(client, _unique_email(), "Owner")
     family_id = await _create_family(client)
     category_id = await _get_global_category_id(client, family_id)
+    _, member_a = await _register_and_add_member(client, family_id, "Member A")
+    _, member_b = await _register_and_add_member(client, family_id, "Member B")
 
-    member_email = _unique_email()
-    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as member_client:
-        member = await _register(member_client, member_email, "Bob")
-        add_member_response = await client.post(
-            f"/api/v1/families/{family_id}/members", json={"email": member_email}
-        )
-        assert add_member_response.status_code == 201
+    # owner pays 100, member_a pays 20, member_b pays 60 -> equal share is 60 each
+    await _create_expense(client, family_id, owner["id"], category_id, 100, True, date(2026, 9, 5))
+    await _create_expense(client, family_id, member_a["id"], category_id, 20, True, date(2026, 9, 10))
+    await _create_expense(client, family_id, member_b["id"], category_id, 60, True, date(2026, 9, 15))
 
-    await _create_expense(client, family_id, owner["id"], category_id, 3000, True, date(2026, 9, 5))
-    await _create_expense(client, family_id, owner["id"], category_id, 2400, True, date(2026, 9, 20))
-
-    create_response = await client.post(
+    response = await client.post(
         f"/api/v1/families/{family_id}/split-expense-groups/",
         json={
             "period_start": "2026-09-01",
@@ -111,26 +120,86 @@ async def test_create_equal_split_group_and_settle_each_participant(client: Asyn
             "method": "equal",
             "participants": [
                 {"participant_user_id": owner["id"]},
-                {"participant_user_id": member["id"]},
+                {"participant_user_id": member_a["id"]},
+                {"participant_user_id": member_b["id"]},
             ],
         },
     )
-    assert create_response.status_code == 201
-    group = create_response.json()
-    assert group["total_amount"] == 5400
-    assert len(group["expenses"]) == 2
-    assert {item["amount"] for item in group["participants"]} == {2700}
 
-    owner_participant = next(
-        item for item in group["participants"] if item["participant_user_id"] == owner["id"]
+    assert response.status_code == 201, response.text
+    body = response.json()
+    assert body["settlements"] == [
+        {
+            "id": body["settlements"][0]["id"],
+            "split_expense_group_id": body["id"],
+            "from_user_id": member_a["id"],
+            "to_user_id": owner["id"],
+            "amount": 40,
+            "is_settled": False,
+            "settled_at": None,
+        }
+    ]
+
+
+@pytest.mark.integration
+async def test_create_group_rejects_when_a_payer_is_not_a_participant(client: AsyncClient) -> None:
+    owner = await _register(client, _unique_email(), "Owner")
+    family_id = await _create_family(client)
+    category_id = await _get_global_category_id(client, family_id)
+    _, member_a = await _register_and_add_member(client, family_id, "Member A")
+    _, member_b = await _register_and_add_member(client, family_id, "Member B")
+
+    await _create_expense(client, family_id, owner["id"], category_id, 100, True, date(2026, 9, 5))
+    await _create_expense(client, family_id, member_a["id"], category_id, 20, True, date(2026, 9, 10))
+
+    response = await client.post(
+        f"/api/v1/families/{family_id}/split-expense-groups/",
+        json={
+            "period_start": "2026-09-01",
+            "period_end": "2026-09-30",
+            "method": "equal",
+            # member_a paid but is left out of participants
+            "participants": [{"participant_user_id": owner["id"]}, {"participant_user_id": member_b["id"]}],
+        },
     )
-    settle_response = await client.patch(
-        f"/api/v1/families/{family_id}/split-expense-groups/{group['id']}/participants/{owner_participant['id']}/settle",
-        json={"is_settled": True},
+
+    assert response.status_code == 422, response.text
+    assert response.json()["error"]["code"] == "SPLIT_GROUP_PAYER_NOT_IN_PARTICIPANTS"
+
+
+@pytest.mark.integration
+async def test_create_group_with_balanced_payments_has_no_settlements_and_is_immediately_settled(
+    client: AsyncClient,
+) -> None:
+    owner = await _register(client, _unique_email(), "Owner")
+    family_id = await _create_family(client)
+    category_id = await _get_global_category_id(client, family_id)
+    _, member_a = await _register_and_add_member(client, family_id, "Member A")
+    _, member_b = await _register_and_add_member(client, family_id, "Member B")
+
+    # Everyone pays exactly their equal share (60 each) up front -> nothing to settle.
+    await _create_expense(client, family_id, owner["id"], category_id, 60, True, date(2026, 9, 5))
+    await _create_expense(client, family_id, member_a["id"], category_id, 60, True, date(2026, 9, 10))
+    await _create_expense(client, family_id, member_b["id"], category_id, 60, True, date(2026, 9, 15))
+
+    response = await client.post(
+        f"/api/v1/families/{family_id}/split-expense-groups/",
+        json={
+            "period_start": "2026-09-01",
+            "period_end": "2026-09-30",
+            "method": "equal",
+            "participants": [
+                {"participant_user_id": owner["id"]},
+                {"participant_user_id": member_a["id"]},
+                {"participant_user_id": member_b["id"]},
+            ],
+        },
     )
-    assert settle_response.status_code == 200
-    assert settle_response.json()["settled_amount"] == 2700
-    assert settle_response.json()["status"] == "pending"
+
+    assert response.status_code == 201, response.text
+    body = response.json()
+    assert body["settlements"] == []
+    assert body["status"] == "settled"
 
 
 @pytest.mark.integration
@@ -310,59 +379,6 @@ async def test_list_and_get_group_detail(client: AsyncClient) -> None:
     assert detail_response.status_code == 200
     assert detail_response.json()["id"] == group_id
     assert detail_response.json()["total_amount"] == 2000
-
-
-@pytest.mark.integration
-async def test_settling_all_participants_flips_group_status_to_settled(client: AsyncClient) -> None:
-    owner = await _register(client, _unique_email(), "Owner")
-    family_id = await _create_family(client)
-    category_id = await _get_global_category_id(client, family_id)
-
-    member_email = _unique_email()
-    async with AsyncClient(
-        transport=ASGITransport(app=app), base_url="http://test"
-    ) as member_client:
-        member = await _register(member_client, member_email, "Bob")
-        assert (
-            await client.post(f"/api/v1/families/{family_id}/members", json={"email": member_email})
-        ).status_code == 201
-
-    await _create_expense(
-        client, family_id, owner["id"], category_id, 1000, True, date(2026, 9, 5)
-    )
-
-    create_response = await client.post(
-        f"/api/v1/families/{family_id}/split-expense-groups/",
-        json={
-            "period_start": "2026-09-01",
-            "period_end": "2026-09-30",
-            "method": "equal",
-            "participants": [
-                {"participant_user_id": owner["id"]},
-                {"participant_user_id": member["id"]},
-            ],
-        },
-    )
-    assert create_response.status_code == 201
-    group = create_response.json()
-    assert group["status"] == "pending"
-    assert len(group["participants"]) == 2
-
-    for participant in group["participants"]:
-        settle_response = await client.patch(
-            f"/api/v1/families/{family_id}/split-expense-groups/"
-            f"{group['id']}/participants/{participant['id']}/settle",
-            json={"is_settled": True},
-        )
-        assert settle_response.status_code == 200
-
-    detail_response = await client.get(
-        f"/api/v1/families/{family_id}/split-expense-groups/{group['id']}"
-    )
-    assert detail_response.status_code == 200
-    assert detail_response.json()["status"] == "settled"
-    assert detail_response.json()["outstanding_amount"] == 0
-    assert detail_response.json()["settled_amount"] == 1000
 
 
 @pytest.mark.integration

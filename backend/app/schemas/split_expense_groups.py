@@ -1,5 +1,5 @@
 import uuid
-from datetime import date
+from datetime import date, datetime
 
 from pydantic import BaseModel, Field, field_validator, model_validator
 
@@ -13,6 +13,7 @@ class SplitExpenseGroupExpenseSummary(BaseModel):
     category_id: uuid.UUID
     amount: int
     expense_date: date
+    payer_user_id: uuid.UUID
 
 
 class SplitExpenseGroupPreviewResponse(BaseModel):
@@ -73,6 +74,16 @@ class SplitExpenseGroupParticipantResponse(BaseModel):
     is_settled: bool
 
 
+class SplitExpenseGroupSettlementResponse(BaseModel):
+    id: uuid.UUID
+    split_expense_group_id: uuid.UUID
+    from_user_id: uuid.UUID
+    to_user_id: uuid.UUID
+    amount: int
+    is_settled: bool
+    settled_at: datetime | None
+
+
 class SplitExpenseGroupResponse(BaseModel):
     id: uuid.UUID
     family_id: uuid.UUID
@@ -86,3 +97,4 @@ class SplitExpenseGroupResponse(BaseModel):
     outstanding_amount: int
     expenses: list[SplitExpenseGroupExpenseSummary]
     participants: list[SplitExpenseGroupParticipantResponse]
+    settlements: list[SplitExpenseGroupSettlementResponse]
