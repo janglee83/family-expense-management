@@ -388,6 +388,7 @@
     "editGroupSplitWarningTitle": "Sửa lại lần chia này?",
     "editGroupSplitWarning": "Sửa lại sẽ tính lại toàn bộ khoản nợ. Các khoản đã đánh dấu đã trả sẽ cần xác nhận lại.",
     "confirmEditGroupSplit": "Tiếp tục sửa",
+    "fairShare": "Phần chia của từng người",
     "splitMethodValues": {
       "equal": "Chia đều",
       "custom": "Tự nhập",

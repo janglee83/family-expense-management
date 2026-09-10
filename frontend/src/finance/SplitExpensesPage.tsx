@@ -368,6 +368,27 @@ export function SplitExpensesPage() {
                     <p className="text-sm text-muted-foreground">
                       {t("finance.outstanding")}: {formatMoney(group.outstanding_amount, currencyCode)}
                     </p>
+                    {group.participants.length > 0 ? (
+                      <div className="space-y-2">
+                        <span className="text-sm font-medium text-foreground">{t("finance.fairShare")}</span>
+                        <ul className="space-y-2">
+                          {group.participants.map((participant) => (
+                            <li
+                              key={participant.id}
+                              className="flex items-center justify-between gap-2 rounded-md border border-border/80 bg-muted/30 px-3 py-2 text-sm"
+                            >
+                              <span className="font-medium text-foreground">
+                                {memberName(participant.participant_user_id)}
+                                {participant.participant_user_id === user?.id ? ` (${t("finance.you")})` : ""}
+                              </span>
+                              <span className="font-mono text-foreground">
+                                {formatMoney(participant.amount, currencyCode)}
+                              </span>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    ) : null}
                     {group.settlements.length === 0 ? (
                       <p className="text-sm text-muted-foreground">{t("finance.noSettlementsNeeded")}</p>
                     ) : (

@@ -388,6 +388,7 @@
     "editGroupSplitWarningTitle": "この分割を編集しますか？",
     "editGroupSplitWarning": "編集すると精算がすべて再計算されます。すでに支払い済みとしたものも再確認が必要になります。",
     "confirmEditGroupSplit": "編集を続ける",
+    "fairShare": "一人ひとりの負担額",
     "splitMethodValues": {
       "equal": "均等",
       "custom": "金額指定",
