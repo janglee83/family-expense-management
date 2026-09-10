@@ -51,3 +51,6 @@ infra/*.tfvars
 infra/crash.log
 infra/override.tf
 infra/override.tf.json
+.mcp.json
+.neon
+.claude/scheduled_tasks.lock
