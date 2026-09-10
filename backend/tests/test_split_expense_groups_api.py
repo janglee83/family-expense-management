@@ -519,3 +519,196 @@ async def test_create_rejects_equal_split_total_smaller_than_participant_count(
     )
     assert response.status_code == 422
     assert response.json()["error"]["code"] == "SPLIT_PERCENTAGE_AMOUNT_MISMATCH"
+
+
+@pytest.mark.integration
+async def test_preview_settlement_computes_without_persisting(client: AsyncClient) -> None:
+    owner = await _register(client, _unique_email(), "Owner")
+    family_id = await _create_family(client)
+    category_id = await _get_global_category_id(client, family_id)
+    _, member_a = await _register_and_add_member(client, family_id, "Member A")
+    _, member_b = await _register_and_add_member(client, family_id, "Member B")
+
+    await _create_expense(client, family_id, owner["id"], category_id, 100, True, date(2026, 9, 5))
+    await _create_expense(client, family_id, member_a["id"], category_id, 20, True, date(2026, 9, 10))
+    await _create_expense(client, family_id, member_b["id"], category_id, 60, True, date(2026, 9, 15))
+
+    before = await client.get(f"/api/v1/families/{family_id}/split-expense-groups/")
+    assert before.json() == []
+
+    response = await client.post(
+        f"/api/v1/families/{family_id}/split-expense-groups/preview-settlement",
+        json={
+            "period_start": "2026-09-01",
+            "period_end": "2026-09-30",
+            "method": "equal",
+            "participants": [
+                {"participant_user_id": owner["id"]},
+                {"participant_user_id": member_a["id"]},
+                {"participant_user_id": member_b["id"]},
+            ],
+        },
+    )
+
+    assert response.status_code == 200, response.text
+    assert response.json() == {
+        "settlements": [{"from_user_id": member_a["id"], "to_user_id": owner["id"], "amount": 40}]
+    }
+
+    after = await client.get(f"/api/v1/families/{family_id}/split-expense-groups/")
+    assert after.json() == []
+
+
+@pytest.mark.integration
+async def test_edit_group_recomputes_and_resets_settled_settlements(client: AsyncClient) -> None:
+    owner = await _register(client, _unique_email(), "Owner")
+    family_id = await _create_family(client)
+    category_id = await _get_global_category_id(client, family_id)
+    _, member_a = await _register_and_add_member(client, family_id, "Member A")
+    _, member_b = await _register_and_add_member(client, family_id, "Member B")
+
+    await _create_expense(client, family_id, owner["id"], category_id, 100, True, date(2026, 9, 5))
+    await _create_expense(client, family_id, member_a["id"], category_id, 20, True, date(2026, 9, 10))
+    await _create_expense(client, family_id, member_b["id"], category_id, 60, True, date(2026, 9, 15))
+
+    create_response = await client.post(
+        f"/api/v1/families/{family_id}/split-expense-groups/",
+        json={
+            "period_start": "2026-09-01",
+            "period_end": "2026-09-30",
+            "method": "equal",
+            "participants": [
+                {"participant_user_id": owner["id"]},
+                {"participant_user_id": member_a["id"]},
+                {"participant_user_id": member_b["id"]},
+            ],
+        },
+    )
+    group_id = create_response.json()["id"]
+    settlement_id = create_response.json()["settlements"][0]["id"]
+
+    settle_response = await client.patch(
+        f"/api/v1/families/{family_id}/split-expense-groups/{group_id}/settlements/{settlement_id}/settle",
+        json={"is_settled": True},
+    )
+    assert settle_response.json()["status"] == "settled"
+
+    edit_response = await client.patch(
+        f"/api/v1/families/{family_id}/split-expense-groups/{group_id}",
+        json={
+            "period_start": "2026-09-01",
+            "period_end": "2026-09-30",
+            "method": "custom",
+            "participants": [
+                {"participant_user_id": owner["id"], "amount": 90},
+                {"participant_user_id": member_a["id"], "amount": 50},
+                {"participant_user_id": member_b["id"], "amount": 40},
+            ],
+        },
+    )
+
+    assert edit_response.status_code == 200, edit_response.text
+    body = edit_response.json()
+    assert body["method"] == "custom"
+    assert body["status"] == "pending"
+    assert all(item["is_settled"] is False for item in body["settlements"])
+    # owner paid 100, owes 90 -> +10; member_a paid 20, owes 50 -> -30; member_b paid 60, owes 40 -> +20
+    assert {(item["from_user_id"], item["to_user_id"], item["amount"]) for item in body["settlements"]} == {
+        (member_a["id"], owner["id"], 10),
+        (member_a["id"], member_b["id"], 20),
+    }
+
+
+@pytest.mark.integration
+async def test_edit_group_to_a_period_with_no_eligible_expenses_is_rejected_and_leaves_group_unchanged(
+    client: AsyncClient,
+) -> None:
+    owner = await _register(client, _unique_email(), "Owner")
+    family_id = await _create_family(client)
+    category_id = await _get_global_category_id(client, family_id)
+    _, member_a = await _register_and_add_member(client, family_id, "Member A")
+    _, member_b = await _register_and_add_member(client, family_id, "Member B")
+
+    await _create_expense(client, family_id, owner["id"], category_id, 100, True, date(2026, 9, 5))
+    await _create_expense(client, family_id, member_a["id"], category_id, 20, True, date(2026, 9, 10))
+    await _create_expense(client, family_id, member_b["id"], category_id, 60, True, date(2026, 9, 15))
+
+    create_response = await client.post(
+        f"/api/v1/families/{family_id}/split-expense-groups/",
+        json={
+            "period_start": "2026-09-01",
+            "period_end": "2026-09-30",
+            "method": "equal",
+            "participants": [
+                {"participant_user_id": owner["id"]},
+                {"participant_user_id": member_a["id"]},
+                {"participant_user_id": member_b["id"]},
+            ],
+        },
+    )
+    group_id = create_response.json()["id"]
+
+    edit_response = await client.patch(
+        f"/api/v1/families/{family_id}/split-expense-groups/{group_id}",
+        json={
+            "period_start": "2020-01-01",
+            "period_end": "2020-01-31",
+            "method": "equal",
+            "participants": [
+                {"participant_user_id": owner["id"]},
+                {"participant_user_id": member_a["id"]},
+                {"participant_user_id": member_b["id"]},
+            ],
+        },
+    )
+    assert edit_response.status_code == 422
+    assert edit_response.json()["error"]["code"] == "SPLIT_GROUP_NO_ELIGIBLE_EXPENSES"
+
+    unchanged = await client.get(f"/api/v1/families/{family_id}/split-expense-groups/{group_id}")
+    assert unchanged.json()["period_start"] == "2026-09-01"
+
+
+@pytest.mark.integration
+async def test_settle_settlement_as_debtor_succeeds_as_unrelated_member_is_rejected(
+    client: AsyncClient,
+) -> None:
+    owner = await _register(client, _unique_email(), "Owner")
+    family_id = await _create_family(client)
+    category_id = await _get_global_category_id(client, family_id)
+    member_a_client, member_a = await _register_and_add_member(client, family_id, "Member A")
+    member_b_client, member_b = await _register_and_add_member(client, family_id, "Member B")
+
+    await _create_expense(client, family_id, owner["id"], category_id, 100, True, date(2026, 9, 5))
+    await _create_expense(client, family_id, member_a["id"], category_id, 20, True, date(2026, 9, 10))
+    await _create_expense(client, family_id, member_b["id"], category_id, 60, True, date(2026, 9, 15))
+
+    create_response = await client.post(
+        f"/api/v1/families/{family_id}/split-expense-groups/",
+        json={
+            "period_start": "2026-09-01",
+            "period_end": "2026-09-30",
+            "method": "equal",
+            "participants": [
+                {"participant_user_id": owner["id"]},
+                {"participant_user_id": member_a["id"]},
+                {"participant_user_id": member_b["id"]},
+            ],
+        },
+    )
+    group_id = create_response.json()["id"]
+    settlement_id = create_response.json()["settlements"][0]["id"]  # member_a -> owner
+
+    # member_b is on neither side of this settlement and isn't owner/admin -> rejected
+    rejected = await member_b_client.patch(
+        f"/api/v1/families/{family_id}/split-expense-groups/{group_id}/settlements/{settlement_id}/settle",
+        json={"is_settled": True},
+    )
+    assert rejected.status_code == 403
+
+    # member_a is the debtor on this settlement -> allowed
+    accepted = await member_a_client.patch(
+        f"/api/v1/families/{family_id}/split-expense-groups/{group_id}/settlements/{settlement_id}/settle",
+        json={"is_settled": True},
+    )
+    assert accepted.status_code == 200
+    assert accepted.json()["settlements"][0]["is_settled"] is True

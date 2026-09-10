@@ -25,11 +25,13 @@ from app.models.split_expense_group import (
 from app.models.user import User
 from app.schemas.split_expense_groups import (
     CreateSplitExpenseGroupRequest,
-    SettleSplitExpenseGroupParticipantRequest,
+    SettleSplitExpenseGroupSettlementRequest,
     SplitExpenseGroupExpenseSummary,
     SplitExpenseGroupParticipantResponse,
     SplitExpenseGroupPreviewResponse,
     SplitExpenseGroupResponse,
+    SplitExpenseGroupSettlementPreviewItem,
+    SplitExpenseGroupSettlementPreviewResponse,
     SplitExpenseGroupSettlementResponse,
 )
 from app.schemas.split_expenses import SplitParticipantInput
@@ -251,26 +253,6 @@ async def _get_group_settlements(
     return list(result.all())
 
 
-async def _get_group_participant_or_404(
-    group_id: uuid.UUID, participant_id: uuid.UUID, session: AsyncSession
-) -> SplitExpenseGroupParticipant:
-    participant = await session.scalar(
-        select(SplitExpenseGroupParticipant)
-        .where(
-            SplitExpenseGroupParticipant.id == participant_id,
-            SplitExpenseGroupParticipant.split_expense_group_id == group_id,
-        )
-        .with_for_update()
-    )
-    if participant is None:
-        raise_api_error(
-            status_code=status.HTTP_404_NOT_FOUND,
-            code="SPLIT_EXPENSE_GROUP_PARTICIPANT_NOT_FOUND",
-            message="Split expense group participant not found",
-        )
-    return participant
-
-
 async def _refresh_group_status(group: SplitExpenseGroup, session: AsyncSession) -> None:
     settlements = await _get_group_settlements(group.id, session)
     group.status = (
@@ -371,6 +353,26 @@ async def preview_split_expense_group(
     )
 
 
+@router.post("/preview-settlement")
+async def preview_split_expense_group_settlement(
+    family_id: uuid.UUID,
+    payload: CreateSplitExpenseGroupRequest,
+    _membership: Annotated[FamilyMember, Depends(get_family_membership)],
+    session: Annotated[AsyncSession, Depends(get_session)],
+) -> SplitExpenseGroupSettlementPreviewResponse:
+    _, _, settlements = await _build_settlement_plan(
+        family_id, payload.period_start, payload.period_end, payload.method, payload.participants, session
+    )
+    return SplitExpenseGroupSettlementPreviewResponse(
+        settlements=[
+            SplitExpenseGroupSettlementPreviewItem(
+                from_user_id=item.from_id, to_user_id=item.to_id, amount=item.amount
+            )
+            for item in settlements
+        ]
+    )
+
+
 @router.post("/", status_code=status.HTTP_201_CREATED)
 async def create_split_expense_group(
     family_id: uuid.UUID,
@@ -464,6 +466,141 @@ async def list_split_expense_groups(
     return [await _to_group_response(group, session) for group in groups.all()]
 
 
+@router.patch("/{group_id}")
+async def update_split_expense_group(
+    family_id: uuid.UUID,
+    group_id: uuid.UUID,
+    payload: CreateSplitExpenseGroupRequest,
+    membership: Annotated[FamilyMember, Depends(get_family_membership)],
+    user: Annotated[User, Depends(get_current_user)],
+    session: Annotated[AsyncSession, Depends(get_session)],
+) -> SplitExpenseGroupResponse:
+    async with locked_write(
+        session,
+        tables=(
+            "expenses",
+            "split_expenses",
+            "split_expense_groups",
+            "split_expense_group_items",
+            "split_expense_group_participants",
+            "split_expense_group_settlements",
+            "notifications",
+        ),
+    ):
+        group = await _get_group_or_404(family_id, group_id, session)
+        require_owner_admin_or_creator(membership, group.created_by_user_id)
+
+        expenses, resolved_items, settlements = await _build_settlement_plan(
+            family_id,
+            payload.period_start,
+            payload.period_end,
+            payload.method,
+            payload.participants,
+            session,
+            exclude_group_id=group.id,
+        )
+
+        for old_settlement in await _get_group_settlements(group.id, session):
+            await session.delete(old_settlement)
+        for old_participant in await _get_group_participants(group.id, session):
+            await session.delete(old_participant)
+        for old_group_item in await session.scalars(
+            select(SplitExpenseGroupItem).where(SplitExpenseGroupItem.split_expense_group_id == group.id)
+        ):
+            await session.delete(old_group_item)
+        await session.flush()
+
+        group.period_start = payload.period_start
+        group.period_end = payload.period_end
+        group.method = payload.method
+        # Same rule as create: an empty recomputed settlement plan means
+        # nothing is owed, so the edited group is immediately SETTLED.
+        group.status = SplitStatus.SETTLED if not settlements else SplitStatus.PENDING
+
+        for expense in expenses:
+            session.add(
+                SplitExpenseGroupItem(split_expense_group_id=group.id, expense_id=expense.id)
+            )
+
+        for participant_user_id, amount, percentage in resolved_items:
+            session.add(
+                SplitExpenseGroupParticipant(
+                    split_expense_group_id=group.id,
+                    participant_user_id=participant_user_id,
+                    amount=amount,
+                    percentage=percentage,
+                    is_settled=False,
+                )
+            )
+
+        for settlement in settlements:
+            session.add(
+                SplitExpenseGroupSettlement(
+                    split_expense_group_id=group.id,
+                    from_user_id=settlement.from_id,
+                    to_user_id=settlement.to_id,
+                    amount=settlement.amount,
+                    is_settled=False,
+                )
+            )
+
+        await queue_family_notification(
+            session,
+            family_id,
+            message=f"{user.display_name} updated the split for {payload.period_start:%Y-%m}.",
+            actor_user_id=user.id,
+        )
+
+    return await _to_group_response(group, session)
+
+
+@router.patch("/{group_id}/settlements/{settlement_id}/settle")
+async def settle_split_expense_group_settlement(
+    family_id: uuid.UUID,
+    group_id: uuid.UUID,
+    settlement_id: uuid.UUID,
+    payload: SettleSplitExpenseGroupSettlementRequest,
+    membership: Annotated[FamilyMember, Depends(get_family_membership)],
+    user: Annotated[User, Depends(get_current_user)],
+    session: Annotated[AsyncSession, Depends(get_session)],
+) -> SplitExpenseGroupResponse:
+    async with locked_write(
+        session,
+        tables=("split_expense_groups", "split_expense_group_settlements", "notifications"),
+    ):
+        group = await _get_group_or_404(family_id, group_id, session)
+        settlement = await session.scalar(
+            select(SplitExpenseGroupSettlement)
+            .where(
+                SplitExpenseGroupSettlement.id == settlement_id,
+                SplitExpenseGroupSettlement.split_expense_group_id == group_id,
+            )
+            .with_for_update()
+        )
+        if settlement is None:
+            raise_api_error(
+                status_code=status.HTTP_404_NOT_FOUND,
+                code="SPLIT_EXPENSE_GROUP_SETTLEMENT_NOT_FOUND",
+                message="Split expense group settlement not found",
+            )
+
+        if user.id not in (settlement.from_user_id, settlement.to_user_id):
+            require_owner_admin_or_creator(membership, group.created_by_user_id)
+
+        settlement.is_settled = payload.is_settled
+        settlement.settled_at = datetime.now(UTC) if payload.is_settled else None
+
+        await _refresh_group_status(group, session)
+        await queue_family_notification(
+            session,
+            family_id,
+            message=f"{user.display_name} updated split settlement status.",
+            actor_user_id=user.id,
+        )
+
+    return await _to_group_response(group, session)
+
+
 # NOTE: this route MUST stay declared after `GET /preview` above — otherwise Starlette
 # would match the literal path "preview" against this `{group_id}` path parameter
 # before FastAPI gets a chance to validate it as a UUID.
@@ -475,46 +612,4 @@ async def get_split_expense_group(
     session: Annotated[AsyncSession, Depends(get_session)],
 ) -> SplitExpenseGroupResponse:
     group = await _get_group_or_404(family_id, group_id, session)
-    return await _to_group_response(group, session)
-
-
-# NOTE: this per-participant settle route predates debt settlements (`total_amount`/
-# `settled_amount`/`outstanding_amount`/`status` no longer read from participant rows
-# as of this task) and is scheduled for removal in Task 4, which adds an equivalent
-# settle-by-settlement route in its place. Left in place here untouched.
-@router.patch("/{group_id}/participants/{participant_id}/settle")
-async def settle_split_expense_group_participant(
-    family_id: uuid.UUID,
-    group_id: uuid.UUID,
-    participant_id: uuid.UUID,
-    payload: SettleSplitExpenseGroupParticipantRequest,
-    membership: Annotated[FamilyMember, Depends(get_family_membership)],
-    user: Annotated[User, Depends(get_current_user)],
-    session: Annotated[AsyncSession, Depends(get_session)],
-) -> SplitExpenseGroupResponse:
-    async with locked_write(
-        session,
-        tables=(
-            "split_expense_groups",
-            "split_expense_group_participants",
-            "notifications",
-        ),
-    ):
-        group = await _get_group_or_404(family_id, group_id, session)
-        participant = await _get_group_participant_or_404(group.id, participant_id, session)
-
-        if participant.participant_user_id != user.id:
-            require_owner_admin_or_creator(membership, group.created_by_user_id)
-
-        participant.is_settled = payload.is_settled
-        participant.settled_at = datetime.now(UTC) if payload.is_settled else None
-
-        await _refresh_group_status(group, session)
-        await queue_family_notification(
-            session,
-            family_id,
-            message=f"{user.display_name} updated split settlement status.",
-            actor_user_id=user.id,
-        )
-
     return await _to_group_response(group, session)

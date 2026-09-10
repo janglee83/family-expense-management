@@ -61,10 +61,6 @@ class CreateSplitExpenseGroupRequest(BaseModel):
         return self
 
 
-class SettleSplitExpenseGroupParticipantRequest(BaseModel):
-    is_settled: bool = True
-
-
 class SplitExpenseGroupParticipantResponse(BaseModel):
     id: uuid.UUID
     split_expense_group_id: uuid.UUID
@@ -82,6 +78,20 @@ class SplitExpenseGroupSettlementResponse(BaseModel):
     amount: int
     is_settled: bool
     settled_at: datetime | None
+
+
+class SplitExpenseGroupSettlementPreviewItem(BaseModel):
+    from_user_id: uuid.UUID
+    to_user_id: uuid.UUID
+    amount: int
+
+
+class SplitExpenseGroupSettlementPreviewResponse(BaseModel):
+    settlements: list[SplitExpenseGroupSettlementPreviewItem]
+
+
+class SettleSplitExpenseGroupSettlementRequest(BaseModel):
+    is_settled: bool = True
 
 
 class SplitExpenseGroupResponse(BaseModel):
