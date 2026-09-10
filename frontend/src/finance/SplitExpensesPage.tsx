@@ -11,9 +11,9 @@ import { Modal } from "../components/ui/Modal";
 import { EmptyState, LoadingState, PageFrame, PageHeader } from "../components/ui/Page";
 import { useSnackbar } from "../components/ui/Snackbar";
 import { formatMoney } from "../utils/currency";
-import { type SplitExpense, type SplitExpenseGroup, type SplitMethod } from "./financeApi";
+import { type SplitExpenseGroup, type SplitMethod } from "./financeApi";
 import { FinanceNav } from "./FinanceNav";
-import { MonthRangePicker } from "./MonthRangePicker";
+import { DateRangePicker } from "./DateRangePicker";
 import { useSplitExpensesStore } from "./stores/splitExpensesStore";
 
 const SPLIT_METHODS: SplitMethod[] = ["equal", "custom", "percentage"];
@@ -27,12 +27,9 @@ export function SplitExpensesPage() {
 
   const {
     family,
-    expenses,
-    splits,
     isLoading,
     error,
     load,
-    toggleSettle,
     groups,
     groupPreview,
     isPreviewLoading,
@@ -69,8 +66,6 @@ export function SplitExpensesPage() {
     [family?.members],
   );
 
-  const expenseById = useMemo(() => Object.fromEntries(expenses.map((expense) => [expense.id, expense])), [expenses]);
-
   const memberName = (userId: string) => memberNameById[userId] ?? userId;
 
   const myRole = family?.members.find((member) => member.user_id === user?.id)?.role;
@@ -82,15 +77,7 @@ export function SplitExpensesPage() {
   }
 
   const splitMethodLabel = (methodValue: SplitMethod) => t(`finance.splitMethodValues.${methodValue}`);
-  const splitStatusLabel = (statusValue: SplitExpense["status"]) => t(`finance.splitStatusValues.${statusValue}`);
-
-  function handleToggleSettle(splitId: string, itemId: string, currentState: boolean) {
-    if (!familyId) {
-      return;
-    }
-
-    void toggleSettle(familyId, splitId, itemId, currentState, t, showSnackbar);
-  }
+  const splitStatusLabel = (statusValue: SplitExpenseGroup["status"]) => t(`finance.splitStatusValues.${statusValue}`);
 
   function handlePreviewGroup() {
     if (!familyId) {
@@ -175,19 +162,19 @@ export function SplitExpensesPage() {
           <Card>
             <CardHeader>
               <CardDescription>{t("finance.totalSplits")}</CardDescription>
-              <CardTitle>{String(splits.length)}</CardTitle>
+              <CardTitle>{String(groups.length)}</CardTitle>
             </CardHeader>
           </Card>
           <Card>
             <CardHeader>
               <CardDescription>{t("finance.pendingSplits")}</CardDescription>
-              <CardTitle>{String(splits.filter((split) => split.status === "pending").length)}</CardTitle>
+              <CardTitle>{String(groups.filter((group) => group.status === "pending").length)}</CardTitle>
             </CardHeader>
           </Card>
           <Card>
             <CardHeader>
               <CardDescription>{t("finance.settledSplits")}</CardDescription>
-              <CardTitle>{String(splits.filter((split) => split.status === "settled").length)}</CardTitle>
+              <CardTitle>{String(groups.filter((group) => group.status === "settled").length)}</CardTitle>
             </CardHeader>
           </Card>
         </section>
@@ -210,9 +197,9 @@ export function SplitExpensesPage() {
                 </Alert>
               ) : null}
 
-              <MonthRangePicker
-                fromMonth={groupForm.fromMonth}
-                toMonth={groupForm.toMonth}
+              <DateRangePicker
+                fromDate={groupForm.fromDate}
+                toDate={groupForm.toDate}
                 onChange={setGroupRange}
               />
 
@@ -446,67 +433,6 @@ export function SplitExpensesPage() {
           </CardContent>
         </Card>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>{t("finance.splitList")}</CardTitle>
-          </CardHeader>
-          <CardContent>
-            {splits.length === 0 ? (
-              <EmptyState title={t("finance.noSplits")} />
-            ) : (
-              <ul className="space-y-4">
-                {splits.map((split) => {
-                  const sourceExpense = expenseById[split.expense_id];
-                  return (
-                    <li key={split.id} className="interactive-row space-y-3 p-4">
-                      <div className="flex flex-wrap items-center justify-between gap-2">
-                        <div className="flex flex-wrap items-center gap-2">
-                          <Badge variant={split.status === "settled" ? "success" : "warning"}>
-                            {splitStatusLabel(split.status)}
-                          </Badge>
-                          <Badge variant="info">{splitMethodLabel(split.method)}</Badge>
-                        </div>
-                        <span className="font-mono text-sm text-foreground">{formatMoney(split.total_amount, currencyCode)}</span>
-                      </div>
-                      <p className="text-sm text-muted-foreground">
-                        {t("finance.expense")}: {sourceExpense?.expense_date ?? "-"}
-                      </p>
-                      <p className="text-sm text-muted-foreground">
-                        {t("finance.outstanding")}: {formatMoney(split.outstanding_amount, currencyCode)}
-                      </p>
-                      <ul className="space-y-2">
-                        {split.items.map((item) => (
-                          <li key={item.id} className="rounded-md border border-border/80 bg-muted/30 px-3 py-2 text-sm">
-                            <div className="flex flex-wrap items-center justify-between gap-2">
-                              <span className="font-medium text-foreground">
-                                {memberNameById[item.participant_user_id] ?? item.participant_user_id}
-                                {item.participant_user_id === user?.id ? ` (${t("finance.you")})` : ""}
-                              </span>
-                              <span className="font-mono text-foreground">{formatMoney(item.amount, currencyCode)}</span>
-                            </div>
-                            <div className="mt-2 flex flex-wrap items-center justify-between gap-2">
-                              <Badge variant={item.is_settled ? "success" : "warning"}>
-                                {item.is_settled ? t("finance.settled") : t("finance.unsettled")}
-                              </Badge>
-                              <Button
-                                type="button"
-                                size="sm"
-                                variant="outline"
-                                onClick={() => handleToggleSettle(split.id, item.id, item.is_settled)}
-                              >
-                                {item.is_settled ? t("finance.markUnsettled") : t("finance.markSettled")}
-                              </Button>
-                            </div>
-                          </li>
-                        ))}
-                      </ul>
-                    </li>
-                  );
-                })}
-              </ul>
-            )}
-          </CardContent>
-        </Card>
       </main>
 
       <Modal

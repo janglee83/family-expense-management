@@ -13,16 +13,16 @@ describe("splitExpensesStore", () => {
     useSplitExpensesStore.setState(useSplitExpensesStore.getInitialState(), true);
   });
 
-  it("setGroupRange updates fromMonth/toMonth and clears any existing settlement preview", () => {
+  it("setGroupRange updates fromDate/toDate and clears any existing settlement preview", () => {
     useSplitExpensesStore.setState({
       settlementPreview: { settlements: [] },
     });
 
-    useSplitExpensesStore.getState().setGroupRange({ fromMonth: "2026-01", toMonth: "2026-03" });
+    useSplitExpensesStore.getState().setGroupRange({ fromDate: "2026-01-05", toDate: "2026-03-20" });
 
     const state = useSplitExpensesStore.getState();
-    expect(state.groupForm.fromMonth).toBe("2026-01");
-    expect(state.groupForm.toMonth).toBe("2026-03");
+    expect(state.groupForm.fromDate).toBe("2026-01-05");
+    expect(state.groupForm.toDate).toBe("2026-03-20");
     expect(state.settlementPreview).toBeNull();
   });
 
@@ -33,8 +33,8 @@ describe("splitExpensesStore", () => {
     useSplitExpensesStore.setState({
       groupPreview: { total_amount: 100, expenses: [] },
       groupForm: {
-        fromMonth: "2026-09",
-        toMonth: "2026-09",
+        fromDate: "2026-09-01",
+        toDate: "2026-09-30",
         method: "equal",
         participantIds: ["u1", "u2"],
         customAmountByParticipant: {},
@@ -63,8 +63,8 @@ describe("splitExpensesStore", () => {
 
     const state = useSplitExpensesStore.getState();
     expect(state.editingGroupId).toBe("group-1");
-    expect(state.groupForm.fromMonth).toBe("2026-09");
-    expect(state.groupForm.toMonth).toBe("2026-10");
+    expect(state.groupForm.fromDate).toBe("2026-09-01");
+    expect(state.groupForm.toDate).toBe("2026-10-31");
     expect(state.groupForm.participantIds).toEqual(["u1", "u2"]);
   });
 
@@ -75,8 +75,8 @@ describe("splitExpensesStore", () => {
       groupPreview: { total_amount: 100, expenses: [] },
       editingGroupId: null,
       groupForm: {
-        fromMonth: "2026-09",
-        toMonth: "2026-09",
+        fromDate: "2026-09-05",
+        toDate: "2026-09-25",
         method: "equal",
         participantIds: ["u1", "u2"],
         customAmountByParticipant: {},
@@ -89,8 +89,8 @@ describe("splitExpensesStore", () => {
     expect(financeApi.createSplitExpenseGroup).toHaveBeenCalledWith(
       "family-1",
       expect.objectContaining({
-        period_start: "2026-09-01",
-        period_end: "2026-09-30",
+        period_start: "2026-09-05",
+        period_end: "2026-09-25",
         method: "equal",
         participants: [{ participant_user_id: "u1" }, { participant_user_id: "u2" }],
       }),
@@ -105,8 +105,8 @@ describe("splitExpensesStore", () => {
       groupPreview: { total_amount: 100, expenses: [] },
       editingGroupId: "group-1",
       groupForm: {
-        fromMonth: "2026-09",
-        toMonth: "2026-10",
+        fromDate: "2026-09-01",
+        toDate: "2026-10-31",
         method: "equal",
         participantIds: ["u1", "u2"],
         customAmountByParticipant: {},

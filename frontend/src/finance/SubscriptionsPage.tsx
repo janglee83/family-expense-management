@@ -138,7 +138,7 @@ export function SubscriptionsPage() {
           <CardContent>
             <form className="space-y-4" onSubmit={handleCreate}>
               <div className="grid gap-4 sm:grid-cols-2">
-                <Field label={t("family.name")} htmlFor="finance-subscription-name" required>
+                <Field label={t("finance.subscriptionName")} htmlFor="finance-subscription-name" required>
                   <input
                     id="finance-subscription-name"
                     type="text"

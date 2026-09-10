@@ -364,8 +364,51 @@ export function HomePage() {
   }, [rangeContext, selectedPeriodExpenses]);
 
   const selectedPeriodTotal = monthlyTotals.reduce((sum, item) => sum + item.total, 0);
-  const averageMonthly = Math.round(selectedPeriodTotal / Math.max(rangeContext.monthKeys.length, 1));
-  const monthlyChartData = monthlyTotals.map((item) => ({ month: item.label, total: item.total }));
+
+  // The "Monthly Trend" card always shows the trailing 6 real months, independent of
+  // whatever single month (by default) the rest of the dashboard is scoped to via
+  // `selectedRange` — a 1-point range there would otherwise render as a flat, empty
+  // trend line that looks broken.
+  const trendRangeContext = useMemo(() => {
+    const currentMonth = toYearMonth(fallbackDate);
+    const startMonth = shiftYearMonth(currentMonth, -5);
+    const startDate = toMonthStart(startMonth, fallbackDate);
+    const endDate = toMonthEnd(currentMonth, fallbackDate);
+    return { startDate, endDate, monthKeys: buildMonthKeysInRange(startDate, endDate) };
+  }, [fallbackDate]);
+
+  const trendMonthlyTotals = useMemo(() => {
+    const totals = new Map<string, number>(trendRangeContext.monthKeys.map((monthKey) => [monthKey, 0]));
+
+    for (const expense of expenses) {
+      if (!isDateWithinRange(expense.expense_date, trendRangeContext.startDate, trendRangeContext.endDate)) {
+        continue;
+      }
+      const expenseDate = new Date(`${expense.expense_date}T00:00:00`);
+      if (Number.isNaN(expenseDate.getTime())) {
+        continue;
+      }
+      const expenseMonthKey = toMonthKey(expenseDate);
+      if (!totals.has(expenseMonthKey)) {
+        continue;
+      }
+      totals.set(expenseMonthKey, (totals.get(expenseMonthKey) ?? 0) + expense.amount);
+    }
+
+    return trendRangeContext.monthKeys.map((monthKey) => ({
+      key: monthKey,
+      label: monthKey.slice(2).replace("-", "/"),
+      total: totals.get(monthKey) ?? 0,
+    }));
+  }, [trendRangeContext, expenses]);
+
+  const trendTotal = trendMonthlyTotals.reduce((sum, item) => sum + item.total, 0);
+  const trendAverageMonthly = Math.round(trendTotal / Math.max(trendRangeContext.monthKeys.length, 1));
+  const trendPeakMonth = trendMonthlyTotals.reduce(
+    (highest, item) => (item.total > highest.total ? item : highest),
+    { key: trendRangeContext.monthKeys[0] ?? "", label: "", total: 0 },
+  );
+  const monthlyChartData = trendMonthlyTotals.map((item) => ({ month: item.label, total: item.total }));
 
   const categoryLookup = useMemo(
     () => Object.fromEntries(categories.map((category) => [category.id, resolveCategoryDisplayName(category, t)])),
@@ -433,17 +476,6 @@ export function HomePage() {
     monthlyIncomeTarget > 0 ? selectedPeriodTotal / monthlyIncomeTarget : 0;
   const savingsProgressRatio =
     savingsGoal > 0 ? Math.max(remainingBalance, 0) / savingsGoal : 0;
-
-  const peakMonth = monthlyTotals.reduce(
-    (highest, item) => (item.total > highest.total ? item : highest),
-    {
-      key: rangeContext.monthKeys[0] ?? rangeContext.startMonth,
-      label: (rangeContext.monthKeys[0] ?? rangeContext.startMonth).slice(2).replace("-", "/"),
-      total: 0,
-    },
-  );
-
-  const selectedMonthLabel = rangeContext.startMonth;
 
   const spendMixData = [
     {
@@ -663,12 +695,14 @@ export function HomePage() {
                     hint={goalStatusLabel}
                     tone="neutral"
                   />
-                  <MetricCard
-                    label={t("dashboard.savingsProgress")}
-                    value={formatMoney(Math.max(remainingBalance, 0), selectedCurrency)}
-                    hint={`${toPercent(savingsProgressRatio)}% ${t("dashboard.savingsGoalHint")}`}
-                    tone="savings"
-                  />
+                  {savingsGoal > 0 ? (
+                    <MetricCard
+                      label={t("dashboard.savingsProgress")}
+                      value={formatMoney(Math.max(remainingBalance, 0), selectedCurrency)}
+                      hint={`${toPercent(savingsProgressRatio)}% ${t("dashboard.savingsGoalHint")}`}
+                      tone="savings"
+                    />
+                  ) : null}
                   <MetricCard
                     label={t("finance.netWorth")}
                     value={formatMoney(netWorthSnapshot?.current_net_worth ?? 0, selectedCurrency)}
@@ -705,19 +739,26 @@ export function HomePage() {
                           <p className="type-body-sm">{formatRate(spendToIncomeRatio)} {t("dashboard.spentVsIncome")}</p>
                         </article>
 
-                        <article className="space-y-2">
-                          <div className="flex items-center justify-between gap-3 text-sm">
+                        {savingsGoal > 0 ? (
+                          <article className="space-y-2">
+                            <div className="flex items-center justify-between gap-3 text-sm">
+                              <p className="font-medium text-foreground">{t("dashboard.savingsGoal")}</p>
+                              <p className="font-mono text-foreground">{formatMoney(savingsGoal, selectedCurrency)}</p>
+                            </div>
+                            <div className="h-2 rounded-full bg-muted">
+                              <div
+                                className="h-full rounded-full bg-success/80"
+                                style={{ width: `${toPercent(savingsProgressRatio)}%` }}
+                              />
+                            </div>
+                            <p className="type-body-sm">{toPercent(savingsProgressRatio)}% {t("dashboard.savingsGoalHint")}</p>
+                          </article>
+                        ) : (
+                          <article className="space-y-1">
                             <p className="font-medium text-foreground">{t("dashboard.savingsGoal")}</p>
-                            <p className="font-mono text-foreground">{formatMoney(savingsGoal, selectedCurrency)}</p>
-                          </div>
-                          <div className="h-2 rounded-full bg-muted">
-                            <div
-                              className="h-full rounded-full bg-success/80"
-                              style={{ width: `${toPercent(savingsProgressRatio)}%` }}
-                            />
-                          </div>
-                          <p className="type-body-sm">{toPercent(savingsProgressRatio)}% {t("dashboard.savingsGoalHint")}</p>
-                        </article>
+                            <p className="type-body-sm text-muted-foreground">{t("dashboard.noSavingsGoal")}</p>
+                          </article>
+                        )}
 
                         <article className="surface-card space-y-2 p-4">
                           <p className="text-sm font-medium text-foreground">{t("dashboard.remainingBalance")}</p>
@@ -764,19 +805,19 @@ export function HomePage() {
                         />
                       </div>
                       <CardDescription>
-                        {selectedFamily?.name ?? t("dashboard.family")} • {selectedMonthLabel}
+                        {selectedFamily?.name ?? t("dashboard.family")} • {t("dashboard.last6Months")}
                       </CardDescription>
                     </CardHeader>
                     <CardContent>
                       <div className="mb-4 flex flex-wrap items-center gap-2">
                         <Badge variant="info">
-                          {t("dashboard.peakMonth", { month: peakMonth.label })}: {formatMoney(peakMonth.total, selectedCurrency)}
+                          {t("dashboard.peakMonth", { month: trendPeakMonth.label })}: {formatMoney(trendPeakMonth.total, selectedCurrency)}
                         </Badge>
                         <Badge variant="neutral">
-                          {t("dashboard.selectedMonthTotal")}: {formatMoney(selectedPeriodTotal, selectedCurrency)}
+                          {t("dashboard.last6MonthsTotal")}: {formatMoney(trendTotal, selectedCurrency)}
                         </Badge>
                         <Badge variant="neutral">
-                          {t("dashboard.averageMonthly")}: {formatMoney(averageMonthly, selectedCurrency)}
+                          {t("dashboard.averageMonthly")}: {formatMoney(trendAverageMonthly, selectedCurrency)}
                         </Badge>
                       </div>
                       <div className="h-72 w-full rounded-md border border-border/70 bg-muted/35 p-3">

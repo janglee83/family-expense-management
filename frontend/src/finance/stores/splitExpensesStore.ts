@@ -29,31 +29,17 @@ interface SplitFormState {
 }
 
 interface GroupFormState {
-  fromMonth: string;
-  toMonth: string;
+  fromDate: string;
+  toDate: string;
   method: SplitMethod;
   participantIds: string[];
   customAmountByParticipant: Record<string, string>;
   percentageByParticipant: Record<string, string>;
 }
 
-function currentYearMonth(): string {
+function currentIsoDate(): string {
   const now = new Date();
-  return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
-}
-
-function rangeToDateRange(fromMonth: string, toMonth: string): { periodStart: string; periodEnd: string } {
-  const [fromYearText, fromMonthText] = fromMonth.split("-");
-  const [toYearText, toMonthText] = toMonth.split("-");
-  const start = new Date(Number(fromYearText), Number(fromMonthText) - 1, 1);
-  const end = new Date(Number(toYearText), Number(toMonthText), 0);
-  const toIso = (date: Date) =>
-    `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
-  return { periodStart: toIso(start), periodEnd: toIso(end) };
-}
-
-function dateToYearMonth(isoDate: string): string {
-  return isoDate.slice(0, 7);
+  return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
 }
 
 interface SplitExpensesStore {
@@ -87,8 +73,8 @@ interface SplitExpensesStore {
   editingGroupId: string | null;
   settlementPreview: SplitExpenseGroupSettlementPreview | null;
   isSettlementPreviewLoading: boolean;
-  setGroupRange: (range: { fromMonth: string; toMonth: string }) => void;
-  setGroupForm: (patch: Partial<Omit<GroupFormState, "fromMonth" | "toMonth">>) => void;
+  setGroupRange: (range: { fromDate: string; toDate: string }) => void;
+  setGroupForm: (patch: Partial<Omit<GroupFormState, "fromDate" | "toDate">>) => void;
   toggleGroupParticipant: (userId: string) => void;
   setGroupCustomAmount: (userId: string, amount: string) => void;
   setGroupPercentage: (userId: string, percentage: string) => void;
@@ -116,8 +102,8 @@ const defaultForm: SplitFormState = {
 };
 
 const defaultGroupForm: GroupFormState = {
-  fromMonth: currentYearMonth(),
-  toMonth: currentYearMonth(),
+  fromDate: currentIsoDate(),
+  toDate: currentIsoDate(),
   method: "equal",
   participantIds: [],
   customAmountByParticipant: {},
@@ -302,14 +288,13 @@ export const useSplitExpensesStore = create<SplitExpensesStore>((set, get) => ({
 
   previewGroup: async (familyId, t) => {
     const { groupForm, editingGroupId } = get();
-    const { periodStart, periodEnd } = rangeToDateRange(groupForm.fromMonth, groupForm.toMonth);
 
     set({ isPreviewLoading: true, error: null, settlementPreview: null });
     try {
       const preview = await previewSplitExpenseGroup(
         familyId,
-        periodStart,
-        periodEnd,
+        groupForm.fromDate,
+        groupForm.toDate,
         editingGroupId ?? undefined,
       );
       set({ groupPreview: preview });
@@ -322,7 +307,6 @@ export const useSplitExpensesStore = create<SplitExpensesStore>((set, get) => ({
 
   previewGroupSettlement: async (familyId, t) => {
     const { groupForm, editingGroupId } = get();
-    const { periodStart, periodEnd } = rangeToDateRange(groupForm.fromMonth, groupForm.toMonth);
     const participants = groupForm.participantIds.map((participantId) => {
       const base = { participant_user_id: participantId };
       if (groupForm.method === "custom") {
@@ -339,8 +323,8 @@ export const useSplitExpensesStore = create<SplitExpensesStore>((set, get) => ({
       const preview = await previewSplitExpenseGroupSettlement(
         familyId,
         {
-          period_start: periodStart,
-          period_end: periodEnd,
+          period_start: groupForm.fromDate,
+          period_end: groupForm.toDate,
           method: groupForm.method,
           participants,
         },
@@ -362,8 +346,8 @@ export const useSplitExpensesStore = create<SplitExpensesStore>((set, get) => ({
       groupPreview: { total_amount: group.total_amount, expenses: group.expenses },
       settlementPreview: null,
       groupForm: {
-        fromMonth: dateToYearMonth(group.period_start),
-        toMonth: dateToYearMonth(group.period_end),
+        fromDate: group.period_start,
+        toDate: group.period_end,
         method: group.method,
         participantIds: group.participants.map((participant) => participant.participant_user_id),
         customAmountByParticipant: Object.fromEntries(
@@ -390,7 +374,6 @@ export const useSplitExpensesStore = create<SplitExpensesStore>((set, get) => ({
       return;
     }
 
-    const { periodStart, periodEnd } = rangeToDateRange(groupForm.fromMonth, groupForm.toMonth);
     const participants = groupForm.participantIds.map((participantId) => {
       const base = { participant_user_id: participantId };
       if (groupForm.method === "custom") {
@@ -406,8 +389,8 @@ export const useSplitExpensesStore = create<SplitExpensesStore>((set, get) => ({
 
     try {
       const input = {
-        period_start: periodStart,
-        period_end: periodEnd,
+        period_start: groupForm.fromDate,
+        period_end: groupForm.toDate,
         method: groupForm.method,
         participants,
       };
