@@ -6,7 +6,7 @@ from datetime import date, timedelta
 from enum import StrEnum
 from math import ceil, floor, sqrt
 from statistics import fmean
-from typing import Literal
+from typing import Generic, Literal, TypeVar
 
 
 class LedgerTransactionType(StrEnum):
@@ -337,6 +337,60 @@ def resolve_percentage_split_amounts(total_amount: int, percentages: list[int]) 
     for index in range(delta):
         floored[index % len(floored)] += 1
     return floored
+
+
+T = TypeVar("T")
+
+
+@dataclass(frozen=True)
+class DebtSettlement(Generic[T]):
+    from_id: T
+    to_id: T
+    amount: int
+
+
+def compute_debt_settlements(net_balance_by_id: dict[T, int]) -> list[DebtSettlement[T]]:
+    """Greedy largest-creditor/largest-debtor matching.
+
+    `net_balance_by_id` is `paid - fair_share` per person: positive means the
+    person is owed money (creditor), negative means the person owes money
+    (debtor). The caller guarantees the values sum to zero.
+
+    True minimum-transaction debt simplification is NP-hard in general (a
+    set-partition problem). This greedy heuristic — repeatedly settle the
+    largest creditor against the largest debtor — is what tools like
+    Splitwise use in practice, and is optimal for small n (family-sized
+    groups).
+    """
+    creditors = sorted(
+        ([id_, balance] for id_, balance in net_balance_by_id.items() if balance > 0),
+        key=lambda pair: pair[1],
+        reverse=True,
+    )
+    debtors = sorted(
+        ([id_, -balance] for id_, balance in net_balance_by_id.items() if balance < 0),
+        key=lambda pair: pair[1],
+        reverse=True,
+    )
+
+    settlements: list[DebtSettlement[T]] = []
+    i = 0
+    j = 0
+    while i < len(creditors) and j < len(debtors):
+        creditor_id, credit = creditors[i]
+        debtor_id, debt = debtors[j]
+        amount = min(credit, debt)
+
+        settlements.append(DebtSettlement(from_id=debtor_id, to_id=creditor_id, amount=amount))
+
+        creditors[i][1] -= amount
+        debtors[j][1] -= amount
+        if creditors[i][1] == 0:
+            i += 1
+        if debtors[j][1] == 0:
+            j += 1
+
+    return settlements
 
 
 def forecast_month_end_spending(

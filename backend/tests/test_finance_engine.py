@@ -5,6 +5,7 @@ from datetime import date
 import pytest
 
 from app.services.finance_engine import (
+    DebtSettlement,
     LedgerTransaction,
     LedgerTransactionType,
     SubscriptionBillingCycle,
@@ -15,6 +16,7 @@ from app.services.finance_engine import (
     calculate_daily_spending_limit,
     calculate_ledger_impact,
     calculate_net_worth,
+    compute_debt_settlements,
     detect_spending_anomalies,
     forecast_month_end_spending,
     resolve_equal_split_amounts,
@@ -258,3 +260,46 @@ def test_resolve_percentage_split_amounts_sums_exactly_to_total() -> None:
     amounts = resolve_percentage_split_amounts(total_amount=999, percentages=[50, 30, 20])
     assert sum(amounts) == 999
     assert amounts[0] >= amounts[1] >= amounts[2]
+
+
+def test_compute_debt_settlements_single_payment_covers_the_shortfall() -> None:
+    # A paid 100, B paid 20, C paid 60; equal fair share is 60 each.
+    # Net balance: A +40, B -40, C 0. One transaction settles it.
+    settlements = compute_debt_settlements({"A": 40, "B": -40, "C": 0})
+
+    assert settlements == [DebtSettlement(from_id="B", to_id="A", amount=40)]
+
+
+def test_compute_debt_settlements_matches_largest_creditor_and_debtor_first() -> None:
+    # Creditors: A +50, B +30. Debtors: C -70, D -10.
+    # Greedy: C pays A 50 (A cleared), C pays B 20 (C cleared, B has 10 left),
+    # D pays B 10 (both cleared).
+    settlements = compute_debt_settlements({"A": 50, "B": 30, "C": -70, "D": -10})
+
+    assert settlements == [
+        DebtSettlement(from_id="C", to_id="A", amount=50),
+        DebtSettlement(from_id="C", to_id="B", amount=20),
+        DebtSettlement(from_id="D", to_id="B", amount=10),
+    ]
+
+
+def test_compute_debt_settlements_returns_empty_when_everyone_is_already_even() -> None:
+    settlements = compute_debt_settlements({"A": 0, "B": 0, "C": 0})
+
+    assert settlements == []
+
+
+def test_compute_debt_settlements_single_payer_owes_nothing_to_themselves() -> None:
+    # A paid everything (300), fair share is 100 each among A, B, C.
+    settlements = compute_debt_settlements({"A": 200, "B": -100, "C": -100})
+
+    assert sorted(settlements, key=lambda item: item.from_id) == [
+        DebtSettlement(from_id="B", to_id="A", amount=100),
+        DebtSettlement(from_id="C", to_id="A", amount=100),
+    ]
+
+
+def test_compute_debt_settlements_ignores_ids_with_zero_balance() -> None:
+    settlements = compute_debt_settlements({"A": 10, "B": -10, "C": 0})
+
+    assert all(item.from_id != "C" and item.to_id != "C" for item in settlements)
