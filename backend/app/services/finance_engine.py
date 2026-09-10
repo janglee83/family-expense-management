@@ -349,6 +349,14 @@ class DebtSettlement(Generic[T]):
     amount: int
 
 
+@dataclass
+class _BalanceRecord(Generic[T]):
+    """Internal mutable record for tracking participant balance during settlement."""
+
+    id: T
+    amount: int
+
+
 def compute_debt_settlements(net_balance_by_id: dict[T, int]) -> list[DebtSettlement[T]]:
     """Greedy largest-creditor/largest-debtor matching.
 
@@ -363,13 +371,13 @@ def compute_debt_settlements(net_balance_by_id: dict[T, int]) -> list[DebtSettle
     groups).
     """
     creditors = sorted(
-        ([id_, balance] for id_, balance in net_balance_by_id.items() if balance > 0),
-        key=lambda pair: pair[1],
+        (_BalanceRecord(id=id_, amount=balance) for id_, balance in net_balance_by_id.items() if balance > 0),
+        key=lambda record: record.amount,
         reverse=True,
     )
     debtors = sorted(
-        ([id_, -balance] for id_, balance in net_balance_by_id.items() if balance < 0),
-        key=lambda pair: pair[1],
+        (_BalanceRecord(id=id_, amount=-balance) for id_, balance in net_balance_by_id.items() if balance < 0),
+        key=lambda record: record.amount,
         reverse=True,
     )
 
@@ -377,17 +385,17 @@ def compute_debt_settlements(net_balance_by_id: dict[T, int]) -> list[DebtSettle
     i = 0
     j = 0
     while i < len(creditors) and j < len(debtors):
-        creditor_id, credit = creditors[i]
-        debtor_id, debt = debtors[j]
-        amount = min(credit, debt)
+        creditor_record = creditors[i]
+        debtor_record = debtors[j]
+        amount = min(creditor_record.amount, debtor_record.amount)
 
-        settlements.append(DebtSettlement(from_id=debtor_id, to_id=creditor_id, amount=amount))
+        settlements.append(DebtSettlement(from_id=debtor_record.id, to_id=creditor_record.id, amount=amount))
 
-        creditors[i][1] -= amount
-        debtors[j][1] -= amount
-        if creditors[i][1] == 0:
+        creditor_record.amount -= amount
+        debtor_record.amount -= amount
+        if creditor_record.amount == 0:
             i += 1
-        if debtors[j][1] == 0:
+        if debtor_record.amount == 0:
             j += 1
 
     return settlements
