@@ -31,6 +31,9 @@ export type CreateSplitExpenseInput = components["schemas"]["CreateSplitExpenseR
 export type SplitExpenseGroup = components["schemas"]["SplitExpenseGroupResponse"];
 export type SplitExpenseGroupPreview = components["schemas"]["SplitExpenseGroupPreviewResponse"];
 export type CreateSplitExpenseGroupInput = components["schemas"]["CreateSplitExpenseGroupRequest"];
+export type SplitExpenseGroupSettlement = components["schemas"]["SplitExpenseGroupSettlementResponse"];
+export type SplitExpenseGroupSettlementPreview =
+  components["schemas"]["SplitExpenseGroupSettlementPreviewResponse"];
 
 export type NetWorth = components["schemas"]["NetWorthResponse"];
 export type CashFlowSummary = components["schemas"]["CashFlowSummaryResponse"];
@@ -453,17 +456,62 @@ export async function listSplitExpenseGroups(familyId: string): Promise<SplitExp
   return data;
 }
 
-export async function settleSplitExpenseGroupParticipant(
+export async function previewSplitExpenseGroupSettlement(
+  familyId: string,
+  input: CreateSplitExpenseGroupInput,
+): Promise<SplitExpenseGroupSettlementPreview> {
+  const { data, error, response } = await apiClient.POST(
+    "/api/v1/families/{family_id}/split-expense-groups/preview-settlement",
+    {
+      params: { path: { family_id: familyId } },
+      body: input,
+    },
+  );
+  if (error || !data) {
+    throw buildApiError({
+      status: response.status,
+      payload: error,
+      fallbackCode: "preview_split_expense_group_settlement_failed",
+      fallbackMessage: "Failed to preview settlement",
+    });
+  }
+  return data;
+}
+
+export async function updateSplitExpenseGroup(
   familyId: string,
   groupId: string,
-  participantId: string,
+  input: CreateSplitExpenseGroupInput,
+): Promise<SplitExpenseGroup> {
+  const { data, error, response } = await apiClient.PATCH(
+    "/api/v1/families/{family_id}/split-expense-groups/{group_id}",
+    {
+      params: { path: { family_id: familyId, group_id: groupId } },
+      body: input,
+    },
+  );
+  if (error || !data) {
+    throw buildApiError({
+      status: response.status,
+      payload: error,
+      fallbackCode: "update_split_expense_group_failed",
+      fallbackMessage: "Failed to update split expense group",
+    });
+  }
+  return data;
+}
+
+export async function settleSplitExpenseGroupSettlement(
+  familyId: string,
+  groupId: string,
+  settlementId: string,
   isSettled: boolean,
 ): Promise<SplitExpenseGroup> {
   const { data, error, response } = await apiClient.PATCH(
-    "/api/v1/families/{family_id}/split-expense-groups/{group_id}/participants/{participant_id}/settle",
+    "/api/v1/families/{family_id}/split-expense-groups/{group_id}/settlements/{settlement_id}/settle",
     {
       params: {
-        path: { family_id: familyId, group_id: groupId, participant_id: participantId },
+        path: { family_id: familyId, group_id: groupId, settlement_id: settlementId },
       },
       body: { is_settled: isSettled },
     },
@@ -472,7 +520,7 @@ export async function settleSplitExpenseGroupParticipant(
     throw buildApiError({
       status: response.status,
       payload: error,
-      fallbackCode: "settle_split_expense_group_participant_failed",
+      fallbackCode: "settle_split_expense_group_settlement_failed",
       fallbackMessage: "Failed to update settlement status",
     });
   }

@@ -583,6 +583,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/families/{family_id}/split-expense-groups/preview-settlement": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Preview Split Expense Group Settlement */
+        post: operations["preview_split_expense_group_settlement_api_v1_families__family_id__split_expense_groups_preview_settlement_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/families/{family_id}/split-expense-groups/{group_id}": {
         parameters: {
             query?: never;
@@ -597,10 +614,11 @@ export interface paths {
         delete?: never;
         options?: never;
         head?: never;
-        patch?: never;
+        /** Update Split Expense Group */
+        patch: operations["update_split_expense_group_api_v1_families__family_id__split_expense_groups__group_id__patch"];
         trace?: never;
     };
-    "/api/v1/families/{family_id}/split-expense-groups/{group_id}/participants/{participant_id}/settle": {
+    "/api/v1/families/{family_id}/split-expense-groups/{group_id}/settlements/{settlement_id}/settle": {
         parameters: {
             query?: never;
             header?: never;
@@ -613,8 +631,8 @@ export interface paths {
         delete?: never;
         options?: never;
         head?: never;
-        /** Settle Split Expense Group Participant */
-        patch: operations["settle_split_expense_group_participant_api_v1_families__family_id__split_expense_groups__group_id__participants__participant_id__settle_patch"];
+        /** Settle Split Expense Group Settlement */
+        patch: operations["settle_split_expense_group_settlement_api_v1_families__family_id__split_expense_groups__group_id__settlements__settlement_id__settle_patch"];
         trace?: never;
     };
     "/api/v1/families/{family_id}/split-expenses/": {
@@ -1692,8 +1710,8 @@ export interface components {
             /** Name */
             name: string;
         };
-        /** SettleSplitExpenseGroupParticipantRequest */
-        SettleSplitExpenseGroupParticipantRequest: {
+        /** SettleSplitExpenseGroupSettlementRequest */
+        SettleSplitExpenseGroupSettlementRequest: {
             /**
              * Is Settled
              * @default true
@@ -1729,6 +1747,11 @@ export interface components {
              * Format: uuid
              */
             id: string;
+            /**
+             * Payer User Id
+             * Format: uuid
+             */
+            payer_user_id: string;
         };
         /** SplitExpenseGroupParticipantResponse */
         SplitExpenseGroupParticipantResponse: {
@@ -1797,9 +1820,60 @@ export interface components {
             period_start: string;
             /** Settled Amount */
             settled_amount: number;
+            /** Settlements */
+            settlements: components["schemas"]["SplitExpenseGroupSettlementResponse"][];
             status: components["schemas"]["SplitStatus"];
             /** Total Amount */
             total_amount: number;
+        };
+        /** SplitExpenseGroupSettlementPreviewItem */
+        SplitExpenseGroupSettlementPreviewItem: {
+            /** Amount */
+            amount: number;
+            /**
+             * From User Id
+             * Format: uuid
+             */
+            from_user_id: string;
+            /**
+             * To User Id
+             * Format: uuid
+             */
+            to_user_id: string;
+        };
+        /** SplitExpenseGroupSettlementPreviewResponse */
+        SplitExpenseGroupSettlementPreviewResponse: {
+            /** Settlements */
+            settlements: components["schemas"]["SplitExpenseGroupSettlementPreviewItem"][];
+        };
+        /** SplitExpenseGroupSettlementResponse */
+        SplitExpenseGroupSettlementResponse: {
+            /** Amount */
+            amount: number;
+            /**
+             * From User Id
+             * Format: uuid
+             */
+            from_user_id: string;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Is Settled */
+            is_settled: boolean;
+            /** Settled At */
+            settled_at: string | null;
+            /**
+             * Split Expense Group Id
+             * Format: uuid
+             */
+            split_expense_group_id: string;
+            /**
+             * To User Id
+             * Format: uuid
+             */
+            to_user_id: string;
         };
         /** SplitExpenseItemResponse */
         SplitExpenseItemResponse: {
@@ -3698,6 +3772,41 @@ export interface operations {
             };
         };
     };
+    preview_split_expense_group_settlement_api_v1_families__family_id__split_expense_groups_preview_settlement_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                family_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateSplitExpenseGroupRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SplitExpenseGroupSettlementPreviewResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     get_split_expense_group_api_v1_families__family_id__split_expense_groups__group_id__get: {
         parameters: {
             query?: never;
@@ -3730,20 +3839,56 @@ export interface operations {
             };
         };
     };
-    settle_split_expense_group_participant_api_v1_families__family_id__split_expense_groups__group_id__participants__participant_id__settle_patch: {
+    update_split_expense_group_api_v1_families__family_id__split_expense_groups__group_id__patch: {
         parameters: {
             query?: never;
             header?: never;
             path: {
                 family_id: string;
                 group_id: string;
-                participant_id: string;
             };
             cookie?: never;
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["SettleSplitExpenseGroupParticipantRequest"];
+                "application/json": components["schemas"]["CreateSplitExpenseGroupRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SplitExpenseGroupResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    settle_split_expense_group_settlement_api_v1_families__family_id__split_expense_groups__group_id__settlements__settlement_id__settle_patch: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                family_id: string;
+                group_id: string;
+                settlement_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SettleSplitExpenseGroupSettlementRequest"];
             };
         };
         responses: {

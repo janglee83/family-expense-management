@@ -2113,7 +2113,7 @@
         "title": "RenameFamilyRequest",
         "type": "object"
       },
-      "SettleSplitExpenseGroupParticipantRequest": {
+      "SettleSplitExpenseGroupSettlementRequest": {
         "properties": {
           "is_settled": {
             "default": true,
@@ -2121,7 +2121,7 @@
             "type": "boolean"
           }
         },
-        "title": "SettleSplitExpenseGroupParticipantRequest",
+        "title": "SettleSplitExpenseGroupSettlementRequest",
         "type": "object"
       },
       "SettleSplitExpenseItemRequest": {
@@ -2166,6 +2166,11 @@
             "format": "uuid",
             "title": "Id",
             "type": "string"
+          },
+          "payer_user_id": {
+            "format": "uuid",
+            "title": "Payer User Id",
+            "type": "string"
           }
         },
         "required": [
@@ -2173,7 +2178,8 @@
           "description",
           "category_id",
           "amount",
-          "expense_date"
+          "expense_date",
+          "payer_user_id"
         ],
         "title": "SplitExpenseGroupExpenseSummary",
         "type": "object"
@@ -2299,6 +2305,13 @@
             "title": "Settled Amount",
             "type": "integer"
           },
+          "settlements": {
+            "items": {
+              "$ref": "#/components/schemas/SplitExpenseGroupSettlementResponse"
+            },
+            "title": "Settlements",
+            "type": "array"
+          },
           "status": {
             "$ref": "#/components/schemas/SplitStatus"
           },
@@ -2319,9 +2332,106 @@
           "settled_amount",
           "outstanding_amount",
           "expenses",
-          "participants"
+          "participants",
+          "settlements"
         ],
         "title": "SplitExpenseGroupResponse",
+        "type": "object"
+      },
+      "SplitExpenseGroupSettlementPreviewItem": {
+        "properties": {
+          "amount": {
+            "title": "Amount",
+            "type": "integer"
+          },
+          "from_user_id": {
+            "format": "uuid",
+            "title": "From User Id",
+            "type": "string"
+          },
+          "to_user_id": {
+            "format": "uuid",
+            "title": "To User Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "from_user_id",
+          "to_user_id",
+          "amount"
+        ],
+        "title": "SplitExpenseGroupSettlementPreviewItem",
+        "type": "object"
+      },
+      "SplitExpenseGroupSettlementPreviewResponse": {
+        "properties": {
+          "settlements": {
+            "items": {
+              "$ref": "#/components/schemas/SplitExpenseGroupSettlementPreviewItem"
+            },
+            "title": "Settlements",
+            "type": "array"
+          }
+        },
+        "required": [
+          "settlements"
+        ],
+        "title": "SplitExpenseGroupSettlementPreviewResponse",
+        "type": "object"
+      },
+      "SplitExpenseGroupSettlementResponse": {
+        "properties": {
+          "amount": {
+            "title": "Amount",
+            "type": "integer"
+          },
+          "from_user_id": {
+            "format": "uuid",
+            "title": "From User Id",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "is_settled": {
+            "title": "Is Settled",
+            "type": "boolean"
+          },
+          "settled_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Settled At"
+          },
+          "split_expense_group_id": {
+            "format": "uuid",
+            "title": "Split Expense Group Id",
+            "type": "string"
+          },
+          "to_user_id": {
+            "format": "uuid",
+            "title": "To User Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "split_expense_group_id",
+          "from_user_id",
+          "to_user_id",
+          "amount",
+          "is_settled",
+          "settled_at"
+        ],
+        "title": "SplitExpenseGroupSettlementResponse",
         "type": "object"
       },
       "SplitExpenseItemResponse": {
@@ -5626,6 +5736,59 @@
         ]
       }
     },
+    "/api/v1/families/{family_id}/split-expense-groups/preview-settlement": {
+      "post": {
+        "operationId": "preview_split_expense_group_settlement_api_v1_families__family_id__split_expense_groups_preview_settlement_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "family_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Family Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateSplitExpenseGroupRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SplitExpenseGroupSettlementPreviewResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Preview Split Expense Group Settlement",
+        "tags": [
+          "split-expense-groups"
+        ]
+      }
+    },
     "/api/v1/families/{family_id}/split-expense-groups/{group_id}": {
       "get": {
         "operationId": "get_split_expense_group_api_v1_families__family_id__split_expense_groups__group_id__get",
@@ -5677,11 +5840,9 @@
         "tags": [
           "split-expense-groups"
         ]
-      }
-    },
-    "/api/v1/families/{family_id}/split-expense-groups/{group_id}/participants/{participant_id}/settle": {
+      },
       "patch": {
-        "operationId": "settle_split_expense_group_participant_api_v1_families__family_id__split_expense_groups__group_id__participants__participant_id__settle_patch",
+        "operationId": "update_split_expense_group_api_v1_families__family_id__split_expense_groups__group_id__patch",
         "parameters": [
           {
             "in": "path",
@@ -5702,23 +5863,13 @@
               "title": "Group Id",
               "type": "string"
             }
-          },
-          {
-            "in": "path",
-            "name": "participant_id",
-            "required": true,
-            "schema": {
-              "format": "uuid",
-              "title": "Participant Id",
-              "type": "string"
-            }
           }
         ],
         "requestBody": {
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/SettleSplitExpenseGroupParticipantRequest"
+                "$ref": "#/components/schemas/CreateSplitExpenseGroupRequest"
               }
             }
           },
@@ -5746,7 +5897,80 @@
             "description": "Validation Error"
           }
         },
-        "summary": "Settle Split Expense Group Participant",
+        "summary": "Update Split Expense Group",
+        "tags": [
+          "split-expense-groups"
+        ]
+      }
+    },
+    "/api/v1/families/{family_id}/split-expense-groups/{group_id}/settlements/{settlement_id}/settle": {
+      "patch": {
+        "operationId": "settle_split_expense_group_settlement_api_v1_families__family_id__split_expense_groups__group_id__settlements__settlement_id__settle_patch",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "family_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Family Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "group_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Group Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "settlement_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Settlement Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SettleSplitExpenseGroupSettlementRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SplitExpenseGroupResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Settle Split Expense Group Settlement",
         "tags": [
           "split-expense-groups"
         ]

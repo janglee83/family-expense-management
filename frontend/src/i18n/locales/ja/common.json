@@ -377,7 +377,8 @@
     "splitGroupNoEligibleExpenses": "この月に対象となる支出がありません",
     "splitGroupInvalidPeriod": "終了日は開始日以降の日付にしてください",
     "splitGroupNotFound": "月ごとの精算が見つかりません",
-    "splitGroupParticipantNotFound": "参加者情報が見つかりません",
+    "splitGroupPayerNotInParticipants": "支払った人は参加者に含める必要があります",
+    "splitGroupSettlementNotFound": "精算対象の記録が見つかりません",
     "splitMethodValues": {
       "equal": "均等",
       "custom": "金額指定",

@@ -377,7 +377,8 @@
     "splitGroupNoEligibleExpenses": "Không có khoản chi hợp lệ trong tháng này",
     "splitGroupInvalidPeriod": "Ngày kết thúc phải sau ngày bắt đầu",
     "splitGroupNotFound": "Không tìm thấy nhóm chia theo tháng",
-    "splitGroupParticipantNotFound": "Không tìm thấy thông tin thành viên",
+    "splitGroupPayerNotInParticipants": "Người đã trả tiền phải nằm trong danh sách tham gia chia",
+    "splitGroupSettlementNotFound": "Không tìm thấy khoản nợ cần thanh toán",
     "splitMethodValues": {
       "equal": "Chia đều",
       "custom": "Tự nhập",
