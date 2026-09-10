@@ -1,4 +1,4 @@
-import { useEffect, useMemo, type FormEvent } from "react";
+import { useEffect, useMemo, useState, type FormEvent } from "react";
 import { useTranslation } from "react-i18next";
 import { useParams } from "react-router-dom";
 import { useAuth } from "../auth/useAuth";
@@ -7,11 +7,13 @@ import { Badge } from "../components/ui/Badge";
 import { Button } from "../components/ui/Button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../components/ui/Card";
 import { Field } from "../components/ui/Field";
+import { Modal } from "../components/ui/Modal";
 import { EmptyState, LoadingState, PageFrame, PageHeader } from "../components/ui/Page";
 import { useSnackbar } from "../components/ui/Snackbar";
 import { formatMoney } from "../utils/currency";
-import { type SplitExpense, type SplitMethod } from "./financeApi";
+import { type SplitExpense, type SplitExpenseGroup, type SplitMethod } from "./financeApi";
 import { FinanceNav } from "./FinanceNav";
+import { MonthRangePicker } from "./MonthRangePicker";
 import { useSplitExpensesStore } from "./stores/splitExpensesStore";
 
 const SPLIT_METHODS: SplitMethod[] = ["equal", "custom", "percentage"];
@@ -21,6 +23,7 @@ export function SplitExpensesPage() {
   const { showSnackbar } = useSnackbar();
   const { user } = useAuth();
   const { familyId } = useParams<{ familyId: string }>();
+  const [pendingEditGroup, setPendingEditGroup] = useState<SplitExpenseGroup | null>(null);
 
   const {
     family,
@@ -35,13 +38,20 @@ export function SplitExpensesPage() {
     isPreviewLoading,
     isGroupSaving,
     groupForm,
+    setGroupRange,
     setGroupForm,
     toggleGroupParticipant,
     setGroupCustomAmount,
     setGroupPercentage,
     previewGroup,
-    createGroup,
-    toggleGroupParticipantSettle,
+    editingGroupId,
+    settlementPreview,
+    isSettlementPreviewLoading,
+    previewGroupSettlement,
+    startEditGroup,
+    cancelEditGroup,
+    saveGroup,
+    settleGroupSettlement,
   } = useSplitExpensesStore();
 
   useEffect(() => {
@@ -60,6 +70,8 @@ export function SplitExpensesPage() {
   );
 
   const expenseById = useMemo(() => Object.fromEntries(expenses.map((expense) => [expense.id, expense])), [expenses]);
+
+  const memberName = (userId: string) => memberNameById[userId] ?? userId;
 
   const splitMethodLabel = (methodValue: SplitMethod) => t(`finance.splitMethodValues.${methodValue}`);
   const splitStatusLabel = (statusValue: SplitExpense["status"]) => t(`finance.splitStatusValues.${statusValue}`);
@@ -80,21 +92,44 @@ export function SplitExpensesPage() {
     void previewGroup(familyId, t);
   }
 
-  function handleCreateGroup(event: FormEvent<HTMLFormElement>) {
+  function handlePreviewSettlement() {
+    if (!familyId) {
+      return;
+    }
+
+    void previewGroupSettlement(familyId, t);
+  }
+
+  function handleSaveGroup(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (!familyId) {
       return;
     }
 
-    void createGroup(familyId, t, showSnackbar);
+    void saveGroup(familyId, t, showSnackbar);
   }
 
-  function handleToggleGroupParticipantSettle(groupId: string, participantId: string, currentState: boolean) {
+  function handleEditGroupClick(group: SplitExpenseGroup) {
+    if (group.settlements.some((settlement) => settlement.is_settled)) {
+      setPendingEditGroup(group);
+      return;
+    }
+    startEditGroup(group);
+  }
+
+  function handleConfirmEditGroup() {
+    if (pendingEditGroup) {
+      startEditGroup(pendingEditGroup);
+    }
+    setPendingEditGroup(null);
+  }
+
+  function handleSettleGroupSettlement(groupId: string, settlementId: string, currentState: boolean) {
     if (!familyId) {
       return;
     }
 
-    void toggleGroupParticipantSettle(familyId, groupId, participantId, currentState, t, showSnackbar);
+    void settleGroupSettlement(familyId, groupId, settlementId, currentState, t, showSnackbar);
   }
 
   if (!familyId || isLoading) {
@@ -107,6 +142,13 @@ export function SplitExpensesPage() {
       </PageFrame>
     );
   }
+
+  const payerMismatchWarning =
+    groupPreview && groupPreview.expenses.length > 0 && groupForm.participantIds.length > 0
+      ? groupPreview.expenses
+          .map((expense) => expense.payer_user_id)
+          .filter((payerId) => !groupForm.participantIds.includes(payerId))
+      : [];
 
   return (
     <PageFrame>
@@ -149,14 +191,22 @@ export function SplitExpensesPage() {
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
-              <Field label={t("finance.selectMonth")} htmlFor="finance-split-group-month">
-                <input
-                  id="finance-split-group-month"
-                  type="month"
-                  value={groupForm.month}
-                  onChange={(event) => setGroupForm({ month: event.target.value })}
-                />
-              </Field>
+              {editingGroupId ? (
+                <Alert variant="info">
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <span>{t("finance.editGroupSplit")}</span>
+                    <Button type="button" variant="outline" size="sm" onClick={cancelEditGroup}>
+                      {t("finance.cancelEditGroupSplit")}
+                    </Button>
+                  </div>
+                </Alert>
+              ) : null}
+
+              <MonthRangePicker
+                fromMonth={groupForm.fromMonth}
+                toMonth={groupForm.toMonth}
+                onChange={setGroupRange}
+              />
 
               <Button type="button" variant="outline" loading={isPreviewLoading} onClick={handlePreviewGroup}>
                 {t("finance.previewMonth")}
@@ -166,7 +216,7 @@ export function SplitExpensesPage() {
                 groupPreview.expenses.length === 0 ? (
                   <EmptyState title={t("finance.noEligibleExpensesForMonth")} />
                 ) : (
-                  <form className="space-y-4" onSubmit={handleCreateGroup}>
+                  <form className="space-y-4" onSubmit={handleSaveGroup}>
                     <div className="surface-card space-y-2 p-3">
                       <div className="flex items-center justify-between text-sm">
                         <span className="font-medium text-foreground">{t("finance.groupIncludedExpenses")}</span>
@@ -177,7 +227,10 @@ export function SplitExpensesPage() {
                       <ul className="space-y-1 text-sm text-muted-foreground">
                         {groupPreview.expenses.map((expense) => (
                           <li key={expense.id} className="flex items-center justify-between gap-2">
-                            <span>{expense.expense_date} {expense.description ? `• ${expense.description}` : ""}</span>
+                            <span>
+                              {expense.expense_date} {expense.description ? `• ${expense.description}` : ""} —{" "}
+                              {t("finance.paidBy")}: {memberName(expense.payer_user_id)}
+                            </span>
                             <span className="font-mono">{formatMoney(expense.amount, currencyCode)}</span>
                           </li>
                         ))}
@@ -233,8 +286,47 @@ export function SplitExpensesPage() {
                       ))}
                     </fieldset>
 
+                    {payerMismatchWarning.length > 0 ? (
+                      <Alert variant="error" role="alert">
+                        {t("finance.splitGroupPayerNotInParticipants")}
+                      </Alert>
+                    ) : (
+                      <Button
+                        type="button"
+                        variant="outline"
+                        loading={isSettlementPreviewLoading}
+                        disabled={groupForm.participantIds.length === 0}
+                        onClick={handlePreviewSettlement}
+                      >
+                        {t("finance.previewSettlement")}
+                      </Button>
+                    )}
+
+                    {settlementPreview ? (
+                      <div className="surface-card space-y-2 p-3">
+                        <span className="font-medium text-foreground">{t("finance.settlementPreviewTitle")}</span>
+                        {settlementPreview.settlements.length === 0 ? (
+                          <p className="text-sm text-muted-foreground">{t("finance.noSettlementsNeeded")}</p>
+                        ) : (
+                          <ul className="space-y-1 text-sm text-muted-foreground">
+                            {settlementPreview.settlements.map((settlement, index) => (
+                              <li key={index} className="flex items-center justify-between gap-2">
+                                <span>
+                                  {t("finance.settlementLine", {
+                                    from: memberName(settlement.from_user_id),
+                                    to: memberName(settlement.to_user_id),
+                                  })}
+                                </span>
+                                <span className="font-mono">{formatMoney(settlement.amount, currencyCode)}</span>
+                              </li>
+                            ))}
+                          </ul>
+                        )}
+                      </div>
+                    ) : null}
+
                     <Button type="submit" loading={isGroupSaving}>
-                      {t("finance.createGroupSplit")}
+                      {t(editingGroupId ? "finance.editGroupSplit" : "finance.createGroupSplit")}
                     </Button>
                   </form>
                 )
@@ -260,45 +352,60 @@ export function SplitExpensesPage() {
                           {splitStatusLabel(group.status)}
                         </Badge>
                         <Badge variant="info">{splitMethodLabel(group.method)}</Badge>
-                        <span className="text-sm text-muted-foreground">{group.period_start.slice(0, 7)}</span>
+                        <span className="text-sm text-muted-foreground">
+                          {group.period_start.slice(0, 7)} → {group.period_end.slice(0, 7)}
+                        </span>
                       </div>
-                      <span className="font-mono text-sm text-foreground">
-                        {formatMoney(group.total_amount, currencyCode)}
-                      </span>
+                      <div className="flex items-center gap-2">
+                        <span className="font-mono text-sm text-foreground">
+                          {formatMoney(group.total_amount, currencyCode)}
+                        </span>
+                        <Button type="button" size="sm" variant="outline" onClick={() => handleEditGroupClick(group)}>
+                          {t("finance.editGroupSplit")}
+                        </Button>
+                      </div>
                     </div>
                     <p className="text-sm text-muted-foreground">
                       {t("finance.outstanding")}: {formatMoney(group.outstanding_amount, currencyCode)}
                     </p>
-                    <ul className="space-y-2">
-                      {group.participants.map((participant) => (
-                        <li key={participant.id} className="rounded-md border border-border/80 bg-muted/30 px-3 py-2 text-sm">
-                          <div className="flex flex-wrap items-center justify-between gap-2">
-                            <span className="font-medium text-foreground">
-                              {memberNameById[participant.participant_user_id] ?? participant.participant_user_id}
-                              {participant.participant_user_id === user?.id ? ` (${t("finance.you")})` : ""}
-                            </span>
-                            <span className="font-mono text-foreground">
-                              {formatMoney(participant.amount, currencyCode)}
-                            </span>
-                          </div>
-                          <div className="mt-2 flex flex-wrap items-center justify-between gap-2">
-                            <Badge variant={participant.is_settled ? "success" : "warning"}>
-                              {participant.is_settled ? t("finance.settled") : t("finance.unsettled")}
-                            </Badge>
-                            <Button
-                              type="button"
-                              size="sm"
-                              variant="outline"
-                              onClick={() =>
-                                handleToggleGroupParticipantSettle(group.id, participant.id, participant.is_settled)
-                              }
-                            >
-                              {participant.is_settled ? t("finance.markUnsettled") : t("finance.markSettled")}
-                            </Button>
-                          </div>
-                        </li>
-                      ))}
-                    </ul>
+                    {group.settlements.length === 0 ? (
+                      <p className="text-sm text-muted-foreground">{t("finance.noSettlementsNeeded")}</p>
+                    ) : (
+                      <ul className="space-y-2">
+                        {group.settlements.map((settlement) => (
+                          <li key={settlement.id} className="rounded-md border border-border/80 bg-muted/30 px-3 py-2 text-sm">
+                            <div className="flex flex-wrap items-center justify-between gap-2">
+                              <span className="font-medium text-foreground">
+                                {t("finance.settlementLine", {
+                                  from: memberName(settlement.from_user_id),
+                                  to: memberName(settlement.to_user_id),
+                                })}
+                              </span>
+                              <span className="font-mono text-foreground">
+                                {formatMoney(settlement.amount, currencyCode)}
+                              </span>
+                            </div>
+                            <div className="mt-2 flex flex-wrap items-center justify-between gap-2">
+                              <Badge variant={settlement.is_settled ? "success" : "warning"}>
+                                {settlement.is_settled ? t("finance.settled") : t("finance.unsettled")}
+                              </Badge>
+                              {settlement.from_user_id === user?.id || settlement.to_user_id === user?.id ? (
+                                <Button
+                                  type="button"
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() =>
+                                    handleSettleGroupSettlement(group.id, settlement.id, settlement.is_settled)
+                                  }
+                                >
+                                  {settlement.is_settled ? t("finance.markUnsettled") : t("finance.markSettled")}
+                                </Button>
+                              ) : null}
+                            </div>
+                          </li>
+                        ))}
+                      </ul>
+                    )}
                   </li>
                 ))}
               </ul>
@@ -368,6 +475,23 @@ export function SplitExpensesPage() {
           </CardContent>
         </Card>
       </main>
+
+      <Modal
+        isOpen={pendingEditGroup !== null}
+        title={t("finance.editGroupSplitWarningTitle")}
+        description={t("finance.editGroupSplitWarning")}
+        onClose={() => setPendingEditGroup(null)}
+        footer={
+          <>
+            <Button type="button" variant="outline" onClick={() => setPendingEditGroup(null)}>
+              {t("common.cancel")}
+            </Button>
+            <Button type="button" variant="destructive" onClick={handleConfirmEditGroup}>
+              {t("finance.confirmEditGroupSplit")}
+            </Button>
+          </>
+        }
+      />
     </PageFrame>
   );
 }
