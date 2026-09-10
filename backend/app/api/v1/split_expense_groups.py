@@ -329,6 +329,10 @@ async def preview_split_expense_group(
     period_end: Annotated[date, Query()],
     _membership: Annotated[FamilyMember, Depends(get_family_membership)],
     session: Annotated[AsyncSession, Depends(get_session)],
+    # When editing an existing group, its own expenses are already rows in
+    # `split_expense_group_items` and would otherwise be filtered out as "already
+    # claimed" — passing that group's id keeps them eligible for the edit.
+    group_id: Annotated[uuid.UUID | None, Query()] = None,
 ) -> SplitExpenseGroupPreviewResponse:
     if period_end < period_start:
         raise_api_error(
@@ -336,7 +340,9 @@ async def preview_split_expense_group(
             code="SPLIT_GROUP_INVALID_PERIOD",
             message="period_end must be greater than or equal to period_start",
         )
-    expenses = await _find_eligible_expenses(family_id, period_start, period_end, session)
+    expenses = await _find_eligible_expenses(
+        family_id, period_start, period_end, session, exclude_group_id=group_id
+    )
     return SplitExpenseGroupPreviewResponse(
         total_amount=sum(expense.amount for expense in expenses),
         expenses=[
@@ -359,9 +365,18 @@ async def preview_split_expense_group_settlement(
     payload: CreateSplitExpenseGroupRequest,
     _membership: Annotated[FamilyMember, Depends(get_family_membership)],
     session: Annotated[AsyncSession, Depends(get_session)],
+    # Same as `GET /preview`: stays a query param (and out of the request body) so
+    # `CreateSplitExpenseGroupRequest` remains the shared create/update body shape.
+    group_id: Annotated[uuid.UUID | None, Query()] = None,
 ) -> SplitExpenseGroupSettlementPreviewResponse:
     _, _, settlements = await _build_settlement_plan(
-        family_id, payload.period_start, payload.period_end, payload.method, payload.participants, session
+        family_id,
+        payload.period_start,
+        payload.period_end,
+        payload.method,
+        payload.participants,
+        session,
+        exclude_group_id=group_id,
     )
     return SplitExpenseGroupSettlementPreviewResponse(
         settlements=[

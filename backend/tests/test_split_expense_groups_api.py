@@ -452,6 +452,130 @@ async def test_expense_already_in_another_group_is_excluded_from_a_second_groups
 
 
 @pytest.mark.integration
+async def test_preview_with_group_id_keeps_that_groups_expenses_but_not_another_groups(
+    client: AsyncClient,
+) -> None:
+    """The edit flow's preview: `group_id` un-hides only the edited group's own expenses."""
+    owner = await _register(client, _unique_email(), "Owner")
+    family_id = await _create_family(client)
+    category_id = await _get_global_category_id(client, family_id)
+    _, member = await _register_and_add_member(client, family_id, "Bob")
+
+    await _create_expense(
+        client, family_id, owner["id"], category_id, 1000, True, date(2026, 9, 5)
+    )
+    await _create_expense(
+        client, family_id, member["id"], category_id, 500, True, date(2026, 10, 5)
+    )
+
+    participants = [
+        {"participant_user_id": owner["id"]},
+        {"participant_user_id": member["id"]},
+    ]
+    september_group = await client.post(
+        f"/api/v1/families/{family_id}/split-expense-groups/",
+        json={
+            "period_start": "2026-09-01",
+            "period_end": "2026-09-30",
+            "method": "equal",
+            "participants": participants,
+        },
+    )
+    assert september_group.status_code == 201, september_group.text
+    september_group_id = september_group.json()["id"]
+
+    october_group = await client.post(
+        f"/api/v1/families/{family_id}/split-expense-groups/",
+        json={
+            "period_start": "2026-10-01",
+            "period_end": "2026-10-31",
+            "method": "equal",
+            "participants": participants,
+        },
+    )
+    assert october_group.status_code == 201, october_group.text
+
+    # Without `group_id` both months' expenses are claimed, so nothing is eligible.
+    without_group_id = await client.get(
+        f"/api/v1/families/{family_id}/split-expense-groups/preview",
+        params={"period_start": "2026-09-01", "period_end": "2026-10-31"},
+    )
+    assert without_group_id.status_code == 200
+    assert without_group_id.json() == {"total_amount": 0, "expenses": []}
+
+    # With it, the September group's own expense comes back — but the October
+    # group's expense stays excluded.
+    with_group_id = await client.get(
+        f"/api/v1/families/{family_id}/split-expense-groups/preview",
+        params={
+            "period_start": "2026-09-01",
+            "period_end": "2026-10-31",
+            "group_id": september_group_id,
+        },
+    )
+    assert with_group_id.status_code == 200, with_group_id.text
+    body = with_group_id.json()
+    assert body["total_amount"] == 1000
+    assert [expense["expense_date"] for expense in body["expenses"]] == ["2026-09-05"]
+
+
+@pytest.mark.integration
+async def test_preview_settlement_with_group_id_sees_the_edited_groups_own_expenses(
+    client: AsyncClient,
+) -> None:
+    owner = await _register(client, _unique_email(), "Owner")
+    family_id = await _create_family(client)
+    category_id = await _get_global_category_id(client, family_id)
+    _, member = await _register_and_add_member(client, family_id, "Bob")
+
+    await _create_expense(
+        client, family_id, owner["id"], category_id, 1000, True, date(2026, 9, 5)
+    )
+
+    participants = [
+        {"participant_user_id": owner["id"]},
+        {"participant_user_id": member["id"]},
+    ]
+    group_response = await client.post(
+        f"/api/v1/families/{family_id}/split-expense-groups/",
+        json={
+            "period_start": "2026-09-01",
+            "period_end": "2026-09-30",
+            "method": "equal",
+            "participants": participants,
+        },
+    )
+    assert group_response.status_code == 201, group_response.text
+    group_id = group_response.json()["id"]
+
+    payload = {
+        "period_start": "2026-09-01",
+        "period_end": "2026-09-30",
+        "method": "equal",
+        "participants": participants,
+    }
+
+    without_group_id = await client.post(
+        f"/api/v1/families/{family_id}/split-expense-groups/preview-settlement",
+        json=payload,
+    )
+    assert without_group_id.status_code == 422
+    assert without_group_id.json()["error"]["code"] == "SPLIT_GROUP_NO_ELIGIBLE_EXPENSES"
+
+    with_group_id = await client.post(
+        f"/api/v1/families/{family_id}/split-expense-groups/preview-settlement",
+        params={"group_id": group_id},
+        json=payload,
+    )
+    assert with_group_id.status_code == 200, with_group_id.text
+    assert with_group_id.json() == {
+        "settlements": [
+            {"from_user_id": member["id"], "to_user_id": owner["id"], "amount": 500}
+        ]
+    }
+
+
+@pytest.mark.integration
 async def test_create_rejects_zero_percentage_participant(client: AsyncClient) -> None:
     owner = await _register(client, _unique_email(), "Owner")
     family_id = await _create_family(client)

@@ -3743,6 +3743,7 @@ export interface operations {
             query: {
                 period_start: string;
                 period_end: string;
+                group_id?: string | null;
             };
             header?: never;
             path: {
@@ -3774,7 +3775,9 @@ export interface operations {
     };
     preview_split_expense_group_settlement_api_v1_families__family_id__split_expense_groups_preview_settlement_post: {
         parameters: {
-            query?: never;
+            query?: {
+                group_id?: string | null;
+            };
             header?: never;
             path: {
                 family_id: string;
