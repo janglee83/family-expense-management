@@ -1,7 +1,8 @@
 import { useState, type FormEvent } from "react";
 import { useTranslation } from "react-i18next";
 import { translateApiError } from "../api/errorI18n";
-import { createFamily, type CurrencyCode, type Family, type FamilyType } from "./familyApi";
+import { type CurrencyCode, type Family, type FamilyType } from "./familyApi";
+import { useCreateFamily } from "./familyQueries";
 import { Button } from "../components/ui/Button";
 import { Field } from "../components/ui/Field";
 import { Alert } from "../components/ui/Alert";
@@ -53,7 +54,7 @@ export function CreateFamilyForm({ onCreated }: { onCreated: (family: Family) =>
   const [memberEmailInput, setMemberEmailInput] = useState("");
   const [memberEmails, setMemberEmails] = useState<string[]>([]);
   const [error, setError] = useState<string | null>(null);
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const createFamilyMutation = useCreateFamily();
   const nameId = "create-family-name";
   const typeId = "create-family-type";
   const currencyId = "create-family-currency";
@@ -81,7 +82,7 @@ export function CreateFamilyForm({ onCreated }: { onCreated: (family: Family) =>
     setMemberEmailInput("");
   }
 
-  async function handleSubmit(event: FormEvent) {
+  function handleSubmit(event: FormEvent) {
     event.preventDefault();
 
     const trimmedName = name.trim();
@@ -114,9 +115,8 @@ export function CreateFamilyForm({ onCreated }: { onCreated: (family: Family) =>
     }
 
     setError(null);
-    setIsSubmitting(true);
-    try {
-      const family = await createFamily({
+    createFamilyMutation.mutate(
+      {
         name: trimmedName,
         family_type: familyType,
         currency_code: currencyCode,
@@ -124,21 +124,24 @@ export function CreateFamilyForm({ onCreated }: { onCreated: (family: Family) =>
         member_emails: familyType === "shared" ? memberEmails : [],
         monthly_income: monthlyIncomeEnabled ? parsedIncome : null,
         savings_goal_amount: parsedSavingsGoal,
-      });
-      onCreated(family);
-      setName("");
-      setFamilyType("shared");
-      setCurrencyCode("jpy");
-      setMonthlyIncomeEnabled(false);
-      setMonthlyIncome("");
-      setSavingsGoalAmount("");
-      setMemberEmailInput("");
-      setMemberEmails([]);
-    } catch (err) {
-      setError(translateApiError(t, err, "family.actionFailed"));
-    } finally {
-      setIsSubmitting(false);
-    }
+      },
+      {
+        onSuccess: (family) => {
+          onCreated(family);
+          setName("");
+          setFamilyType("shared");
+          setCurrencyCode("jpy");
+          setMonthlyIncomeEnabled(false);
+          setMonthlyIncome("");
+          setSavingsGoalAmount("");
+          setMemberEmailInput("");
+          setMemberEmails([]);
+        },
+        onError: (err) => {
+          setError(translateApiError(t, err, "family.actionFailed"));
+        },
+      },
+    );
   }
 
   return (
@@ -292,7 +295,7 @@ export function CreateFamilyForm({ onCreated }: { onCreated: (family: Family) =>
         <Button
           type="submit"
           className="w-full sm:w-auto"
-          loading={isSubmitting}
+          loading={createFamilyMutation.isPending}
           loadingLabel={t("common.loading")}
         >
           {t("family.create")}

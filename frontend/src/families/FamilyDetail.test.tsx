@@ -1,10 +1,11 @@
-import { render, screen, within } from "@testing-library/react";
+import { screen, within } from "@testing-library/react";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import i18n from "../i18n/i18n";
 import { FamilyDetail } from "./FamilyDetail";
 import { useAuth } from "../auth/useAuth";
 import { SnackbarProvider } from "../components/ui/Snackbar";
+import { renderWithProviders } from "../testUtils/renderWithProviders";
 
 const getFamilyDetailMock = vi.fn();
 const removeMemberMock = vi.fn();
@@ -32,7 +33,7 @@ function renderAtFamily(userId: string) {
     logout: vi.fn(),
   });
 
-  return render(
+  return renderWithProviders(
     <SnackbarProvider>
       <MemoryRouter initialEntries={["/families/fam-1"]}>
         <Routes>
