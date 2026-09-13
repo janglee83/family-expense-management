@@ -1,4 +1,5 @@
 import { act, renderHook, waitFor } from "@testing-library/react";
+import { useQueryClient } from "@tanstack/react-query";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { createQueryWrapper } from "../testUtils/renderWithProviders";
 import { authKeys, useCurrentUser, useLogin, useLogout, useRegister } from "./authQueries";
@@ -87,6 +88,22 @@ describe("useLogout", () => {
     });
 
     await waitFor(() => expect(currentUserResult.current.data).toBeNull());
+  });
+
+  it("purges every other cached query so a subsequent login never shows stale data", async () => {
+    vi.mocked(authApi.logoutUser).mockResolvedValue(undefined);
+    const wrapper = createQueryWrapper();
+    const { result: clientResult } = renderHook(() => useQueryClient(), { wrapper });
+    clientResult.current.setQueryData(["families"], [{ id: "fam-1" }]);
+
+    const { result: logoutResult } = renderHook(() => useLogout(), { wrapper });
+
+    await act(async () => {
+      await logoutResult.current.mutateAsync();
+    });
+
+    await waitFor(() => expect(clientResult.current.getQueryData(authKeys.currentUser)).toBeNull());
+    expect(clientResult.current.getQueryData(["families"])).toBeUndefined();
   });
 });
 
