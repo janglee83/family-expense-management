@@ -7,4 +7,5 @@ export const financeKeys = {
   ledgerTransactions: (familyId: string) => ["finance", familyId, "ledger-transactions"] as const,
   subscriptions: (familyId: string) => ["finance", familyId, "subscriptions"] as const,
   subscriptionSummary: (familyId: string) => ["finance", familyId, "subscriptions", "summary"] as const,
+  splitExpenseGroups: (familyId: string) => ["finance", familyId, "split-expense-groups"] as const,
 };
