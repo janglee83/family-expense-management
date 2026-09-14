@@ -1,6 +1,8 @@
-import { useEffect, type FormEvent } from "react";
+import { useState, type FormEvent } from "react";
 import { useTranslation } from "react-i18next";
 import { useParams } from "react-router-dom";
+import { translateApiError } from "../api/errorI18n";
+import { useFamilyDetail } from "../families/familyQueries";
 import { Alert } from "../components/ui/Alert";
 import { Badge } from "../components/ui/Badge";
 import { Button } from "../components/ui/Button";
@@ -12,6 +14,15 @@ import { useSnackbar } from "../components/ui/Snackbar";
 import { formatMoney } from "../utils/currency";
 import { type GoalEntry } from "./financeApi";
 import { FinanceNav } from "./FinanceNav";
+import {
+  useAccounts,
+  useCreateGoal,
+  useCreateGoalEntry,
+  useDeleteGoal,
+  useGoalEntries,
+  useGoals,
+  useTogglePauseGoal,
+} from "./queries/goalsQueries";
 import { useGoalsStore } from "./stores/goalsStore";
 
 function toDateInput(value: string | null): string {
@@ -22,91 +33,142 @@ export function GoalsPage() {
   const { t } = useTranslation();
   const { showSnackbar } = useSnackbar();
   const { familyId } = useParams<{ familyId: string }>();
+  const [formError, setFormError] = useState<string | null>(null);
 
-  const {
-    goals,
-    accounts,
-    familyCurrencyCode,
-    isLoading,
-    isSavingGoal,
-    isSavingEntry,
-    error,
-    goalForm,
-    entryGoal,
-    entryForm,
-    selectedGoalEntries,
-    setGoalForm,
-    setEntryForm,
-    closeEntryModal,
-    load,
-    createGoal,
-    togglePause,
-    deleteGoal,
-    openEntryModal,
-    createEntry,
-  } = useGoalsStore();
+  const { goalForm, entryGoal, entryForm, setGoalForm, setEntryForm, closeEntryModal, openEntryModal, resetGoalForm, resetEntryForm } =
+    useGoalsStore();
 
-  useEffect(() => {
-    if (!familyId) {
-      return;
-    }
+  const goalsQuery = useGoals(familyId ?? "");
+  const accountsQuery = useAccounts(familyId ?? "");
+  const familyDetailQuery = useFamilyDetail(familyId ?? "");
+  const goalEntriesQuery = useGoalEntries(familyId ?? "", entryGoal?.id);
+  const goals = goalsQuery.data ?? [];
+  const accounts = accountsQuery.data ?? [];
+  const familyCurrencyCode = familyDetailQuery.data?.currency_code ?? "jpy";
+  const selectedGoalEntries = goalEntriesQuery.data ?? [];
+  const isLoading = goalsQuery.isLoading || accountsQuery.isLoading || familyDetailQuery.isLoading;
+  const queryError =
+    goalsQuery.isError || accountsQuery.isError || familyDetailQuery.isError
+      ? t("expense.actionFailed")
+      : null;
+  const error = queryError ?? formError;
 
-    void load(familyId, t);
-  }, [familyId, load, t]);
+  const createGoalMutation = useCreateGoal(familyId ?? "");
+  const togglePauseMutation = useTogglePauseGoal(familyId ?? "");
+  const deleteGoalMutation = useDeleteGoal(familyId ?? "");
+  const createEntryMutation = useCreateGoalEntry(familyId ?? "", entryGoal?.id ?? "");
+  const isSavingGoal = createGoalMutation.isPending;
+  const isSavingEntry = createEntryMutation.isPending;
 
   const goalEntryTypeLabel = (entryTypeValue: GoalEntry["entry_type"]) =>
     entryTypeValue === "contribution" ? t("finance.contribution") : t("finance.withdrawal");
 
   function handleCreateGoal(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (!familyId) {
+    if (!familyId) return;
+
+    const targetAmount = Number(goalForm.goalTarget);
+    const currentAmount = Number(goalForm.goalCurrent);
+    if (!Number.isFinite(targetAmount) || targetAmount <= 0 || !Number.isFinite(currentAmount) || currentAmount < 0) {
+      setFormError(t("expense.actionFailed"));
       return;
     }
 
-    void createGoal(familyId, t, showSnackbar);
+    setFormError(null);
+    createGoalMutation.mutate(
+      {
+        name: goalForm.goalName.trim(),
+        target_amount: targetAmount,
+        current_amount: currentAmount,
+        target_date: goalForm.goalDate || null,
+        monthly_contribution: goalForm.goalMonthlyContribution ? Number(goalForm.goalMonthlyContribution) : null,
+        icon: goalForm.goalIcon.trim() || null,
+        linked_account_id: goalForm.goalLinkedAccountId || null,
+      },
+      {
+        onSuccess: () => {
+          resetGoalForm();
+          showSnackbar({ message: t("finance.goalCreated"), variant: "success" });
+        },
+        onError: (err) => {
+          const message = translateApiError(t, err, "expense.actionFailed");
+          setFormError(message);
+          showSnackbar({ message, variant: "error" });
+        },
+      },
+    );
   }
 
   function handleTogglePause(goalId: string) {
-    if (!familyId) {
-      return;
-    }
-
     const goal = goals.find((item) => item.id === goalId);
-    if (!goal) {
-      return;
-    }
+    if (!goal) return;
 
-    void togglePause(familyId, goal, t, showSnackbar);
+    setFormError(null);
+    togglePauseMutation.mutate(
+      { goalId, isPaused: !goal.is_paused },
+      {
+        onSuccess: () => {
+          showSnackbar({ message: t("finance.goalUpdated"), variant: "success" });
+        },
+        onError: (err) => {
+          const message = translateApiError(t, err, "expense.actionFailed");
+          setFormError(message);
+          showSnackbar({ message, variant: "error" });
+        },
+      },
+    );
   }
 
   function handleDeleteGoal(goalId: string) {
-    if (!familyId) {
-      return;
-    }
-
-    void deleteGoal(familyId, goalId, t, showSnackbar);
+    setFormError(null);
+    deleteGoalMutation.mutate(goalId, {
+      onSuccess: () => {
+        showSnackbar({ message: t("finance.goalDeleted"), variant: "success" });
+      },
+      onError: (err) => {
+        const message = translateApiError(t, err, "expense.actionFailed");
+        setFormError(message);
+        showSnackbar({ message, variant: "error" });
+      },
+    });
   }
 
   function handleOpenEntry(goalId: string) {
-    if (!familyId) {
-      return;
-    }
-
     const goal = goals.find((item) => item.id === goalId);
-    if (!goal) {
-      return;
-    }
-
-    void openEntryModal(familyId, goal);
+    if (!goal) return;
+    openEntryModal(goal);
   }
 
   function handleCreateEntry(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (!familyId) {
+    if (!entryGoal) return;
+
+    const amount = Number(entryForm.entryAmount);
+    if (!Number.isFinite(amount) || amount <= 0) {
+      setFormError(t("expense.amountMustBePositive"));
       return;
     }
 
-    void createEntry(familyId, t, showSnackbar);
+    setFormError(null);
+    createEntryMutation.mutate(
+      {
+        amount,
+        entry_type: entryForm.entryType,
+        occurred_on: entryForm.entryDate,
+        note: entryForm.entryNote.trim() || null,
+      },
+      {
+        onSuccess: () => {
+          resetEntryForm();
+          showSnackbar({ message: t("finance.goalEntryAdded"), variant: "success" });
+        },
+        onError: (err) => {
+          const message = translateApiError(t, err, "expense.actionFailed");
+          setFormError(message);
+          showSnackbar({ message, variant: "error" });
+        },
+      },
+    );
   }
 
   if (!familyId || isLoading) {
