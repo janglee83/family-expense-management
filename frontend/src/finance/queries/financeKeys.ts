@@ -4,4 +4,5 @@ export const financeKeys = {
   accounts: (familyId: string) => ["finance", familyId, "accounts"] as const,
   goals: (familyId: string) => ["finance", familyId, "goals"] as const,
   goalEntries: (familyId: string, goalId: string) => ["finance", familyId, "goals", goalId, "entries"] as const,
+  ledgerTransactions: (familyId: string) => ["finance", familyId, "ledger-transactions"] as const,
 };

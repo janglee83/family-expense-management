@@ -1,6 +1,9 @@
-import { useEffect, useMemo, type FormEvent } from "react";
+import { useMemo, useState, type FormEvent } from "react";
 import { useTranslation } from "react-i18next";
 import { useParams } from "react-router-dom";
+import { translateApiError } from "../api/errorI18n";
+import { useFamilyDetail } from "../families/familyQueries";
+import { useCategories } from "../expenses/expenseQueries";
 import { Alert } from "../components/ui/Alert";
 import { Badge } from "../components/ui/Badge";
 import { Button } from "../components/ui/Button";
@@ -12,6 +15,13 @@ import { resolveCategoryDisplayName } from "../expenses/expenseApi";
 import { formatMoney } from "../utils/currency";
 import { type AccountType, type LedgerTransactionType } from "./financeApi";
 import { FinanceNav } from "./FinanceNav";
+import {
+  useAccounts,
+  useCreateAccount,
+  useCreateLedgerTransaction,
+  useLedgerTransactions,
+  useToggleAccountActive,
+} from "./queries/accountsLedgerQueries";
 import { useAccountsLedgerStore } from "./stores/accountsLedgerStore";
 
 const ACCOUNT_TYPES: AccountType[] = ["bank", "cash", "investment", "credit_card", "loan"];
@@ -25,37 +35,44 @@ const LEDGER_TYPES: LedgerTransactionType[] = [
   "goal_withdrawal",
 ];
 
+function toNumberOrNull(value: string): number | null {
+  if (!value.trim()) {
+    return null;
+  }
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? parsed : null;
+}
+
 export function AccountsLedgerPage() {
   const { t } = useTranslation();
   const { showSnackbar } = useSnackbar();
   const { familyId } = useParams<{ familyId: string }>();
+  const [formError, setFormError] = useState<string | null>(null);
 
-  const {
-    accounts,
-    transactions,
-    categories,
-    familyCurrencyCode,
-    isLoading,
-    isCreatingAccount,
-    isCreatingLedger,
-    error,
-    accountForm,
-    ledgerForm,
-    setAccountForm,
-    setLedgerForm,
-    load,
-    createAccount,
-    toggleAccountActive,
-    createLedger,
-  } = useAccountsLedgerStore();
+  const { accountForm, ledgerForm, setAccountForm, setLedgerForm, resetAccountForm, resetLedgerForm } =
+    useAccountsLedgerStore();
 
-  useEffect(() => {
-    if (!familyId) {
-      return;
-    }
+  const accountsQuery = useAccounts(familyId ?? "");
+  const transactionsQuery = useLedgerTransactions(familyId ?? "");
+  const categoriesQuery = useCategories(familyId ?? "");
+  const familyDetailQuery = useFamilyDetail(familyId ?? "");
+  const accounts = accountsQuery.data ?? [];
+  const transactions = transactionsQuery.data ?? [];
+  const categories = categoriesQuery.data ?? [];
+  const familyCurrencyCode = familyDetailQuery.data?.currency_code ?? "jpy";
+  const isLoading =
+    accountsQuery.isLoading || transactionsQuery.isLoading || categoriesQuery.isLoading || familyDetailQuery.isLoading;
+  const queryError =
+    accountsQuery.isError || transactionsQuery.isError || categoriesQuery.isError || familyDetailQuery.isError
+      ? t("expense.actionFailed")
+      : null;
+  const error = queryError ?? formError;
 
-    void load(familyId, t);
-  }, [familyId, load, t]);
+  const createAccountMutation = useCreateAccount(familyId ?? "");
+  const toggleAccountActiveMutation = useToggleAccountActive(familyId ?? "");
+  const createLedgerMutation = useCreateLedgerTransaction(familyId ?? "");
+  const isCreatingAccount = createAccountMutation.isPending;
+  const isCreatingLedger = createLedgerMutation.isPending;
 
   const categoryNameById = useMemo(
     () => Object.fromEntries(categories.map((category) => [category.id, resolveCategoryDisplayName(category, t)])),
@@ -67,33 +84,97 @@ export function AccountsLedgerPage() {
 
   function handleCreateAccount(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (!familyId) {
+    if (!familyId) return;
+
+    const opening = Number(accountForm.openingBalance);
+    if (!Number.isFinite(opening)) {
+      setFormError(t("expense.actionFailed"));
       return;
     }
 
-    void createAccount(familyId, t, showSnackbar);
+    setFormError(null);
+    createAccountMutation.mutate(
+      {
+        name: accountForm.accountName.trim(),
+        account_type: accountForm.accountType,
+        currency_code: familyCurrencyCode === "vnd" ? "vnd" : "jpy",
+        opening_balance: opening,
+        credit_limit: accountForm.accountType === "credit_card" ? toNumberOrNull(accountForm.creditLimit) : null,
+        statement_closing_day:
+          accountForm.accountType === "credit_card" ? toNumberOrNull(accountForm.statementClosingDay) : null,
+        payment_due_day: accountForm.accountType === "credit_card" ? toNumberOrNull(accountForm.paymentDueDay) : null,
+        minimum_payment: accountForm.accountType === "credit_card" ? toNumberOrNull(accountForm.minimumPayment) : null,
+      },
+      {
+        onSuccess: () => {
+          resetAccountForm();
+          showSnackbar({ message: t("finance.accountCreated"), variant: "success" });
+        },
+        onError: (err) => {
+          const message = translateApiError(t, err, "expense.actionFailed");
+          setFormError(message);
+          showSnackbar({ message, variant: "error" });
+        },
+      },
+    );
   }
 
   function handleToggleAccountActive(accountId: string) {
-    if (!familyId) {
-      return;
-    }
-
     const account = accounts.find((item) => item.id === accountId);
-    if (!account) {
-      return;
-    }
+    if (!account) return;
 
-    void toggleAccountActive(familyId, account, t, showSnackbar);
+    setFormError(null);
+    toggleAccountActiveMutation.mutate(
+      { accountId, isActive: !account.is_active },
+      {
+        onSuccess: () => {
+          showSnackbar({
+            message: account.is_active ? t("finance.accountDisabled") : t("finance.accountEnabled"),
+            variant: "success",
+          });
+        },
+        onError: (err) => {
+          const message = translateApiError(t, err, "expense.actionFailed");
+          setFormError(message);
+          showSnackbar({ message, variant: "error" });
+        },
+      },
+    );
   }
 
   function handleCreateLedger(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (!familyId) {
+    if (!familyId) return;
+
+    const amount = Number(ledgerForm.ledgerAmount);
+    if (!Number.isFinite(amount) || amount <= 0) {
+      setFormError(t("expense.amountMustBePositive"));
       return;
     }
 
-    void createLedger(familyId, t, showSnackbar);
+    setFormError(null);
+    createLedgerMutation.mutate(
+      {
+        transaction_type: ledgerForm.ledgerType,
+        amount,
+        occurred_on: ledgerForm.ledgerDate,
+        description: ledgerForm.ledgerDescription.trim() || null,
+        category_id: ledgerForm.ledgerCategoryId || null,
+        source_account_id: ledgerForm.sourceAccountId || null,
+        destination_account_id: ledgerForm.destinationAccountId || null,
+      },
+      {
+        onSuccess: () => {
+          resetLedgerForm();
+          showSnackbar({ message: t("finance.ledgerCreated"), variant: "success" });
+        },
+        onError: (err) => {
+          const message = translateApiError(t, err, "expense.actionFailed");
+          setFormError(message);
+          showSnackbar({ message, variant: "error" });
+        },
+      },
+    );
   }
 
   if (!familyId || isLoading) {
