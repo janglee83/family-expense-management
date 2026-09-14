@@ -39,6 +39,10 @@ frontend/test-results/
 
 # Local agent metadata
 .serena/
+.superpowers/
+
+# Local docker-compose port overrides (machine-specific)
+docker-compose.override.yml
 
 # Terraform
 # State and tfvars hold `sensitive = true` variables (database_url, redis_url,
