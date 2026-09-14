@@ -1,15 +1,9 @@
-import { useEffect, useState, type FormEvent } from "react";
+import { useState, type FormEvent } from "react";
 import { useTranslation } from "react-i18next";
 import { translateApiError } from "../api/errorI18n";
-import { getFamilyDetail, type FamilyMemberInfo } from "../families/familyApi";
-import {
-  createExpense,
-  listCategories,
-  resolveCategoryDisplayName,
-  updateExpense,
-  type Category,
-  type Expense,
-} from "./expenseApi";
+import { useFamilyDetail } from "../families/familyQueries";
+import { resolveCategoryDisplayName, type Expense } from "./expenseApi";
+import { useCategories, useCreateExpense, useUpdateExpense } from "./expenseQueries";
 import { Field } from "../components/ui/Field";
 import { Button } from "../components/ui/Button";
 import { Alert } from "../components/ui/Alert";
@@ -41,9 +35,11 @@ function formatDigitsAsAmount(value: string, currencyCode: string): string {
 
 export function ExpenseForm({ familyId, expense, currencyCode, onSaved, onCancel }: ExpenseFormProps) {
   const { t } = useTranslation();
-  const [categories, setCategories] = useState<Category[]>([]);
-  const [members, setMembers] = useState<FamilyMemberInfo[]>([]);
-  const [activeCurrencyCode, setActiveCurrencyCode] = useState(currencyCode ?? "jpy");
+  const categoriesQuery = useCategories(familyId);
+  const familyDetailQuery = useFamilyDetail(familyId);
+  const categories = categoriesQuery.data ?? [];
+  const members = familyDetailQuery.data?.members ?? [];
+  const activeCurrencyCode = currencyCode ?? familyDetailQuery.data?.currency_code ?? "jpy";
   const [payerUserId, setPayerUserId] = useState(expense?.payer_user_id ?? "");
   const [categoryId, setCategoryId] = useState(expense?.category_id ?? "");
   const [amountInput, setAmountInput] = useState(
@@ -55,36 +51,19 @@ export function ExpenseForm({ familyId, expense, currencyCode, onSaved, onCancel
     expense?.expense_date ?? new Date().toISOString().slice(0, 10),
   );
   const [error, setError] = useState<string | null>(null);
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const createExpenseMutation = useCreateExpense(familyId);
+  const updateExpenseMutation = useUpdateExpense(familyId);
+  const isSubmitting = createExpenseMutation.isPending || updateExpenseMutation.isPending;
   const payerId = `expense-payer-${familyId}`;
   const categoryIdInput = `expense-category-${familyId}`;
   const amountId = `expense-amount-${familyId}`;
   const sharedId = `expense-shared-${familyId}`;
   const dateId = `expense-date-${familyId}`;
   const descriptionId = `expense-description-${familyId}`;
+  const effectivePayerUserId = payerUserId || members[0]?.user_id || "";
+  const effectiveCategoryId = categoryId || categories[0]?.id || "";
 
-  useEffect(() => {
-    let cancelled = false;
-    Promise.all([listCategories(familyId), getFamilyDetail(familyId)])
-      .then(([categoryResult, familyDetail]) => {
-        if (cancelled) return;
-        setCategories(categoryResult);
-        setMembers(familyDetail.members);
-        setActiveCurrencyCode(familyDetail.currency_code);
-        setCategoryId((current) => current || categoryResult[0]?.id || "");
-        setPayerUserId((current) => current || familyDetail.members[0]?.user_id || "");
-      })
-      .catch(() => {
-        if (!cancelled) {
-          setError(t("expense.actionFailed"));
-        }
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, [familyId, t]);
-
-  async function handleSubmit(event: FormEvent) {
+  function handleSubmit(event: FormEvent) {
     event.preventDefault();
 
     const parsedAmount = Number(toDigits(amountInput));
@@ -98,24 +77,26 @@ export function ExpenseForm({ familyId, expense, currencyCode, onSaved, onCancel
     }
 
     setError(null);
-    setIsSubmitting(true);
-    try {
-      const input = {
-        payer_user_id: payerUserId,
-        category_id: categoryId,
-        amount: parsedAmount,
-        is_shared: isShared,
-        description: description || null,
-        expense_date: expenseDate,
-      };
-      const saved = expense
-        ? await updateExpense(familyId, expense.id, input)
-        : await createExpense(familyId, input);
-      onSaved(saved);
-    } catch (err) {
-      setError(translateApiError(t, err, "expense.actionFailed"));
-    } finally {
-      setIsSubmitting(false);
+    const input = {
+      payer_user_id: effectivePayerUserId,
+      category_id: effectiveCategoryId,
+      amount: parsedAmount,
+      is_shared: isShared,
+      description: description || null,
+      expense_date: expenseDate,
+    };
+
+    const mutationOptions = {
+      onSuccess: onSaved,
+      onError: (err: unknown) => {
+        setError(translateApiError(t, err, "expense.actionFailed"));
+      },
+    };
+
+    if (expense) {
+      updateExpenseMutation.mutate({ expenseId: expense.id, input }, mutationOptions);
+    } else {
+      createExpenseMutation.mutate(input, mutationOptions);
     }
   }
 
@@ -125,7 +106,7 @@ export function ExpenseForm({ familyId, expense, currencyCode, onSaved, onCancel
         <Field label={t("expense.payer")} htmlFor={payerId} required>
           <select
             id={payerId}
-            value={payerUserId}
+            value={effectivePayerUserId}
             className="min-h-10"
             onChange={(event) => setPayerUserId(event.target.value)}
           >
@@ -140,7 +121,7 @@ export function ExpenseForm({ familyId, expense, currencyCode, onSaved, onCancel
         <Field label={t("expense.category")} htmlFor={categoryIdInput} required>
           <select
             id={categoryIdInput}
-            value={categoryId}
+            value={effectiveCategoryId}
             className="min-h-10"
             onChange={(event) => setCategoryId(event.target.value)}
           >

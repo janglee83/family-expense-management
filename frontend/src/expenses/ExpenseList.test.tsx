@@ -1,7 +1,8 @@
-import { render, screen } from "@testing-library/react";
+import { screen } from "@testing-library/react";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import i18n from "../i18n/i18n";
+import { renderWithProviders } from "../testUtils/renderWithProviders";
 import { ExpenseList } from "./ExpenseList";
 import { getFamilyDetail } from "../families/familyApi";
 import { useAuth } from "../auth/useAuth";
@@ -26,7 +27,7 @@ vi.mock("../auth/useAuth", () => ({
 }));
 
 function renderAt() {
-  return render(
+  return renderWithProviders(
     <SnackbarProvider>
       <MemoryRouter initialEntries={["/families/fam-1/expenses"]}>
         <Routes>
