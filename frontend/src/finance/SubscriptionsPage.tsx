@@ -44,7 +44,7 @@ export function SubscriptionsPage() {
   const subscriptions = subscriptionsQuery.data ?? [];
   const summary = summaryQuery.data ?? null;
   const accounts = accountsQuery.data ?? [];
-  const categories = categoriesQuery.data ?? [];
+  const categories = useMemo(() => categoriesQuery.data ?? [], [categoriesQuery.data]);
   const familyCurrencyCode = familyDetailQuery.data?.currency_code ?? "jpy";
   const isLoading =
     subscriptionsQuery.isLoading ||

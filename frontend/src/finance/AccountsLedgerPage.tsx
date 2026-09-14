@@ -58,7 +58,7 @@ export function AccountsLedgerPage() {
   const familyDetailQuery = useFamilyDetail(familyId ?? "");
   const accounts = accountsQuery.data ?? [];
   const transactions = transactionsQuery.data ?? [];
-  const categories = categoriesQuery.data ?? [];
+  const categories = useMemo(() => categoriesQuery.data ?? [], [categoriesQuery.data]);
   const familyCurrencyCode = familyDetailQuery.data?.currency_code ?? "jpy";
   const isLoading =
     accountsQuery.isLoading || transactionsQuery.isLoading || categoriesQuery.isLoading || familyDetailQuery.isLoading;

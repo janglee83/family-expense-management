@@ -209,7 +209,7 @@ export function HomePage() {
   });
 
   const familiesQuery = useFamilies();
-  const families = familiesQuery.data ?? [];
+  const families = useMemo(() => familiesQuery.data ?? [], [familiesQuery.data]);
   const isFamiliesLoading = familiesQuery.isLoading;
 
   useEffect(() => {
@@ -250,8 +250,8 @@ export function HomePage() {
 
   const expensesQuery = useExpenses(selectedFamilyId);
   const categoriesQuery = useCategories(selectedFamilyId);
-  const expenses = expensesQuery.data ?? [];
-  const categories = categoriesQuery.data ?? [];
+  const expenses = useMemo(() => expensesQuery.data ?? [], [expensesQuery.data]);
+  const categories = useMemo(() => categoriesQuery.data ?? [], [categoriesQuery.data]);
   const isExpensesLoading = expensesQuery.isLoading || categoriesQuery.isLoading;
 
   const netWorthQuery = useNetWorth(selectedFamilyId, {
