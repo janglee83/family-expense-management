@@ -27,8 +27,12 @@ export function useSubscriptionSummary(familyId: string) {
 }
 
 function invalidateSubscriptions(queryClient: ReturnType<typeof useQueryClient>, familyId: string) {
+  // financeKeys.subscriptionSummary(familyId) is a key-prefix descendant of
+  // financeKeys.subscriptions(familyId), so this single invalidateQueries call (default
+  // exact: false) already matches and refetches both the subscriptions list and the
+  // summary query. A second, explicit invalidateQueries for the summary key would be
+  // fully redundant and would cause an extra network refetch on every mutation.
   queryClient.invalidateQueries({ queryKey: financeKeys.subscriptions(familyId) });
-  queryClient.invalidateQueries({ queryKey: financeKeys.subscriptionSummary(familyId) });
 }
 
 export function useCreateSubscription(familyId: string) {

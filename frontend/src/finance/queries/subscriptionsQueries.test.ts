@@ -60,11 +60,10 @@ describe("subscriptionsQueries", () => {
 
     // List: 1 initial fetch + 1 refetch triggered by invalidateQueries(financeKeys.subscriptions(...)).
     await waitFor(() => expect(financeApi.listSubscriptions).toHaveBeenCalledTimes(2));
-    // Summary: 1 initial fetch + 2 refetches. financeKeys.subscriptionSummary(...) is nested under the
-    // financeKeys.subscriptions(...) prefix, so both invalidateQueries calls in invalidateSubscriptions
-    // match the summary query (one by prefix, one exactly), each triggering its own refetch. The count
-    // (3, deterministic) still proves invalidation genuinely occurred for the summary query.
-    await waitFor(() => expect(financeApi.getSubscriptionSummary).toHaveBeenCalledTimes(3));
+    // Summary: 1 initial fetch + 1 refetch. financeKeys.subscriptionSummary(...) is nested under the
+    // financeKeys.subscriptions(...) prefix, so the single invalidateQueries call in
+    // invalidateSubscriptions (default exact: false) already matches and refetches the summary query too.
+    await waitFor(() => expect(financeApi.getSubscriptionSummary).toHaveBeenCalledTimes(2));
   });
 
   it("useChangeSubscriptionStatus calls updateSubscription with the new status", async () => {
