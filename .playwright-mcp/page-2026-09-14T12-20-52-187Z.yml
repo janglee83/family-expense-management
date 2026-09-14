@@ -1,0 +1,161 @@
+- generic [active] [ref=f3e1]:
+  - generic [ref=f3e2]:
+    - generic [ref=f3e5]:
+      - complementary "サイドバー" [ref=f3e6]:
+        - generic [ref=f3e7]:
+          - link "家計簿" [ref=f3e8] [cursor=pointer]:
+            - /url: /
+          - paragraph [ref=f3e9]: Test User A
+        - navigation "サイドバー" [ref=f3e10]:
+          - link "ホーム" [ref=f3e11] [cursor=pointer]:
+            - /url: /
+          - link "家族" [ref=f3e12] [cursor=pointer]:
+            - /url: /families
+          - link "家族を作成" [ref=f3e13] [cursor=pointer]:
+            - /url: /families/new
+        - button "ログアウト" [ref=f3e15] [cursor=pointer]
+      - generic [ref=f3e16]:
+        - banner [ref=f3e17]:
+          - button "言語" [ref=f3e18] [cursor=pointer]:
+            - generic [aria-hidden] [ref=f3e19]: 🌐
+          - button "テーマ" [ref=f3e20] [cursor=pointer]:
+            - generic [aria-hidden] [ref=f3e21]: 🖥️
+          - button "通知" [ref=f3e22] [cursor=pointer]:
+            - generic [aria-hidden] [ref=f3e23]: 🔔
+          - button "ガイドを再表示" [ref=f3e24] [cursor=pointer]:
+            - generic [aria-hidden] [ref=f3e25]: 📘
+        - main [ref=f3e26]:
+          - generic [ref=f3e28]:
+            - heading "口座と台帳" [level=1] [ref=f3e29]
+            - paragraph [ref=f3e30]: 家族の口座を管理し、資金の動きを台帳に記録します。
+          - navigation "家計セクション" [ref=f3e132]:
+            - link "口座と台帳" [ref=f3e133] [cursor=pointer]:
+              - /url: /families/26662f3e-0bfe-49d5-96c4-e754c80ed011/finance/accounts
+            - link "目標" [ref=f3e134] [cursor=pointer]:
+              - /url: /families/26662f3e-0bfe-49d5-96c4-e754c80ed011/finance/goals
+            - link "サブスクリプション" [ref=f3e135] [cursor=pointer]:
+              - /url: /families/26662f3e-0bfe-49d5-96c4-e754c80ed011/finance/subscriptions
+            - link "割り勘" [ref=f3e136] [cursor=pointer]:
+              - /url: /families/26662f3e-0bfe-49d5-96c4-e754c80ed011/finance/splits
+            - link "データ操作" [ref=f3e137] [cursor=pointer]:
+              - /url: /families/26662f3e-0bfe-49d5-96c4-e754c80ed011/finance/data
+            - link "家族へ戻る" [ref=f3e138] [cursor=pointer]:
+              - /url: /families/26662f3e-0bfe-49d5-96c4-e754c80ed011
+          - generic [ref=f3e139]:
+            - generic [ref=f3e141]:
+              - paragraph [ref=f3e142]: 口座数
+              - heading "1" [level=2] [ref=f3e228]
+            - generic [ref=f3e145]:
+              - paragraph [ref=f3e146]: 有効な口座
+              - heading "1" [level=2] [ref=f3e229]
+            - generic [ref=f3e149]:
+              - paragraph [ref=f3e150]: 台帳エントリー
+              - heading "0" [level=2] [ref=f3e151]
+            - generic [ref=f3e153]:
+              - paragraph [ref=f3e154]: 通貨
+              - heading "JPY" [level=2] [ref=f3e155]
+          - generic [ref=f3e156]:
+            - generic [ref=f3e157]:
+              - generic [ref=f3e158]:
+                - heading "口座を作成" [level=2] [ref=f3e159]
+                - paragraph [ref=f3e160]: 現金、銀行、投資、クレジットカード、ローン口座の残高を追跡します。
+              - generic [ref=f3e162]:
+                - generic [ref=f3e163]:
+                  - generic [ref=f3e164]:
+                    - generic [ref=f3e165]: 家族名
+                    - text: "*"
+                  - textbox "家族名 *" [ref=f3e166]
+                - generic [ref=f3e167]:
+                  - generic [ref=f3e168]:
+                    - generic [ref=f3e169]: 口座タイプ
+                    - text: "*"
+                  - combobox "口座タイプ *" [ref=f3e170] [cursor=pointer]:
+                    - option "銀行" [selected]
+                    - option "現金"
+                    - option "投資"
+                    - option "クレジットカード"
+                    - option "ローン"
+                - generic [ref=f3e171]:
+                  - generic [ref=f3e172]:
+                    - generic [ref=f3e173]: 開始残高
+                    - text: "*"
+                  - spinbutton "開始残高 *" [ref=f3e174]: "0"
+                - button "口座を作成" [ref=f3e175] [cursor=pointer]
+            - generic [ref=f3e176]:
+              - generic [ref=f3e177]:
+                - heading "台帳エントリーを追加" [level=2] [ref=f3e178]
+                - paragraph [ref=f3e179]: 収入、支出、振替、カード取引を口座残高に反映して記録します。
+              - generic [ref=f3e181]:
+                - generic [ref=f3e182]:
+                  - generic [ref=f3e183]:
+                    - generic [ref=f3e184]:
+                      - generic [ref=f3e185]: 種別
+                      - text: "*"
+                    - combobox "種別 *" [ref=f3e186] [cursor=pointer]:
+                      - option "支出" [selected]
+                      - option "収入"
+                      - option "振替"
+                      - option "カード利用"
+                      - option "カード支払い"
+                      - option "目標へ積立"
+                      - option "目標から引き出し"
+                  - generic [ref=f3e187]:
+                    - generic [ref=f3e188]:
+                      - generic [ref=f3e189]: 金額
+                      - text: "*"
+                    - spinbutton "金額 *" [ref=f3e190]
+                - generic [ref=f3e191]:
+                  - generic [ref=f3e192]:
+                    - generic [ref=f3e193]: 日付
+                    - text: "*"
+                  - textbox "日付 *" [ref=f3e194]: 2026-09-14
+                - generic [ref=f3e195]:
+                  - generic [ref=f3e196]:
+                    - generic [ref=f3e197]: 出金口座
+                    - combobox "出金口座" [ref=f3e199] [cursor=pointer]:
+                      - option "-" [selected]
+                      - option "Test Bank"
+                  - generic [ref=f3e200]:
+                    - generic [ref=f3e201]: 入金口座
+                    - combobox "入金口座" [ref=f3e203] [cursor=pointer]:
+                      - option "-" [selected]
+                      - option "Test Bank"
+                - generic [ref=f3e204]:
+                  - generic [ref=f3e205]: カテゴリー
+                  - combobox "カテゴリー" [ref=f3e207] [cursor=pointer]:
+                    - option "-" [selected]
+                    - option "食料品"
+                    - option "外食"
+                    - option "交通費"
+                    - option "光熱費"
+                    - option "娯楽"
+                    - option "その他"
+                - generic [ref=f3e208]:
+                  - generic [ref=f3e209]: メモ
+                  - textbox "メモ" [ref=f3e211]
+                - button "台帳エントリーを追加" [ref=f3e212] [cursor=pointer]
+          - generic [ref=f3e213]:
+            - generic [ref=f3e214]:
+              - generic [ref=f3e215]:
+                - heading "口座一覧" [level=2] [ref=f3e216]
+                - paragraph [ref=f3e217]: 現在残高と口座設定を確認できます。
+              - list [ref=f3e230]:
+                - listitem [ref=f3e231]:
+                  - generic [ref=f3e232]:
+                    - paragraph [ref=f3e233]: Test Bank
+                    - generic [ref=f3e234]: 有効
+                  - paragraph [ref=f3e235]: 銀行
+                  - paragraph [ref=f3e236]: "残高: ￥0"
+                  - button "無効化" [ref=f3e237] [cursor=pointer]
+            - generic [ref=f3e221]:
+              - generic [ref=f3e222]:
+                - heading "最近の台帳エントリー" [level=2] [ref=f3e223]
+                - paragraph [ref=f3e224]: 口座・カテゴリー情報付きの最新取引です。
+              - heading "台帳エントリーがまだありません" [level=2] [ref=f3e227]
+    - region "Notifications (F8)":
+      - list:
+        - listitem [ref=f3e239]:
+          - generic [ref=f3e240]: 口座を作成しました
+          - button "X" [ref=f3e241] [cursor=pointer]
+    - button "Open Tanstack query devtools" [ref=f3e83] [cursor=pointer]
+  - status [ref=f3e243]: Notification 口座を作成しました

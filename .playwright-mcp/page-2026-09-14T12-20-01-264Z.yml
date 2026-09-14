@@ -1,0 +1,79 @@
+- generic [active] [ref=e1]:
+  - generic [ref=e2]:
+    - generic [ref=e249]:
+      - complementary "サイドバー" [ref=e250]:
+        - generic [ref=e251]:
+          - link "家計簿" [ref=e252] [cursor=pointer]:
+            - /url: /
+          - paragraph [ref=e253]: Test User A
+        - navigation "サイドバー" [ref=e254]:
+          - link "ホーム" [ref=e255] [cursor=pointer]:
+            - /url: /
+          - link "家族" [ref=e256] [cursor=pointer]:
+            - /url: /families
+          - link "家族を作成" [ref=e257] [cursor=pointer]:
+            - /url: /families/new
+        - button "ログアウト" [ref=e259] [cursor=pointer]
+      - generic [ref=e260]:
+        - banner [ref=e261]:
+          - button "言語" [ref=e262] [cursor=pointer]:
+            - generic [aria-hidden] [ref=e263]: 🌐
+          - button "テーマ" [ref=e264] [cursor=pointer]:
+            - generic [aria-hidden] [ref=e265]: 🖥️
+          - button "通知" [ref=e266] [cursor=pointer]:
+            - generic [aria-hidden] [ref=e267]: 🔔
+          - button "ガイドを再表示" [ref=e268] [cursor=pointer]:
+            - generic [aria-hidden] [ref=e269]: 📘
+        - main [ref=e270]:
+          - generic [ref=e271]:
+            - generic [ref=e272]:
+              - heading "Smoke Test Family" [level=1] [ref=e273]
+              - paragraph [ref=e274]: "通貨: JPY"
+            - navigation "家計セクション" [ref=e276]:
+              - link "支出一覧" [ref=e277] [cursor=pointer]:
+                - /url: /families/26662f3e-0bfe-49d5-96c4-e754c80ed011/expenses
+              - link "口座と台帳" [ref=e278] [cursor=pointer]:
+                - /url: /families/26662f3e-0bfe-49d5-96c4-e754c80ed011/finance/accounts
+              - link "目標" [ref=e279] [cursor=pointer]:
+                - /url: /families/26662f3e-0bfe-49d5-96c4-e754c80ed011/finance/goals
+              - link "サブスクリプション" [ref=e280] [cursor=pointer]:
+                - /url: /families/26662f3e-0bfe-49d5-96c4-e754c80ed011/finance/subscriptions
+              - link "割り勘" [ref=e281] [cursor=pointer]:
+                - /url: /families/26662f3e-0bfe-49d5-96c4-e754c80ed011/finance/splits
+              - link "データ操作" [ref=e282] [cursor=pointer]:
+                - /url: /families/26662f3e-0bfe-49d5-96c4-e754c80ed011/finance/data
+              - button "家族を削除" [ref=e283] [cursor=pointer]
+          - generic [ref=e284]:
+            - generic [ref=e286]:
+              - paragraph [ref=e287]: 家族タイプ
+              - heading "複数人" [level=2] [ref=e288]
+            - generic [ref=e290]:
+              - paragraph [ref=e291]: 通貨
+              - heading "JPY" [level=2] [ref=e292]
+            - generic [ref=e294]:
+              - paragraph [ref=e295]: 自分の家族
+              - heading "1" [level=2] [ref=e296]
+          - generic [ref=e297]:
+            - generic [ref=e298]:
+              - generic [ref=e299]:
+                - heading "自分の家族" [level=2] [ref=e300]
+                - paragraph [ref=e301]: 複数人
+              - list [ref=e303]:
+                - listitem [ref=e304]:
+                  - generic [ref=e305]:
+                    - generic [ref=e306]: Test User A
+                    - generic [ref=e307]: オーナー
+            - generic [ref=e309]:
+              - generic [ref=e310]:
+                - heading "家族名を変更" [level=2] [ref=e311]
+                - paragraph [ref=e312]: 家族名
+              - generic [ref=e314]:
+                - paragraph [ref=e315]: Smoke Test Family
+                - button "編集" [ref=e316] [cursor=pointer]
+    - region "Notifications (F8)":
+      - list:
+        - listitem [ref=e318]:
+          - generic [ref=e319]: 家族を作成しました
+          - button "X" [ref=e320] [cursor=pointer]
+    - button "Open Tanstack query devtools" [ref=e84] [cursor=pointer]
+  - status [ref=e322]: Notification 家族を作成しました

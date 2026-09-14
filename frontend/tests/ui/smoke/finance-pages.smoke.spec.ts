@@ -89,6 +89,13 @@ async function mockFinanceSmokeData(page: Page): Promise<void> {
   await page.route(splitPattern, async (route) => {
     await fulfillJson(route, 200, []);
   });
+
+  const splitGroupsPattern = new RegExp(
+    `/api/v1/families/${escapeRegExp(familyId)}/split-expense-groups/(?:\\?.*)?$`,
+  );
+  await page.route(splitGroupsPattern, async (route) => {
+    await fulfillJson(route, 200, []);
+  });
 }
 
 async function expectFinanceNavJapanese(page: Page, activeLabel: string): Promise<void> {
@@ -148,9 +155,9 @@ test.describe("Finance pages smoke", () => {
 
     await expect(page.getByRole("heading", { level: 1, name: "割り勘" })).toBeVisible();
     await expectFinanceNavJapanese(page, "割り勘");
-    await expect(page.getByRole("main")).toContainText("割り勘を作成");
-    await expect(page.getByRole("main")).toContainText("割り勘一覧");
-    await expect(page.getByRole("main")).toContainText("割り勘データがまだありません");
+    await expect(page.getByRole("main")).toContainText("期間で精算");
+    await expect(page.getByRole("main")).toContainText("月ごとの精算一覧");
+    await expect(page.getByRole("main")).toContainText("まだ月ごとの精算がありません");
     await expectNoHorizontalOverflow(page);
   });
 

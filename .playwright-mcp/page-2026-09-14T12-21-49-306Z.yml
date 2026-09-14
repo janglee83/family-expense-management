@@ -1,0 +1,34 @@
+- generic [ref=f8e2]:
+  - generic [ref=f8e5]:
+    - complementary "サイドバー" [ref=f8e6]:
+      - generic [ref=f8e7]:
+        - link "家計簿" [ref=f8e8] [cursor=pointer]:
+          - /url: /
+        - paragraph [ref=f8e9]: Test User A
+      - navigation "サイドバー" [ref=f8e10]:
+        - link "ホーム" [ref=f8e11] [cursor=pointer]:
+          - /url: /
+        - link "家族" [ref=f8e12] [cursor=pointer]:
+          - /url: /families
+        - link "家族を作成" [ref=f8e13] [cursor=pointer]:
+          - /url: /families/new
+      - button "ログアウト" [ref=f8e15] [cursor=pointer]
+    - generic [ref=f8e16]:
+      - banner [ref=f8e17]:
+        - button "言語" [ref=f8e18] [cursor=pointer]:
+          - generic [aria-hidden] [ref=f8e19]: 🌐
+        - button "テーマ" [ref=f8e20] [cursor=pointer]:
+          - generic [aria-hidden] [ref=f8e21]: 🖥️
+        - button "通知" [ref=f8e22] [cursor=pointer]:
+          - generic [aria-hidden] [ref=f8e23]: 🔔
+        - button "ガイドを再表示" [ref=f8e24] [cursor=pointer]:
+          - generic [aria-hidden] [ref=f8e25]: 📘
+      - main [ref=f8e26]:
+        - generic [ref=f8e28]:
+          - heading "ダッシュボード" [level=1] [ref=f8e29]
+          - paragraph [ref=f8e30]: 今月のお金の状況を一目で把握し、次の行動につなげます
+        - status [ref=f8e31]:
+          - paragraph [ref=f8e32]: 読み込み中...
+  - region "Notifications (F8)":
+    - list
+  - button "Open Tanstack query devtools" [ref=f8e83] [cursor=pointer]

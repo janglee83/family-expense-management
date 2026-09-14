@@ -1,0 +1,37 @@
+- generic [ref=f9e2]:
+  - main [ref=f9e4]:
+    - generic [ref=f9e5]:
+      - generic [ref=f9e6]:
+        - generic [ref=f9e7]:
+          - heading "アカウント作成" [level=1] [ref=f9e8]
+          - button "言語" [ref=f9e10] [cursor=pointer]:
+            - generic [aria-hidden] [ref=f9e11]: 🌐
+        - paragraph [ref=f9e12]: 家計簿
+      - generic [ref=f9e13]:
+        - generic [ref=f9e14]:
+          - group "アカウント作成" [ref=f9e15]:
+            - generic [ref=f9e17]:
+              - generic [ref=f9e18]:
+                - generic [ref=f9e19]: 表示名
+                - text: "*"
+              - textbox "表示名 *" [ref=f9e20]
+            - generic [ref=f9e21]:
+              - generic [ref=f9e22]:
+                - generic [ref=f9e23]: メールアドレス
+                - text: "*"
+              - textbox "メールアドレス *" [ref=f9e24]
+            - generic [ref=f9e25]:
+              - generic [ref=f9e26]:
+                - generic [ref=f9e27]: パスワード
+                - text: "*"
+              - textbox "パスワード *" [ref=f9e28]
+          - button "登録する" [ref=f9e29] [cursor=pointer]
+        - generic [ref=f9e30]:
+          - paragraph [ref=f9e31]: 家計簿
+          - link "ログイン" [ref=f9e32] [cursor=pointer]:
+            - /url: /login
+            - text: ログイン
+            - generic [aria-hidden] [ref=f9e33]: ">"
+  - region "Notifications (F8)":
+    - list
+  - button "Open Tanstack query devtools" [ref=f9e84] [cursor=pointer]

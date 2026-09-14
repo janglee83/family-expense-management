@@ -1,0 +1,7 @@
+- generic [ref=f1e2]:
+  - main [ref=f1e3]:
+    - status [ref=f1e5]:
+      - paragraph [ref=f1e6]: Loading...
+  - region "Notifications (F8)":
+    - list
+  - button "Open Tanstack query devtools" [ref=f1e57] [cursor=pointer]

@@ -1,0 +1,110 @@
+- generic:
+  - generic [aria-hidden]:
+    - generic:
+      - generic:
+        - generic:
+          - complementary:
+            - generic:
+              - link:
+                - /url: /
+                - text: 家計簿
+              - paragraph: Test User A
+            - navigation:
+              - link:
+                - /url: /
+                - text: ホーム
+              - link:
+                - /url: /families
+                - text: 家族
+              - link:
+                - /url: /families/new
+                - text: 家族を作成
+            - generic:
+              - button: ログアウト
+          - generic:
+            - banner:
+              - button:
+                - generic [aria-hidden]: 🌐
+              - button:
+                - generic [aria-hidden]: 🖥️
+              - button [expanded]:
+                - generic [aria-hidden]: 🔔
+              - button:
+                - generic [aria-hidden]: 📘
+            - main:
+              - generic:
+                - generic:
+                  - heading [level=1]: ダッシュボード
+                  - paragraph: 今月のお金の状況を一目で把握し、次の行動につなげます
+                - generic:
+                  - generic:
+                    - button:
+                      - generic: 家族
+                      - generic: Smoke Test Family
+                    - button:
+                      - generic: 月
+                      - generic: 09/2026
+              - tablist:
+                - tab [selected]: 概要
+                - tab: 分析
+                - tab: 取引
+              - generic:
+                - generic:
+                  - generic:
+                    - paragraph: 月収目標
+                    - heading [level=2]: ￥0
+                  - generic:
+                    - paragraph: 月次の支出上限を把握するための基準です
+                - generic:
+                  - generic:
+                    - paragraph: 選択月の合計
+                    - heading [level=2]: ￥3,500
+                  - generic:
+                    - paragraph: 0% が月収目標に対する支出率
+                - generic:
+                  - generic:
+                    - paragraph: 残りバランス
+                    - heading [level=2]: "-￥3,500"
+                  - generic:
+                    - paragraph: この家族では月収目標が未設定です
+                - generic:
+                  - generic:
+                    - paragraph: 純資産
+                    - heading [level=2]: ￥0
+                  - generic:
+                    - paragraph: "期間変動: ￥0"
+              - generic:
+                - generic:
+                  - generic:
+                    - generic:
+                      - heading [level=2]: 予算目標トラッカー
+                      - button: "?"
+                    - paragraph: 実績支出と月収・貯蓄目標を照合します
+                  - generic:
+                    - generic:
+                      - article:
+                        - generic:
+                          - paragraph: 選択月の合計
+                          - paragraph: ￥3,500
+                        - paragraph: 0% が月収目標に対する支出率
+                      - article:
+                        - paragraph: 貯蓄目標
+                        - paragraph: 貯蓄目標が設定されていません。家族設定から設定してください。
+                      - article:
+                        - paragraph: 残りバランス
+                        - paragraph: "-￥3,500"
+                        - paragraph: この家族では月収目標が未設定です
+                - generic:
+                  - generic:
+                    - heading [level=2]: 今月のインサイト
+                    - paragraph: 自動分析で、見直すべきポイントを提示します
+                  - generic:
+                    - list:
+                      - listitem: 今月の最大支出カテゴリーは食料品（￥3,500）です。
+    - generic:
+      - button
+  - menu "通知" [active] [ref=f7e200]:
+    - banner [ref=f7e201]:
+      - heading "通知" [level=2] [ref=f7e202]
+      - button "すべて既読にする" [disabled]
+    - paragraph [ref=f7e204]: 通知はまだありません

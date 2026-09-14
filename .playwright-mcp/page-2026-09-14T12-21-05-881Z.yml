@@ -1,0 +1,34 @@
+- generic [ref=f5e2]:
+  - generic [ref=f5e5]:
+    - complementary "サイドバー" [ref=f5e6]:
+      - generic [ref=f5e7]:
+        - link "家計簿" [ref=f5e8] [cursor=pointer]:
+          - /url: /
+        - paragraph [ref=f5e9]: Test User A
+      - navigation "サイドバー" [ref=f5e10]:
+        - link "ホーム" [ref=f5e11] [cursor=pointer]:
+          - /url: /
+        - link "家族" [ref=f5e12] [cursor=pointer]:
+          - /url: /families
+        - link "家族を作成" [ref=f5e13] [cursor=pointer]:
+          - /url: /families/new
+      - button "ログアウト" [ref=f5e15] [cursor=pointer]
+    - generic [ref=f5e16]:
+      - banner [ref=f5e17]:
+        - button "言語" [ref=f5e18] [cursor=pointer]:
+          - generic [aria-hidden] [ref=f5e19]: 🌐
+        - button "テーマ" [ref=f5e20] [cursor=pointer]:
+          - generic [aria-hidden] [ref=f5e21]: 🖥️
+        - button "通知" [ref=f5e22] [cursor=pointer]:
+          - generic [aria-hidden] [ref=f5e23]: 🔔
+        - button "ガイドを再表示" [ref=f5e24] [cursor=pointer]:
+          - generic [aria-hidden] [ref=f5e25]: 📘
+      - main [ref=f5e26]:
+        - generic [ref=f5e28]:
+          - heading "割り勘" [level=1] [ref=f5e29]
+          - paragraph [ref=f5e30]: 共同支出を配分し、各メンバーの精算状況を管理します。
+        - status [ref=f5e31]:
+          - paragraph [ref=f5e32]: 読み込み中...
+  - region "Notifications (F8)":
+    - list
+  - button "Open Tanstack query devtools" [ref=f5e83] [cursor=pointer]
