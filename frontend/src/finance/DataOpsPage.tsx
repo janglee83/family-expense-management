@@ -1,6 +1,8 @@
-import { useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { useParams } from "react-router-dom";
+import { translateApiError } from "../api/errorI18n";
+import { useFamilyDetail } from "../families/familyQueries";
+import { useExpenses } from "../expenses/expenseQueries";
 import { Alert } from "../components/ui/Alert";
 import { Badge } from "../components/ui/Badge";
 import { Button } from "../components/ui/Button";
@@ -10,100 +12,166 @@ import { EmptyState, LoadingState, PageFrame, PageHeader } from "../components/u
 import { useSnackbar } from "../components/ui/Snackbar";
 import { formatMoney } from "../utils/currency";
 import { FinanceNav } from "./FinanceNav";
+import {
+  useCommitExpenseImport,
+  useDeleteExpenseWithUndo,
+  useExportBackup,
+  useExportExpensesCsv,
+  useExportExpensesJson,
+  usePreviewExpenseImport,
+  useRestoreUndo,
+} from "./queries/dataOpsQueries";
 import { useDataOpsStore } from "./stores/dataOpsStore";
+
+function downloadContent(filename: string, mimeType: string, content: string) {
+  const blob = new Blob([content], { type: mimeType });
+  const url = URL.createObjectURL(blob);
+  const anchor = document.createElement("a");
+  anchor.href = url;
+  anchor.download = filename;
+  document.body.appendChild(anchor);
+  anchor.click();
+  anchor.remove();
+  URL.revokeObjectURL(url);
+}
+
+function nowFileStamp(): string {
+  return new Date().toISOString().replaceAll(":", "-").slice(0, 19);
+}
 
 export function DataOpsPage() {
   const { t } = useTranslation();
   const { showSnackbar } = useSnackbar();
   const { familyId } = useParams<{ familyId: string }>();
 
-  const {
-    expenses,
-    familyCurrencyCode,
-    previewResult,
-    undoToken,
-    selectedFile,
-    skipDuplicates,
-    isLoading,
-    isPreviewing,
-    isImporting,
-    isRestoring,
-    error,
-    setSelectedFile,
-    setSkipDuplicates,
-    setUndoToken,
-    load,
-    exportJson,
-    exportCsv,
-    exportBackup,
-    previewImport,
-    commitImport,
-    deleteWithUndo,
-    restoreUndo,
-  } = useDataOpsStore();
+  const { selectedFile, skipDuplicates, undoToken, setSelectedFile, setSkipDuplicates, setUndoToken } =
+    useDataOpsStore();
 
-  useEffect(() => {
-    if (!familyId) {
-      return;
-    }
+  const expensesQuery = useExpenses(familyId ?? "");
+  const familyDetailQuery = useFamilyDetail(familyId ?? "");
+  const expenses = expensesQuery.data ?? [];
+  const familyCurrencyCode = familyDetailQuery.data?.currency_code ?? "jpy";
+  const isLoading = expensesQuery.isLoading || familyDetailQuery.isLoading;
+  const error = expensesQuery.isError || familyDetailQuery.isError ? t("expense.actionFailed") : null;
 
-    void load(familyId, t);
-  }, [familyId, load, t]);
+  const exportJsonMutation = useExportExpensesJson(familyId ?? "");
+  const exportCsvMutation = useExportExpensesCsv(familyId ?? "");
+  const exportBackupMutation = useExportBackup(familyId ?? "");
+  const previewImportMutation = usePreviewExpenseImport(familyId ?? "");
+  const commitImportMutation = useCommitExpenseImport(familyId ?? "");
+  const deleteWithUndoMutation = useDeleteExpenseWithUndo(familyId ?? "");
+  const restoreUndoMutation = useRestoreUndo(familyId ?? "");
+  const previewResult = previewImportMutation.data ?? null;
+  const isPreviewing = previewImportMutation.isPending;
+  const isImporting = commitImportMutation.isPending;
+  const isRestoring = restoreUndoMutation.isPending;
 
   function handleExportJson() {
-    if (!familyId) {
-      return;
-    }
-
-    void exportJson(familyId, t, showSnackbar);
+    exportJsonMutation.mutate(undefined, {
+      onSuccess: (payload) => {
+        downloadContent(`expenses-${nowFileStamp()}.json`, "application/json", `${JSON.stringify(payload.items, null, 2)}\n`);
+        showSnackbar({ message: t("finance.exportJsonDone"), variant: "success" });
+      },
+      onError: (err) => {
+        showSnackbar({ message: translateApiError(t, err, "expense.actionFailed"), variant: "error" });
+      },
+    });
   }
 
   function handleExportCsv() {
-    if (!familyId) {
-      return;
-    }
-
-    void exportCsv(familyId, t, showSnackbar);
+    exportCsvMutation.mutate(undefined, {
+      onSuccess: (csvContent) => {
+        downloadContent(`expenses-${nowFileStamp()}.csv`, "text/csv", csvContent);
+        showSnackbar({ message: t("finance.exportCsvDone"), variant: "success" });
+      },
+      onError: (err) => {
+        showSnackbar({ message: translateApiError(t, err, "expense.actionFailed"), variant: "error" });
+      },
+    });
   }
 
   function handleExportBackup() {
-    if (!familyId) {
-      return;
-    }
-
-    void exportBackup(familyId, t, showSnackbar);
+    exportBackupMutation.mutate(undefined, {
+      onSuccess: (payload) => {
+        downloadContent(`expenses-backup-${nowFileStamp()}.json`, "application/json", `${JSON.stringify(payload, null, 2)}\n`);
+        showSnackbar({ message: t("finance.exportBackupDone"), variant: "success" });
+      },
+      onError: (err) => {
+        showSnackbar({ message: translateApiError(t, err, "expense.actionFailed"), variant: "error" });
+      },
+    });
   }
 
   function handlePreviewImport() {
-    if (!familyId) {
-      return;
-    }
-
-    void previewImport(familyId, t, showSnackbar);
+    if (!selectedFile) return;
+    previewImportMutation.mutate(selectedFile, {
+      onSuccess: () => {
+        showSnackbar({ message: t("finance.previewReady"), variant: "success" });
+      },
+      onError: (err) => {
+        showSnackbar({ message: translateApiError(t, err, "expense.actionFailed"), variant: "error" });
+      },
+    });
   }
 
   function handleCommitImport() {
-    if (!familyId) {
-      return;
-    }
+    if (!previewResult) return;
 
-    void commitImport(familyId, t, showSnackbar);
+    const rows = previewResult.rows.map((row) => ({
+      payer_user_id: row.payer_user_id,
+      category_id: row.category_id,
+      amount: row.amount,
+      is_shared: row.is_shared,
+      description: row.description ?? null,
+      expense_date: row.expense_date,
+    }));
+
+    commitImportMutation.mutate(
+      { rows, skip_duplicates: skipDuplicates },
+      {
+        onSuccess: (result) => {
+          setSelectedFile(null);
+          previewImportMutation.reset();
+          showSnackbar({
+            message: t("finance.importDone", {
+              created: result.created_count,
+              skipped: result.skipped_duplicate_count,
+            }),
+            variant: "success",
+          });
+        },
+        onError: (err) => {
+          showSnackbar({ message: translateApiError(t, err, "expense.actionFailed"), variant: "error" });
+        },
+      },
+    );
   }
 
   function handleDeleteWithUndo(expenseId: string) {
-    if (!familyId) {
-      return;
-    }
-
-    void deleteWithUndo(familyId, expenseId, t, showSnackbar);
+    deleteWithUndoMutation.mutate(expenseId, {
+      onSuccess: (result) => {
+        setUndoToken(result.undo_token);
+        showSnackbar({ message: t("finance.deletedWithUndo"), variant: "success" });
+      },
+      onError: (err) => {
+        showSnackbar({ message: translateApiError(t, err, "expense.actionFailed"), variant: "error" });
+      },
+    });
   }
 
   function handleRestoreUndo() {
-    if (!familyId) {
-      return;
-    }
+    const token = undoToken.trim();
+    if (!token) return;
 
-    void restoreUndo(familyId, t, showSnackbar);
+    restoreUndoMutation.mutate(token, {
+      onSuccess: () => {
+        setUndoToken("");
+        showSnackbar({ message: t("finance.undoRestored"), variant: "success" });
+      },
+      onError: (err) => {
+        showSnackbar({ message: translateApiError(t, err, "expense.actionFailed"), variant: "error" });
+      },
+    });
   }
 
   if (!familyId || isLoading) {
