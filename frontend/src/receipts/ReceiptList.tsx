@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useParams } from "react-router-dom";
 import { useAuth } from "../auth/useAuth";
@@ -34,12 +35,14 @@ export function ReceiptList() {
   const { t } = useTranslation();
   const { familyId } = useParams<{ familyId: string }>();
   const { user } = useAuth();
+  const [formError, setFormError] = useState<string | null>(null);
   const receiptsQuery = useReceipts(familyId ?? "");
   const familyDetailQuery = useFamilyDetail(familyId ?? "");
   const receipts = receiptsQuery.data ?? [];
   const myRole = familyDetailQuery.data?.members.find((member) => member.user_id === user?.id)?.role;
   const isLoading = receiptsQuery.isLoading || familyDetailQuery.isLoading;
-  const error = receiptsQuery.isError || familyDetailQuery.isError ? t("receipt.uploadFailed") : null;
+  const queryError = receiptsQuery.isError || familyDetailQuery.isError ? t("receipt.uploadFailed") : null;
+  const error = queryError ?? formError;
 
   const deleteReceiptMutation = useDeleteReceipt(familyId ?? "");
   const canManage = myRole === "owner" || myRole === "admin";
@@ -52,7 +55,12 @@ export function ReceiptList() {
 
   function handleDelete(receiptId: string) {
     if (!familyId || !window.confirm(t("receipt.confirmDelete"))) return;
-    deleteReceiptMutation.mutate(receiptId);
+    setFormError(null);
+    deleteReceiptMutation.mutate(receiptId, {
+      onError: () => {
+        setFormError(t("receipt.uploadFailed"));
+      },
+    });
   }
 
   if (isLoading || !familyId) {
