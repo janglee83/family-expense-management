@@ -54,6 +54,8 @@ export function ExpenseForm({ familyId, expense, currencyCode, onSaved, onCancel
   const createExpenseMutation = useCreateExpense(familyId);
   const updateExpenseMutation = useUpdateExpense(familyId);
   const isSubmitting = createExpenseMutation.isPending || updateExpenseMutation.isPending;
+  const initialLoadError =
+    categoriesQuery.isError || familyDetailQuery.isError ? t("expense.actionFailed") : null;
   const payerId = `expense-payer-${familyId}`;
   const categoryIdInput = `expense-category-${familyId}`;
   const amountId = `expense-amount-${familyId}`;
@@ -62,6 +64,7 @@ export function ExpenseForm({ familyId, expense, currencyCode, onSaved, onCancel
   const descriptionId = `expense-description-${familyId}`;
   const effectivePayerUserId = payerUserId || members[0]?.user_id || "";
   const effectiveCategoryId = categoryId || categories[0]?.id || "";
+  const displayError = error || initialLoadError;
 
   function handleSubmit(event: FormEvent) {
     event.preventDefault();
@@ -202,9 +205,9 @@ export function ExpenseForm({ familyId, expense, currencyCode, onSaved, onCancel
         ) : null}
       </div>
 
-      {error ? (
+      {displayError ? (
         <Alert variant="error" role="alert">
-          {error}
+          {displayError}
         </Alert>
       ) : null}
     </form>

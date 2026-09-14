@@ -454,6 +454,7 @@ export function ExpenseList() {
                   if (!renamingCategory) return;
                   const trimmedName = renameCategoryName.trim();
                   if (!trimmedName) {
+                    showSnackbar({ message: t("expense.actionFailed"), variant: "error" });
                     return;
                   }
                   handleRenameCategory(renamingCategory.id, trimmedName);
