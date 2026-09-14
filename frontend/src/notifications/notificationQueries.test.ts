@@ -39,11 +39,13 @@ describe("notificationQueries", () => {
       { wrapper },
     );
 
+    await waitFor(() => expect(result.current.list.isSuccess).toBe(true));
+
     await act(async () => {
       await result.current.mark.mutateAsync("n1");
     });
 
-    expect(result.current.list.isStale).toBe(true);
+    await waitFor(() => expect(notificationApi.listNotifications).toHaveBeenCalledTimes(2));
   });
 
   it("useMarkAllNotificationsRead invalidates every notificationKeys.list query on success", async () => {
@@ -55,10 +57,12 @@ describe("notificationQueries", () => {
       { wrapper },
     );
 
+    await waitFor(() => expect(result.current.list.isSuccess).toBe(true));
+
     await act(async () => {
       await result.current.markAll.mutateAsync();
     });
 
-    expect(result.current.list.isStale).toBe(true);
+    await waitFor(() => expect(notificationApi.listNotifications).toHaveBeenCalledTimes(2));
   });
 });

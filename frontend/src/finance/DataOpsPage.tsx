@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useParams } from "react-router-dom";
 import { translateApiError } from "../api/errorI18n";
@@ -52,7 +53,9 @@ export function DataOpsPage() {
   const expenses = expensesQuery.data ?? [];
   const familyCurrencyCode = familyDetailQuery.data?.currency_code ?? "jpy";
   const isLoading = expensesQuery.isLoading || familyDetailQuery.isLoading;
-  const error = expensesQuery.isError || familyDetailQuery.isError ? t("expense.actionFailed") : null;
+  const queryError = expensesQuery.isError || familyDetailQuery.isError ? t("expense.actionFailed") : null;
+  const [formError, setFormError] = useState<string | null>(null);
+  const error = queryError ?? formError;
 
   const exportJsonMutation = useExportExpensesJson(familyId ?? "");
   const exportCsvMutation = useExportExpensesCsv(familyId ?? "");
@@ -67,49 +70,61 @@ export function DataOpsPage() {
   const isRestoring = restoreUndoMutation.isPending;
 
   function handleExportJson() {
+    setFormError(null);
     exportJsonMutation.mutate(undefined, {
       onSuccess: (payload) => {
         downloadContent(`expenses-${nowFileStamp()}.json`, "application/json", `${JSON.stringify(payload.items, null, 2)}\n`);
         showSnackbar({ message: t("finance.exportJsonDone"), variant: "success" });
       },
       onError: (err) => {
-        showSnackbar({ message: translateApiError(t, err, "expense.actionFailed"), variant: "error" });
+        const message = translateApiError(t, err, "expense.actionFailed");
+        setFormError(message);
+        showSnackbar({ message, variant: "error" });
       },
     });
   }
 
   function handleExportCsv() {
+    setFormError(null);
     exportCsvMutation.mutate(undefined, {
       onSuccess: (csvContent) => {
         downloadContent(`expenses-${nowFileStamp()}.csv`, "text/csv", csvContent);
         showSnackbar({ message: t("finance.exportCsvDone"), variant: "success" });
       },
       onError: (err) => {
-        showSnackbar({ message: translateApiError(t, err, "expense.actionFailed"), variant: "error" });
+        const message = translateApiError(t, err, "expense.actionFailed");
+        setFormError(message);
+        showSnackbar({ message, variant: "error" });
       },
     });
   }
 
   function handleExportBackup() {
+    setFormError(null);
     exportBackupMutation.mutate(undefined, {
       onSuccess: (payload) => {
         downloadContent(`expenses-backup-${nowFileStamp()}.json`, "application/json", `${JSON.stringify(payload, null, 2)}\n`);
         showSnackbar({ message: t("finance.exportBackupDone"), variant: "success" });
       },
       onError: (err) => {
-        showSnackbar({ message: translateApiError(t, err, "expense.actionFailed"), variant: "error" });
+        const message = translateApiError(t, err, "expense.actionFailed");
+        setFormError(message);
+        showSnackbar({ message, variant: "error" });
       },
     });
   }
 
   function handlePreviewImport() {
     if (!selectedFile) return;
+    setFormError(null);
     previewImportMutation.mutate(selectedFile, {
       onSuccess: () => {
         showSnackbar({ message: t("finance.previewReady"), variant: "success" });
       },
       onError: (err) => {
-        showSnackbar({ message: translateApiError(t, err, "expense.actionFailed"), variant: "error" });
+        const message = translateApiError(t, err, "expense.actionFailed");
+        setFormError(message);
+        showSnackbar({ message, variant: "error" });
       },
     });
   }
@@ -126,6 +141,7 @@ export function DataOpsPage() {
       expense_date: row.expense_date,
     }));
 
+    setFormError(null);
     commitImportMutation.mutate(
       { rows, skip_duplicates: skipDuplicates },
       {
@@ -141,20 +157,25 @@ export function DataOpsPage() {
           });
         },
         onError: (err) => {
-          showSnackbar({ message: translateApiError(t, err, "expense.actionFailed"), variant: "error" });
+          const message = translateApiError(t, err, "expense.actionFailed");
+          setFormError(message);
+          showSnackbar({ message, variant: "error" });
         },
       },
     );
   }
 
   function handleDeleteWithUndo(expenseId: string) {
+    setFormError(null);
     deleteWithUndoMutation.mutate(expenseId, {
       onSuccess: (result) => {
         setUndoToken(result.undo_token);
         showSnackbar({ message: t("finance.deletedWithUndo"), variant: "success" });
       },
       onError: (err) => {
-        showSnackbar({ message: translateApiError(t, err, "expense.actionFailed"), variant: "error" });
+        const message = translateApiError(t, err, "expense.actionFailed");
+        setFormError(message);
+        showSnackbar({ message, variant: "error" });
       },
     });
   }
@@ -163,13 +184,16 @@ export function DataOpsPage() {
     const token = undoToken.trim();
     if (!token) return;
 
+    setFormError(null);
     restoreUndoMutation.mutate(token, {
       onSuccess: () => {
         setUndoToken("");
         showSnackbar({ message: t("finance.undoRestored"), variant: "success" });
       },
       onError: (err) => {
-        showSnackbar({ message: translateApiError(t, err, "expense.actionFailed"), variant: "error" });
+        const message = translateApiError(t, err, "expense.actionFailed");
+        setFormError(message);
+        showSnackbar({ message, variant: "error" });
       },
     });
   }

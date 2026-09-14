@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useParams } from "react-router-dom";
+import { translateApiError } from "../api/errorI18n";
 import { useAuth } from "../auth/useAuth";
 import { useFamilyDetail } from "../families/familyQueries";
 import { useSnackbar } from "../components/ui/Snackbar";
@@ -40,10 +41,12 @@ export function ExpenseList() {
   const familyCurrencyCode = familyDetailQuery.data?.currency_code ?? "jpy";
   const myRole = familyDetailQuery.data?.members.find((member) => member.user_id === user?.id)?.role;
   const isLoading = expensesQuery.isLoading || categoriesQuery.isLoading || familyDetailQuery.isLoading;
-  const error =
+  const queryError =
     expensesQuery.isError || categoriesQuery.isError || familyDetailQuery.isError
       ? t("expense.actionFailed")
       : null;
+  const [formError, setFormError] = useState<string | null>(null);
+  const error = queryError ?? formError;
   const [isCreating, setIsCreating] = useState(false);
   const [editingExpenseId, setEditingExpenseId] = useState<string | null>(null);
   const [viewingExpenseId, setViewingExpenseId] = useState<string | null>(null);
@@ -79,12 +82,15 @@ export function ExpenseList() {
 
   function handleDeleteExpense(expenseId: string) {
     if (!familyId) return;
+    setFormError(null);
     deleteExpenseMutation.mutate(expenseId, {
       onSuccess: () => {
         showSnackbar({ message: t("expense.deleteSuccess"), variant: "success" });
       },
-      onError: () => {
-        showSnackbar({ message: t("expense.actionFailed"), variant: "error" });
+      onError: (err) => {
+        const message = translateApiError(t, err, "expense.actionFailed");
+        setFormError(message);
+        showSnackbar({ message, variant: "error" });
       },
     });
   }
@@ -97,6 +103,7 @@ export function ExpenseList() {
       return;
     }
 
+    setFormError(null);
     createCategoryMutation.mutate(
       { name: trimmedName, icon: newCategoryIcon },
       {
@@ -106,8 +113,10 @@ export function ExpenseList() {
           setIsAddingCategory(false);
           showSnackbar({ message: t("expense.categoryAdded"), variant: "success" });
         },
-        onError: () => {
-          showSnackbar({ message: t("expense.actionFailed"), variant: "error" });
+        onError: (err) => {
+          const message = translateApiError(t, err, "expense.actionFailed");
+          setFormError(message);
+          showSnackbar({ message, variant: "error" });
         },
       },
     );
@@ -115,14 +124,17 @@ export function ExpenseList() {
 
   function handleRenameCategory(categoryId: string, newName: string) {
     if (!familyId) return;
+    setFormError(null);
     renameCategoryMutation.mutate(
       { categoryId, name: newName },
       {
         onSuccess: () => {
           showSnackbar({ message: t("expense.categoryRenamed"), variant: "success" });
         },
-        onError: () => {
-          showSnackbar({ message: t("expense.actionFailed"), variant: "error" });
+        onError: (err) => {
+          const message = translateApiError(t, err, "expense.actionFailed");
+          setFormError(message);
+          showSnackbar({ message, variant: "error" });
         },
       },
     );
@@ -130,12 +142,15 @@ export function ExpenseList() {
 
   function handleDeleteCategory(categoryId: string) {
     if (!familyId) return;
+    setFormError(null);
     deleteCategoryMutation.mutate(categoryId, {
       onSuccess: () => {
         showSnackbar({ message: t("expense.categoryDeleted"), variant: "success" });
       },
-      onError: () => {
-        showSnackbar({ message: t("expense.actionFailed"), variant: "error" });
+      onError: (err) => {
+        const message = translateApiError(t, err, "expense.actionFailed");
+        setFormError(message);
+        showSnackbar({ message, variant: "error" });
       },
     });
   }

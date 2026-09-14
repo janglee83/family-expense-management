@@ -72,8 +72,12 @@ export function useCreateGoalEntry(familyId: string, goalId: string) {
   return useMutation({
     mutationFn: (input: CreateGoalEntryInput) => createGoalEntry(familyId, goalId, input),
     onSuccess: () => {
+      // financeKeys.goalEntries(familyId, goalId) is a key-prefix descendant of
+      // financeKeys.goals(familyId), so this single invalidateQueries call (default
+      // exact: false) already matches and refetches both the goals list and the goal
+      // entries query. A second, explicit invalidateQueries for the entries key would be
+      // fully redundant and would cause an extra network refetch on every mutation.
       queryClient.invalidateQueries({ queryKey: financeKeys.goals(familyId) });
-      queryClient.invalidateQueries({ queryKey: financeKeys.goalEntries(familyId, goalId) });
     },
   });
 }

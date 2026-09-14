@@ -158,7 +158,11 @@ export function SplitExpensesPage() {
           cancelEditGroup();
           showSnackbar({ message: t(wasEditing ? "finance.splitUpdated" : "finance.splitCreated"), variant: "success" });
         },
-        onError: (err) => setFormError(translateApiError(t, err, "expense.actionFailed")),
+        onError: (err) => {
+          const message = translateApiError(t, err, "expense.actionFailed");
+          setFormError(message);
+          showSnackbar({ message, variant: "error" });
+        },
       },
     );
   }
