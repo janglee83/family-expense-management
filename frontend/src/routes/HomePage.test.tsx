@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router-dom";
 import { beforeEach, describe, expect, it, vi } from "vitest";
@@ -6,8 +6,10 @@ import i18n from "../i18n/i18n";
 import { HomePage } from "./HomePage";
 import { useAuth } from "../auth/useAuth";
 import { SnackbarProvider } from "../components/ui/Snackbar";
+import { renderWithProviders } from "../testUtils/renderWithProviders";
 import { listMyFamilies } from "../families/familyApi";
 import { listCategories, listExpenses } from "../expenses/expenseApi";
+import { getNetWorth } from "../finance/financeApi";
 
 vi.mock("../families/familyApi", () => ({
   listMyFamilies: vi.fn(),
@@ -20,6 +22,9 @@ vi.mock("../expenses/expenseApi", async () => {
     listCategories: vi.fn(),
   };
 });
+vi.mock("../finance/financeApi", () => ({
+  getNetWorth: vi.fn(),
+}));
 
 vi.mock("../auth/useAuth");
 
@@ -33,6 +38,18 @@ describe("HomePage", () => {
     vi.mocked(listCategories).mockReset();
     vi.mocked(listExpenses).mockResolvedValue([]);
     vi.mocked(listCategories).mockResolvedValue([]);
+    vi.mocked(getNetWorth).mockReset();
+    vi.mocked(getNetWorth).mockResolvedValue({
+      as_of: "2026-09-30",
+      assets_total: 0,
+      change_amount: 0,
+      change_percentage: 0,
+      current_net_worth: 0,
+      liabilities_total: 0,
+      period_end: "2026-09-30",
+      period_start: "2026-09-01",
+      previous_net_worth: 0,
+    });
     // i18next is a global singleton; reset the language before each test so
     // the language switch in one test doesn't leak into the next.
     await i18n.changeLanguage("ja");
@@ -50,7 +67,7 @@ describe("HomePage", () => {
   });
 
   function renderPage() {
-    return render(
+    return renderWithProviders(
       <SnackbarProvider>
         <MemoryRouter>
           <HomePage />
