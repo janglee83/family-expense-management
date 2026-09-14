@@ -3,13 +3,12 @@ import { useTranslation } from "react-i18next";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { useAuth } from "../auth/useAuth";
 import {
-  changeMemberRole,
-  deleteFamily,
-  getFamilyDetail,
-  removeMember,
-  renameFamily,
-  type FamilyDetail as FamilyDetailType,
-} from "./familyApi";
+  useChangeMemberRole,
+  useDeleteFamily,
+  useFamilyDetail,
+  useRemoveMember,
+  useRenameFamily,
+} from "./familyQueries";
 import { LoadingState, PageFrame, PageHeader } from "../components/ui/Page";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../components/ui/Card";
 import { Alert } from "../components/ui/Alert";
@@ -26,9 +25,9 @@ export function FamilyDetail() {
   const { user } = useAuth();
   const navigate = useNavigate();
   const { showSnackbar } = useSnackbar();
-  const [detail, setDetail] = useState<FamilyDetailType | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const detailQuery = useFamilyDetail(familyIdParam ?? "");
+  const detail = detailQuery.data ?? null;
+  const isLoading = detailQuery.isLoading;
   const [nameInput, setNameInput] = useState("");
   const [isEditingName, setIsEditingName] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
@@ -37,28 +36,18 @@ export function FamilyDetail() {
     displayName: string;
     isSelf: boolean;
   } | null>(null);
+  const [error, setError] = useState<string | null>(null);
   const nameInputId = "family-name";
+  const renameFamily = useRenameFamily(familyIdParam ?? "");
+  const deleteFamilyMutation = useDeleteFamily(familyIdParam ?? "");
+  const removeMember = useRemoveMember(familyIdParam ?? "");
+  const changeMemberRole = useChangeMemberRole(familyIdParam ?? "");
 
   useEffect(() => {
-    if (!familyIdParam) return;
-    let cancelled = false;
-    getFamilyDetail(familyIdParam)
-      .then((result) => {
-        if (!cancelled) {
-          setDetail(result);
-          setNameInput(result.name);
-        }
-      })
-      .catch(() => {
-        if (!cancelled) setDetail(null);
-      })
-      .finally(() => {
-        if (!cancelled) setIsLoading(false);
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, [familyIdParam]);
+    if (detail) {
+      setNameInput(detail.name);
+    }
+  }, [detail]);
 
   if (isLoading) {
     return (
@@ -105,7 +94,7 @@ export function FamilyDetail() {
       ? moneySummaries.join(" • ")
       : `${t("family.currency")}: ${detail.currency_code.toUpperCase()}`;
 
-  async function handleRename() {
+  function handleRename() {
     if (!detail) {
       return;
     }
@@ -122,73 +111,64 @@ export function FamilyDetail() {
       return;
     }
 
-    try {
-      const updated = await renameFamily(familyId, trimmedName);
-      setDetail((current) => (current ? { ...current, name: updated.name } : current));
-      setNameInput(trimmedName);
-      setIsEditingName(false);
-      showSnackbar({ message: t("family.renameSuccess"), variant: "success" });
-    } catch {
-      setError(t("family.actionFailed"));
-      showSnackbar({ message: t("family.actionFailed"), variant: "error" });
-    }
+    renameFamily.mutate(trimmedName, {
+      onSuccess: () => {
+        setIsEditingName(false);
+        showSnackbar({ message: t("family.renameSuccess"), variant: "success" });
+      },
+      onError: () => {
+        setError(t("family.actionFailed"));
+        showSnackbar({ message: t("family.actionFailed"), variant: "error" });
+      },
+    });
   }
 
-  async function handleDelete() {
+  function handleDelete() {
     setError(null);
-    try {
-      await deleteFamily(familyId);
-      showSnackbar({ message: t("family.deleteSuccess"), variant: "success" });
-      navigate("/families");
-    } catch {
-      setError(t("family.actionFailed"));
-      showSnackbar({ message: t("family.actionFailed"), variant: "error" });
-    }
-  }
-
-  async function handleRemoveOrLeave(userId: string, isSelf: boolean) {
-    setError(null);
-    try {
-      await removeMember(familyId, userId);
-      if (isSelf) {
-        showSnackbar({ message: t("family.leaveSuccess"), variant: "success" });
+    deleteFamilyMutation.mutate(undefined, {
+      onSuccess: () => {
+        showSnackbar({ message: t("family.deleteSuccess"), variant: "success" });
         navigate("/families");
-        return;
-      }
-      setDetail((current) =>
-        current
-          ? {
-              ...current,
-              members: current.members.filter((member) => member.user_id !== userId),
-            }
-          : current,
-      );
-      showSnackbar({ message: t("family.removeSuccess"), variant: "success" });
-    } catch {
-      setError(t("family.actionFailed"));
-      showSnackbar({ message: t("family.actionFailed"), variant: "error" });
-    }
+      },
+      onError: () => {
+        setError(t("family.actionFailed"));
+        showSnackbar({ message: t("family.actionFailed"), variant: "error" });
+      },
+    });
   }
 
-  async function handleRoleChange(userId: string, role: "admin" | "member") {
+  function handleRemoveOrLeave(userId: string, isSelf: boolean) {
     setError(null);
-    try {
-      const updated = await changeMemberRole(familyId, userId, role);
-      setDetail((current) =>
-        current
-          ? {
-              ...current,
-              members: current.members.map((member) =>
-                member.user_id === userId ? updated : member,
-              ),
-            }
-          : current,
-      );
-      showSnackbar({ message: t("family.roleChangeSuccess"), variant: "success" });
-    } catch {
-      setError(t("family.actionFailed"));
-      showSnackbar({ message: t("family.actionFailed"), variant: "error" });
-    }
+    removeMember.mutate(userId, {
+      onSuccess: () => {
+        if (isSelf) {
+          showSnackbar({ message: t("family.leaveSuccess"), variant: "success" });
+          navigate("/families");
+          return;
+        }
+        showSnackbar({ message: t("family.removeSuccess"), variant: "success" });
+      },
+      onError: () => {
+        setError(t("family.actionFailed"));
+        showSnackbar({ message: t("family.actionFailed"), variant: "error" });
+      },
+    });
+  }
+
+  function handleRoleChange(userId: string, role: "admin" | "member") {
+    setError(null);
+    changeMemberRole.mutate(
+      { userId, role },
+      {
+        onSuccess: () => {
+          showSnackbar({ message: t("family.roleChangeSuccess"), variant: "success" });
+        },
+        onError: () => {
+          setError(t("family.actionFailed"));
+          showSnackbar({ message: t("family.actionFailed"), variant: "error" });
+        },
+      },
+    );
   }
 
   return (
@@ -321,7 +301,7 @@ export function FamilyDetail() {
                           <select
                             value={member.role}
                             onChange={(event) =>
-                              void handleRoleChange(
+                              handleRoleChange(
                                 member.user_id,
                                 event.target.value as "admin" | "member",
                               )
@@ -382,7 +362,7 @@ export function FamilyDetail() {
                         onChange={(event) => setNameInput(event.target.value)}
                       />
                       <div className="flex flex-wrap gap-2">
-                        <Button type="button" onClick={() => void handleRename()}>
+                        <Button type="button" onClick={() => handleRename()}>
                           {t("family.rename")}
                         </Button>
                         <Button
@@ -419,7 +399,7 @@ export function FamilyDetail() {
                 type="button"
                 variant="destructive"
                 onClick={() => {
-                  void handleDelete();
+                  handleDelete();
                   setIsDeleteModalOpen(false);
                 }}
               >
@@ -445,7 +425,7 @@ export function FamilyDetail() {
                 variant={memberToConfirm?.isSelf ? "outline" : "destructive"}
                 onClick={() => {
                   if (!memberToConfirm) return;
-                  void handleRemoveOrLeave(memberToConfirm.userId, memberToConfirm.isSelf);
+                  handleRemoveOrLeave(memberToConfirm.userId, memberToConfirm.isSelf);
                   setMemberToConfirm(null);
                 }}
               >

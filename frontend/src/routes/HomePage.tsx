@@ -18,14 +18,10 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
-import { listMyFamilies, type Family } from "../families/familyApi";
-import {
-  listCategories,
-  listExpenses,
-  resolveCategoryDisplayName,
-  type Category,
-  type Expense,
-} from "../expenses/expenseApi";
+import { useFamilies } from "../families/familyQueries";
+import { useCategories, useExpenses } from "../expenses/expenseQueries";
+import { resolveCategoryDisplayName } from "../expenses/expenseApi";
+import { useNetWorth } from "../finance/queries/analyticsQueries";
 import { formatMoney, formatMoneyCompact } from "../utils/currency";
 import { PageFrame, PageHeader, EmptyState, LoadingState } from "../components/ui/Page";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../components/ui/Card";
@@ -34,7 +30,6 @@ import { Alert } from "../components/ui/Alert";
 import { DropdownContent, DropdownMenu, Popover, PopoverContent } from "../components/ui/primitives";
 import { MonthPicker, type MonthPickerValue } from "../components/ui/MonthPicker";
 import { buttonClassName } from "../components/ui/buttonClassName";
-import { getNetWorth, type NetWorth } from "../finance/financeApi";
 
 function toYearMonth(date: Date): string {
   return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
@@ -207,73 +202,21 @@ function DashboardHelpTooltip({
 export function HomePage() {
   const { t } = useTranslation();
   const [activeTab, setActiveTab] = useState<"overview" | "analysis" | "transactions">("overview");
-  const [families, setFamilies] = useState<Family[]>([]);
   const [selectedFamilyId, setSelectedFamilyId] = useState("");
   const [selectedRange, setSelectedRange] = useState<MonthPickerValue>(() => {
     const currentMonth = toYearMonth(new Date());
     return { startMonth: currentMonth, endMonth: currentMonth };
   });
-  const [expenses, setExpenses] = useState<Expense[]>([]);
-  const [categories, setCategories] = useState<Category[]>([]);
-  const [isFamiliesLoading, setIsFamiliesLoading] = useState(true);
-  const [isExpensesLoading, setIsExpensesLoading] = useState(false);
-  const [netWorthSnapshot, setNetWorthSnapshot] = useState<NetWorth | null>(null);
-  const [error, setError] = useState<string | null>(null);
+
+  const familiesQuery = useFamilies();
+  const families = useMemo(() => familiesQuery.data ?? [], [familiesQuery.data]);
+  const isFamiliesLoading = familiesQuery.isLoading;
 
   useEffect(() => {
-    let cancelled = false;
-
-    listMyFamilies()
-      .then((result) => {
-        if (cancelled) return;
-        setFamilies(result);
-        setSelectedFamilyId((current) => current || result[0]?.id || "");
-      })
-      .catch(() => {
-        if (!cancelled) {
-          setError(t("family.actionFailed"));
-        }
-      })
-      .finally(() => {
-        if (!cancelled) setIsFamiliesLoading(false);
-      });
-
-    return () => {
-      cancelled = true;
-    };
-  }, [t]);
-
-  useEffect(() => {
-    if (!selectedFamilyId) {
-      setExpenses([]);
-      setCategories([]);
-      return;
+    if (families.length > 0 && !selectedFamilyId) {
+      setSelectedFamilyId(families[0].id);
     }
-
-    let cancelled = false;
-    setIsExpensesLoading(true);
-
-    Promise.all([listExpenses(selectedFamilyId), listCategories(selectedFamilyId)])
-      .then(([expenseResult, categoryResult]) => {
-        if (cancelled) return;
-        setExpenses(expenseResult);
-        setCategories(categoryResult);
-      })
-      .catch(() => {
-        if (!cancelled) {
-          setExpenses([]);
-          setCategories([]);
-          setError(t("expense.actionFailed"));
-        }
-      })
-      .finally(() => {
-        if (!cancelled) setIsExpensesLoading(false);
-      });
-
-    return () => {
-      cancelled = true;
-    };
-  }, [selectedFamilyId, t]);
+  }, [families, selectedFamilyId]);
 
   useEffect(() => {
     if (families.length === 0) {
@@ -305,33 +248,24 @@ export function HomePage() {
     };
   }, [fallbackDate, selectedRange.endMonth, selectedRange.startMonth]);
 
-  useEffect(() => {
-    if (!selectedFamilyId) {
-      setNetWorthSnapshot(null);
-      return;
-    }
+  const expensesQuery = useExpenses(selectedFamilyId);
+  const categoriesQuery = useCategories(selectedFamilyId);
+  const expenses = useMemo(() => expensesQuery.data ?? [], [expensesQuery.data]);
+  const categories = useMemo(() => categoriesQuery.data ?? [], [categoriesQuery.data]);
+  const isExpensesLoading = expensesQuery.isLoading || categoriesQuery.isLoading;
 
-    let cancelled = false;
-    const startDate = toDateKey(rangeContext.startDate);
-    const endDate = toDateKey(rangeContext.endDate);
+  const netWorthQuery = useNetWorth(selectedFamilyId, {
+    startDate: toDateKey(rangeContext.startDate),
+    endDate: toDateKey(rangeContext.endDate),
+  });
+  const netWorthSnapshot = netWorthQuery.data ?? null;
 
-    getNetWorth(selectedFamilyId, { startDate, endDate })
-      .then((netWorthResult) => {
-        if (cancelled) {
-          return;
-        }
-        setNetWorthSnapshot(netWorthResult);
-      })
-      .catch(() => {
-        if (!cancelled) {
-          setNetWorthSnapshot(null);
-        }
-      });
-
-    return () => {
-      cancelled = true;
-    };
-  }, [rangeContext, selectedFamilyId]);
+  const error =
+    familiesQuery.isError
+      ? t("family.actionFailed")
+      : expensesQuery.isError || categoriesQuery.isError
+        ? t("expense.actionFailed")
+        : null;
 
   const selectedPeriodExpenses = useMemo(
     () =>

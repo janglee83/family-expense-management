@@ -1,7 +1,9 @@
-import { useEffect, useMemo, useState, type FormEvent } from "react";
+import { useMemo, useState, type FormEvent } from "react";
 import { useTranslation } from "react-i18next";
 import { useParams } from "react-router-dom";
 import { useAuth } from "../auth/useAuth";
+import { translateApiError } from "../api/errorI18n";
+import { useFamilyDetail } from "../families/familyQueries";
 import { Alert } from "../components/ui/Alert";
 import { Badge } from "../components/ui/Badge";
 import { Button } from "../components/ui/Button";
@@ -14,6 +16,13 @@ import { formatMoney } from "../utils/currency";
 import { type SplitExpenseGroup, type SplitMethod } from "./financeApi";
 import { FinanceNav } from "./FinanceNav";
 import { DateRangePicker } from "./DateRangePicker";
+import {
+  usePreviewSplitExpenseGroup,
+  usePreviewSplitExpenseGroupSettlement,
+  useSaveSplitExpenseGroup,
+  useSettleSplitExpenseGroupSettlement,
+  useSplitExpenseGroups,
+} from "./queries/splitExpensesQueries";
 import { useSplitExpensesStore } from "./stores/splitExpensesStore";
 
 const SPLIT_METHODS: SplitMethod[] = ["equal", "custom", "percentage"];
@@ -24,40 +33,39 @@ export function SplitExpensesPage() {
   const { user } = useAuth();
   const { familyId } = useParams<{ familyId: string }>();
   const [pendingEditGroup, setPendingEditGroup] = useState<SplitExpenseGroup | null>(null);
+  const [formError, setFormError] = useState<string | null>(null);
 
   const {
-    family,
-    isLoading,
-    error,
-    load,
-    groups,
-    groupPreview,
-    isPreviewLoading,
-    isGroupSaving,
     groupForm,
     setGroupRange,
     setGroupForm,
     toggleGroupParticipant,
     setGroupCustomAmount,
     setGroupPercentage,
-    previewGroup,
+    setGroupPreview,
+    setSettlementPreview,
     editingGroupId,
+    groupPreview,
     settlementPreview,
-    isSettlementPreviewLoading,
-    previewGroupSettlement,
     startEditGroup,
     cancelEditGroup,
-    saveGroup,
-    settleGroupSettlement,
   } = useSplitExpensesStore();
 
-  useEffect(() => {
-    if (!familyId) {
-      return;
-    }
+  const groupsQuery = useSplitExpenseGroups(familyId ?? "");
+  const familyDetailQuery = useFamilyDetail(familyId ?? "");
+  const groups = groupsQuery.data ?? [];
+  const family = familyDetailQuery.data ?? null;
+  const isLoading = groupsQuery.isLoading || familyDetailQuery.isLoading;
+  const queryError = groupsQuery.isError || familyDetailQuery.isError ? t("expense.actionFailed") : null;
+  const error = queryError ?? formError;
 
-    void load(familyId, t);
-  }, [familyId, load, t]);
+  const previewGroupMutation = usePreviewSplitExpenseGroup(familyId ?? "");
+  const previewSettlementMutation = usePreviewSplitExpenseGroupSettlement(familyId ?? "");
+  const saveGroupMutation = useSaveSplitExpenseGroup(familyId ?? "");
+  const settleGroupSettlementMutation = useSettleSplitExpenseGroupSettlement(familyId ?? "");
+  const isPreviewLoading = previewGroupMutation.isPending;
+  const isSettlementPreviewLoading = previewSettlementMutation.isPending;
+  const isGroupSaving = saveGroupMutation.isPending;
 
   const currencyCode = family?.currency_code ?? "jpy";
 
@@ -79,29 +87,84 @@ export function SplitExpensesPage() {
   const splitMethodLabel = (methodValue: SplitMethod) => t(`finance.splitMethodValues.${methodValue}`);
   const splitStatusLabel = (statusValue: SplitExpenseGroup["status"]) => t(`finance.splitStatusValues.${statusValue}`);
 
-  function handlePreviewGroup() {
-    if (!familyId) {
-      return;
-    }
+  function buildParticipants() {
+    return groupForm.participantIds.map((participantId) => {
+      const base = { participant_user_id: participantId };
+      if (groupForm.method === "custom") {
+        return { ...base, amount: Number(groupForm.customAmountByParticipant[participantId] ?? 0) };
+      }
+      if (groupForm.method === "percentage") {
+        return { ...base, percentage: Number(groupForm.percentageByParticipant[participantId] ?? 0) };
+      }
+      return base;
+    });
+  }
 
-    void previewGroup(familyId, t);
+  function handlePreviewGroup() {
+    if (!familyId) return;
+
+    setFormError(null);
+    previewGroupMutation.mutate(
+      { fromDate: groupForm.fromDate, toDate: groupForm.toDate, excludeGroupId: editingGroupId ?? undefined },
+      {
+        onSuccess: (preview) => setGroupPreview(preview),
+        onError: (err) => setFormError(translateApiError(t, err, "expense.actionFailed")),
+      },
+    );
   }
 
   function handlePreviewSettlement() {
-    if (!familyId) {
-      return;
-    }
+    if (!familyId) return;
 
-    void previewGroupSettlement(familyId, t);
+    setFormError(null);
+    previewSettlementMutation.mutate(
+      {
+        input: {
+          period_start: groupForm.fromDate,
+          period_end: groupForm.toDate,
+          method: groupForm.method,
+          participants: buildParticipants(),
+        },
+        excludeGroupId: editingGroupId ?? undefined,
+      },
+      {
+        onSuccess: (preview) => setSettlementPreview(preview),
+        onError: (err) => setFormError(translateApiError(t, err, "expense.actionFailed")),
+      },
+    );
   }
 
   function handleSaveGroup(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (!familyId) {
+    if (!familyId || !groupPreview || groupForm.participantIds.length === 0) {
+      setFormError(t("expense.actionFailed"));
       return;
     }
 
-    void saveGroup(familyId, t, showSnackbar);
+    setFormError(null);
+    saveGroupMutation.mutate(
+      {
+        groupId: editingGroupId,
+        input: {
+          period_start: groupForm.fromDate,
+          period_end: groupForm.toDate,
+          method: groupForm.method,
+          participants: buildParticipants(),
+        },
+      },
+      {
+        onSuccess: () => {
+          const wasEditing = Boolean(editingGroupId);
+          cancelEditGroup();
+          showSnackbar({ message: t(wasEditing ? "finance.splitUpdated" : "finance.splitCreated"), variant: "success" });
+        },
+        onError: (err) => {
+          const message = translateApiError(t, err, "expense.actionFailed");
+          setFormError(message);
+          showSnackbar({ message, variant: "error" });
+        },
+      },
+    );
   }
 
   function handleEditGroupClick(group: SplitExpenseGroup) {
@@ -120,11 +183,18 @@ export function SplitExpensesPage() {
   }
 
   function handleSettleGroupSettlement(groupId: string, settlementId: string, currentState: boolean) {
-    if (!familyId) {
-      return;
-    }
-
-    void settleGroupSettlement(familyId, groupId, settlementId, currentState, t, showSnackbar);
+    setFormError(null);
+    settleGroupSettlementMutation.mutate(
+      { groupId, settlementId, isSettled: !currentState },
+      {
+        onSuccess: () => showSnackbar({ message: t("finance.splitUpdated"), variant: "success" }),
+        onError: (err) => {
+          const message = translateApiError(t, err, "expense.actionFailed");
+          setFormError(message);
+          showSnackbar({ message, variant: "error" });
+        },
+      },
+    );
   }
 
   if (!familyId || isLoading) {

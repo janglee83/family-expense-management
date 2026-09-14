@@ -1,7 +1,8 @@
 import { useState, type FormEvent } from "react";
 import { useTranslation } from "react-i18next";
 import { translateApiError } from "../api/errorI18n";
-import { addMember, type FamilyMemberInfo } from "./familyApi";
+import { type FamilyMemberInfo } from "./familyApi";
+import { useAddMember } from "./familyQueries";
 import { Button } from "../components/ui/Button";
 import { Field } from "../components/ui/Field";
 import { Alert } from "../components/ui/Alert";
@@ -16,22 +17,21 @@ export function AddMemberForm({
   const { t } = useTranslation();
   const [email, setEmail] = useState("");
   const [error, setError] = useState<string | null>(null);
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const addMemberMutation = useAddMember(familyId);
   const emailId = `member-email-${familyId}`;
 
-  async function handleSubmit(event: FormEvent) {
+  function handleSubmit(event: FormEvent) {
     event.preventDefault();
     setError(null);
-    setIsSubmitting(true);
-    try {
-      const member = await addMember(familyId, email);
-      onAdded(member);
-      setEmail("");
-    } catch (err) {
-      setError(translateApiError(t, err, "family.actionFailed"));
-    } finally {
-      setIsSubmitting(false);
-    }
+    addMemberMutation.mutate(email, {
+      onSuccess: (member) => {
+        onAdded(member);
+        setEmail("");
+      },
+      onError: (err) => {
+        setError(translateApiError(t, err, "family.actionFailed"));
+      },
+    });
   }
 
   return (
@@ -46,7 +46,7 @@ export function AddMemberForm({
         />
       </Field>
       <div className="flex flex-wrap gap-2">
-        <Button type="submit" loading={isSubmitting} loadingLabel={t("common.loading")}>
+        <Button type="submit" loading={addMemberMutation.isPending} loadingLabel={t("common.loading")}>
           {t("family.addMember")}
         </Button>
       </div>

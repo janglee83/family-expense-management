@@ -1,10 +1,11 @@
 import { render, screen } from "@testing-library/react";
+import { QueryClientProvider } from "@tanstack/react-query";
 import { MemoryRouter } from "react-router-dom";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import "./i18n/i18n";
 import { AppRoutes } from "./AppRoutes";
-import { AuthProvider } from "./auth/AuthContext";
 import { SnackbarProvider } from "./components/ui/Snackbar";
+import { createTestQueryClient } from "./testUtils/renderWithProviders";
 
 const fetchCurrentUserMock = vi.fn();
 const refreshSessionMock = vi.fn();
@@ -19,13 +20,13 @@ vi.mock("./auth/authApi", () => ({
 
 function renderAt(initialPath: string) {
   return render(
-    <MemoryRouter initialEntries={[initialPath]}>
-      <SnackbarProvider>
-        <AuthProvider>
+    <QueryClientProvider client={createTestQueryClient()}>
+      <MemoryRouter initialEntries={[initialPath]}>
+        <SnackbarProvider>
           <AppRoutes />
-        </AuthProvider>
-      </SnackbarProvider>
-    </MemoryRouter>,
+        </SnackbarProvider>
+      </MemoryRouter>
+    </QueryClientProvider>,
   );
 }
 

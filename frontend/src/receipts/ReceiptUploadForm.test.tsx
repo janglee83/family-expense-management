@@ -1,7 +1,8 @@
-import { render, screen } from "@testing-library/react";
+import { screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import i18n from "../i18n/i18n";
+import { renderWithProviders } from "../testUtils/renderWithProviders";
 import { ReceiptUploadForm } from "./ReceiptUploadForm";
 import { uploadReceipt } from "./receiptApi";
 
@@ -21,7 +22,7 @@ describe("ReceiptUploadForm", () => {
 
   it("rejects an oversized file client-side without calling the API", async () => {
     const user = userEvent.setup();
-    render(<ReceiptUploadForm familyId="fam-1" onUploaded={onUploaded} />);
+    renderWithProviders(<ReceiptUploadForm familyId="fam-1" onUploaded={onUploaded} />);
     const oversizedFile = new File([new Uint8Array(11 * 1024 * 1024)], "big.jpg", {
       type: "image/jpeg",
     });
@@ -36,7 +37,7 @@ describe("ReceiptUploadForm", () => {
 
   it("rejects a wrong-type file client-side without calling the API", async () => {
     const user = userEvent.setup();
-    render(<ReceiptUploadForm familyId="fam-1" onUploaded={onUploaded} />);
+    renderWithProviders(<ReceiptUploadForm familyId="fam-1" onUploaded={onUploaded} />);
     const pdfFile = new File(["not an image"], "doc.pdf", { type: "application/pdf" });
 
     await user.upload(screen.getByLabelText(i18n.t("receipt.upload")), pdfFile);
@@ -60,7 +61,7 @@ describe("ReceiptUploadForm", () => {
       updated_at: "2026-08-30T00:00:00Z",
     });
     const user = userEvent.setup();
-    render(<ReceiptUploadForm familyId="fam-1" onUploaded={onUploaded} />);
+    renderWithProviders(<ReceiptUploadForm familyId="fam-1" onUploaded={onUploaded} />);
     const validFile = new File(["fake jpeg content"], "receipt.jpg", { type: "image/jpeg" });
 
     await user.upload(screen.getByLabelText(i18n.t("receipt.upload")), validFile);

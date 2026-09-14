@@ -1,8 +1,9 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useParams } from "react-router-dom";
+import { translateApiError } from "../api/errorI18n";
 import { useAuth } from "../auth/useAuth";
-import { getFamilyDetail } from "../families/familyApi";
+import { useFamilyDetail } from "../families/familyQueries";
 import { useSnackbar } from "../components/ui/Snackbar";
 import { PageFrame, PageHeader, EmptyState, LoadingState } from "../components/ui/Page";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../components/ui/Card";
@@ -11,17 +12,15 @@ import { Badge } from "../components/ui/Badge";
 import { Alert } from "../components/ui/Alert";
 import { Field } from "../components/ui/Field";
 import { Modal } from "../components/ui/Modal";
+import { resolveCategoryDisplayName, type Category } from "./expenseApi";
 import {
-  createCategory,
-  deleteCategory,
-  deleteExpense,
-  listCategories,
-  listExpenses,
-  renameCategory,
-  resolveCategoryDisplayName,
-  type Category,
-  type Expense,
-} from "./expenseApi";
+  useCategories,
+  useCreateCategory,
+  useDeleteCategory,
+  useDeleteExpense,
+  useExpenses,
+  useRenameCategory,
+} from "./expenseQueries";
 import { ExpenseForm } from "./ExpenseForm";
 import { formatMoney } from "../utils/currency";
 import { CATEGORY_ICON_OPTIONS, resolveCategoryIconSymbol } from "./categoryIcons";
@@ -31,13 +30,23 @@ export function ExpenseList() {
   const { familyId } = useParams<{ familyId: string }>();
   const { user } = useAuth();
   const { showSnackbar } = useSnackbar();
-  const [expenses, setExpenses] = useState<Expense[]>([]);
-  const [categories, setCategories] = useState<Category[]>([]);
-  const [familyCurrencyCode, setFamilyCurrencyCode] = useState("jpy");
-  const [memberNames, setMemberNames] = useState<Record<string, string>>({});
-  const [myRole, setMyRole] = useState<string | undefined>(undefined);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const expensesQuery = useExpenses(familyId ?? "");
+  const categoriesQuery = useCategories(familyId ?? "");
+  const familyDetailQuery = useFamilyDetail(familyId ?? "");
+  const expenses = expensesQuery.data ?? [];
+  const categories = categoriesQuery.data ?? [];
+  const memberNames = Object.fromEntries(
+    (familyDetailQuery.data?.members ?? []).map((member) => [member.user_id, member.display_name]),
+  );
+  const familyCurrencyCode = familyDetailQuery.data?.currency_code ?? "jpy";
+  const myRole = familyDetailQuery.data?.members.find((member) => member.user_id === user?.id)?.role;
+  const isLoading = expensesQuery.isLoading || categoriesQuery.isLoading || familyDetailQuery.isLoading;
+  const queryError =
+    expensesQuery.isError || categoriesQuery.isError || familyDetailQuery.isError
+      ? t("expense.actionFailed")
+      : null;
+  const [formError, setFormError] = useState<string | null>(null);
+  const error = queryError ?? formError;
   const [isCreating, setIsCreating] = useState(false);
   const [editingExpenseId, setEditingExpenseId] = useState<string | null>(null);
   const [viewingExpenseId, setViewingExpenseId] = useState<string | null>(null);
@@ -45,46 +54,16 @@ export function ExpenseList() {
   const [isAddingCategory, setIsAddingCategory] = useState(false);
   const [newCategoryName, setNewCategoryName] = useState("");
   const [newCategoryIcon, setNewCategoryIcon] = useState("tag");
-  const [isCategorySubmitting, setIsCategorySubmitting] = useState(false);
   const [renamingCategory, setRenamingCategory] = useState<Category | null>(null);
   const [renameCategoryName, setRenameCategoryName] = useState("");
   const [deletingCategoryId, setDeletingCategoryId] = useState<string | null>(null);
+  const deleteExpenseMutation = useDeleteExpense(familyId ?? "");
+  const createCategoryMutation = useCreateCategory(familyId ?? "");
+  const renameCategoryMutation = useRenameCategory(familyId ?? "");
+  const deleteCategoryMutation = useDeleteCategory(familyId ?? "");
+  const isCategorySubmitting = createCategoryMutation.isPending;
   const categoryNameInputId = `expense-category-new-${familyId ?? "none"}`;
   const categoryIconInputId = `expense-category-icon-${familyId ?? "none"}`;
-
-  useEffect(() => {
-    if (!familyId) return;
-    let cancelled = false;
-    setError(null);
-
-    Promise.all([listExpenses(familyId), listCategories(familyId), getFamilyDetail(familyId)])
-      .then(([expenseResult, categoryResult, familyDetail]) => {
-        if (cancelled) return;
-        setExpenses(expenseResult);
-        setCategories(categoryResult);
-        setMemberNames(
-          Object.fromEntries(
-            familyDetail.members.map((member) => [member.user_id, member.display_name]),
-          ),
-        );
-        setFamilyCurrencyCode(familyDetail.currency_code);
-        setMyRole(familyDetail.members.find((member) => member.user_id === user?.id)?.role);
-      })
-      .catch(() => {
-        if (!cancelled) {
-          setExpenses([]);
-          setCategories([]);
-          setError(t("expense.actionFailed"));
-        }
-      })
-      .finally(() => {
-        if (!cancelled) setIsLoading(false);
-      });
-
-    return () => {
-      cancelled = true;
-    };
-  }, [familyId, user?.id, t]);
 
   const canManage = myRole === "owner" || myRole === "admin";
 
@@ -101,20 +80,22 @@ export function ExpenseList() {
     return resolveCategoryIconSymbol(category.icon, category.name);
   }
 
-  async function handleDeleteExpense(expenseId: string) {
+  function handleDeleteExpense(expenseId: string) {
     if (!familyId) return;
-    setError(null);
-    try {
-      await deleteExpense(familyId, expenseId);
-      setExpenses((current) => current.filter((expense) => expense.id !== expenseId));
-      showSnackbar({ message: t("expense.deleteSuccess"), variant: "success" });
-    } catch {
-      setError(t("expense.actionFailed"));
-      showSnackbar({ message: t("expense.actionFailed"), variant: "error" });
-    }
+    setFormError(null);
+    deleteExpenseMutation.mutate(expenseId, {
+      onSuccess: () => {
+        showSnackbar({ message: t("expense.deleteSuccess"), variant: "success" });
+      },
+      onError: (err) => {
+        const message = translateApiError(t, err, "expense.actionFailed");
+        setFormError(message);
+        showSnackbar({ message, variant: "error" });
+      },
+    });
   }
 
-  async function handleCreateCategory() {
+  function handleCreateCategory() {
     if (!familyId) return;
 
     const trimmedName = newCategoryName.trim();
@@ -122,51 +103,56 @@ export function ExpenseList() {
       return;
     }
 
-    setError(null);
-    setIsCategorySubmitting(true);
-    try {
-      const created = await createCategory(familyId, trimmedName, newCategoryIcon);
-      setCategories((current) => [...current, created]);
-      setNewCategoryName("");
-      setNewCategoryIcon("tag");
-      setIsAddingCategory(false);
-      showSnackbar({ message: t("expense.categoryAdded"), variant: "success" });
-    } catch {
-      setError(t("expense.actionFailed"));
-      showSnackbar({ message: t("expense.actionFailed"), variant: "error" });
-    } finally {
-      setIsCategorySubmitting(false);
-    }
+    setFormError(null);
+    createCategoryMutation.mutate(
+      { name: trimmedName, icon: newCategoryIcon },
+      {
+        onSuccess: () => {
+          setNewCategoryName("");
+          setNewCategoryIcon("tag");
+          setIsAddingCategory(false);
+          showSnackbar({ message: t("expense.categoryAdded"), variant: "success" });
+        },
+        onError: (err) => {
+          const message = translateApiError(t, err, "expense.actionFailed");
+          setFormError(message);
+          showSnackbar({ message, variant: "error" });
+        },
+      },
+    );
   }
 
-  async function handleRenameCategory(categoryId: string, newName: string) {
+  function handleRenameCategory(categoryId: string, newName: string) {
     if (!familyId) return;
-
-    setError(null);
-    try {
-      const updated = await renameCategory(familyId, categoryId, newName);
-      setCategories((current) =>
-        current.map((category) => (category.id === categoryId ? updated : category)),
-      );
-      showSnackbar({ message: t("expense.categoryRenamed"), variant: "success" });
-    } catch {
-      setError(t("expense.actionFailed"));
-      showSnackbar({ message: t("expense.actionFailed"), variant: "error" });
-    }
+    setFormError(null);
+    renameCategoryMutation.mutate(
+      { categoryId, name: newName },
+      {
+        onSuccess: () => {
+          showSnackbar({ message: t("expense.categoryRenamed"), variant: "success" });
+        },
+        onError: (err) => {
+          const message = translateApiError(t, err, "expense.actionFailed");
+          setFormError(message);
+          showSnackbar({ message, variant: "error" });
+        },
+      },
+    );
   }
 
-  async function handleDeleteCategory(categoryId: string) {
+  function handleDeleteCategory(categoryId: string) {
     if (!familyId) return;
-
-    setError(null);
-    try {
-      await deleteCategory(familyId, categoryId);
-      setCategories((current) => current.filter((category) => category.id !== categoryId));
-      showSnackbar({ message: t("expense.categoryDeleted"), variant: "success" });
-    } catch {
-      setError(t("expense.actionFailed"));
-      showSnackbar({ message: t("expense.actionFailed"), variant: "error" });
-    }
+    setFormError(null);
+    deleteCategoryMutation.mutate(categoryId, {
+      onSuccess: () => {
+        showSnackbar({ message: t("expense.categoryDeleted"), variant: "success" });
+      },
+      onError: (err) => {
+        const message = translateApiError(t, err, "expense.actionFailed");
+        setFormError(message);
+        showSnackbar({ message, variant: "error" });
+      },
+    });
   }
 
   const deletingExpense = deletingExpenseId
@@ -243,9 +229,7 @@ export function ExpenseList() {
               <ExpenseForm
                 familyId={familyId}
                 currencyCode={familyCurrencyCode}
-                onSaved={(expense) => {
-                  setExpenses((current) => [expense, ...current]);
-                  void listCategories(familyId).then(setCategories);
+                onSaved={() => {
                   setIsCreating(false);
                   showSnackbar({ message: t("expense.createSuccess"), variant: "success" });
                 }}
@@ -274,11 +258,7 @@ export function ExpenseList() {
                           familyId={familyId}
                           expense={expense}
                           currencyCode={familyCurrencyCode}
-                          onSaved={(updated) => {
-                            setExpenses((current) =>
-                              current.map((item) => (item.id === updated.id ? updated : item)),
-                            );
-                            void listCategories(familyId).then(setCategories);
+                          onSaved={() => {
                             setEditingExpenseId(null);
                             showSnackbar({ message: t("expense.updateSuccess"), variant: "success" });
                           }}
@@ -407,7 +387,7 @@ export function ExpenseList() {
                   className="space-y-3 rounded-md border border-border/80 bg-muted/35 p-3"
                   onSubmit={(event) => {
                     event.preventDefault();
-                    void handleCreateCategory();
+                    handleCreateCategory();
                   }}
                 >
                   <Field label={t("expense.newCategoryName")} htmlFor={categoryNameInputId} required>
@@ -489,10 +469,10 @@ export function ExpenseList() {
                   if (!renamingCategory) return;
                   const trimmedName = renameCategoryName.trim();
                   if (!trimmedName) {
-                    setError(t("expense.actionFailed"));
+                    showSnackbar({ message: t("expense.actionFailed"), variant: "error" });
                     return;
                   }
-                  void handleRenameCategory(renamingCategory.id, trimmedName);
+                  handleRenameCategory(renamingCategory.id, trimmedName);
                   setRenamingCategory(null);
                   setRenameCategoryName("");
                 }}
@@ -586,7 +566,7 @@ export function ExpenseList() {
                 variant="destructive"
                 onClick={() => {
                   if (!deletingExpense) return;
-                  void handleDeleteExpense(deletingExpense.id);
+                  handleDeleteExpense(deletingExpense.id);
                   setDeletingExpenseId(null);
                 }}
               >
@@ -612,7 +592,7 @@ export function ExpenseList() {
                 variant="destructive"
                 onClick={() => {
                   if (!deletingCategory) return;
-                  void handleDeleteCategory(deletingCategory.id);
+                  handleDeleteCategory(deletingCategory.id);
                   setDeletingCategoryId(null);
                 }}
               >

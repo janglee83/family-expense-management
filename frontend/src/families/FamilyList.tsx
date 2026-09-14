@@ -1,7 +1,6 @@
-import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Link } from "react-router-dom";
-import { listMyFamilies, type Family } from "./familyApi";
+import { useFamilies } from "./familyQueries";
 import { PageFrame, PageHeader, EmptyState } from "../components/ui/Page";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../components/ui/Card";
 import { Badge } from "../components/ui/Badge";
@@ -10,32 +9,8 @@ import { buttonClassName } from "../components/ui/buttonClassName";
 
 export function FamilyList() {
   const { t } = useTranslation();
-  const [families, setFamilies] = useState<Family[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    let cancelled = false;
-    listMyFamilies()
-      .then((result) => {
-        if (!cancelled) {
-          setFamilies(result);
-          setError(null);
-        }
-      })
-      .catch(() => {
-        if (!cancelled) {
-          setFamilies([]);
-          setError(t("family.actionFailed"));
-        }
-      })
-      .finally(() => {
-        if (!cancelled) setIsLoading(false);
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, [t]);
+  const { data: families = [], isLoading, isError } = useFamilies();
+  const error = isError ? t("family.actionFailed") : null;
 
   return (
     <PageFrame>

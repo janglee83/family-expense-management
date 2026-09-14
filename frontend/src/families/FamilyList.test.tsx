@@ -1,10 +1,11 @@
-import { render, screen } from "@testing-library/react";
+import { screen } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import "../i18n/i18n";
 import { FamilyList } from "./FamilyList";
 import { useAuth } from "../auth/useAuth";
 import { SnackbarProvider } from "../components/ui/Snackbar";
+import { renderWithProviders } from "../testUtils/renderWithProviders";
 
 const listMyFamiliesMock = vi.fn();
 
@@ -32,7 +33,7 @@ describe("FamilyList", () => {
       { id: "11111111-1111-1111-1111-111111111111", name: "My Family", role: "owner" },
     ]);
 
-    render(
+    renderWithProviders(
       <SnackbarProvider>
         <MemoryRouter>
           <FamilyList />
@@ -46,7 +47,7 @@ describe("FamilyList", () => {
   it("shows the empty state when there are no families", async () => {
     listMyFamiliesMock.mockResolvedValue([]);
 
-    render(
+    renderWithProviders(
       <SnackbarProvider>
         <MemoryRouter>
           <FamilyList />

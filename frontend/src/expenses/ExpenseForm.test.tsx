@@ -1,8 +1,9 @@
-import { render, screen } from "@testing-library/react";
+import { screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router-dom";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import i18n from "../i18n/i18n";
+import { renderWithProviders } from "../testUtils/renderWithProviders";
 import { ExpenseForm } from "./ExpenseForm";
 import { getFamilyDetail } from "../families/familyApi";
 import { createExpense, listCategories, updateExpense } from "./expenseApi";
@@ -51,7 +52,11 @@ describe("ExpenseForm", () => {
 
   it("shows a validation error for a non-positive amount without calling the API", async () => {
     const user = userEvent.setup();
-    render(<ExpenseForm familyId="fam-1" onSaved={onSaved} />, { wrapper: MemoryRouter });
+    renderWithProviders(
+      <MemoryRouter>
+        <ExpenseForm familyId="fam-1" onSaved={onSaved} />
+      </MemoryRouter>,
+    );
     await screen.findByRole("option", { name: /食料品/ });
 
     await user.clear(screen.getByLabelText("金額"));
@@ -77,7 +82,11 @@ describe("ExpenseForm", () => {
       expense_date: "2026-08-25",
     });
     const user = userEvent.setup();
-    render(<ExpenseForm familyId="fam-1" onSaved={onSaved} />, { wrapper: MemoryRouter });
+    renderWithProviders(
+      <MemoryRouter>
+        <ExpenseForm familyId="fam-1" onSaved={onSaved} />
+      </MemoryRouter>,
+    );
     await screen.findByRole("option", { name: /食料品/ });
 
     await user.clear(screen.getByLabelText("金額"));
@@ -105,9 +114,10 @@ describe("ExpenseForm", () => {
     };
     vi.mocked(updateExpense).mockResolvedValue({ ...existingExpense, amount: 1800 });
     const user = userEvent.setup();
-    render(
-      <ExpenseForm familyId="fam-1" expense={existingExpense} onSaved={onSaved} />,
-      { wrapper: MemoryRouter },
+    renderWithProviders(
+      <MemoryRouter>
+        <ExpenseForm familyId="fam-1" expense={existingExpense} onSaved={onSaved} />
+      </MemoryRouter>,
     );
     await screen.findByRole("option", { name: /食料品/ });
 

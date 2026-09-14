@@ -1,7 +1,8 @@
 import { useState, type ChangeEvent, type FormEvent } from "react";
 import { useTranslation } from "react-i18next";
 import { translateApiError } from "../api/errorI18n";
-import { uploadReceipt, validateReceiptFile, type Receipt } from "./receiptApi";
+import { validateReceiptFile, type Receipt } from "./receiptApi";
+import { useUploadReceipt } from "./receiptQueries";
 import { Button } from "../components/ui/Button";
 import { Field } from "../components/ui/Field";
 import { Alert } from "../components/ui/Alert";
@@ -15,7 +16,7 @@ export function ReceiptUploadForm({ familyId, onUploaded }: ReceiptUploadFormPro
   const { t } = useTranslation();
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [isUploading, setIsUploading] = useState(false);
+  const uploadReceiptMutation = useUploadReceipt(familyId);
   const fileId = `receipt-file-${familyId}`;
 
   function handleFileChange(event: ChangeEvent<HTMLInputElement>) {
@@ -32,21 +33,20 @@ export function ReceiptUploadForm({ familyId, onUploaded }: ReceiptUploadFormPro
     setSelectedFile(file);
   }
 
-  async function handleSubmit(event: FormEvent) {
+  function handleSubmit(event: FormEvent) {
     event.preventDefault();
     if (!selectedFile) return;
 
     setError(null);
-    setIsUploading(true);
-    try {
-      const receipt = await uploadReceipt(familyId, selectedFile);
-      onUploaded(receipt);
-      setSelectedFile(null);
-    } catch (err) {
-      setError(translateApiError(t, err, "receipt.uploadFailed"));
-    } finally {
-      setIsUploading(false);
-    }
+    uploadReceiptMutation.mutate(selectedFile, {
+      onSuccess: (receipt) => {
+        onUploaded(receipt);
+        setSelectedFile(null);
+      },
+      onError: (err) => {
+        setError(translateApiError(t, err, "receipt.uploadFailed"));
+      },
+    });
   }
 
   return (
@@ -67,7 +67,7 @@ export function ReceiptUploadForm({ familyId, onUploaded }: ReceiptUploadFormPro
         type="submit"
         className="w-full sm:w-auto"
         disabled={!selectedFile}
-        loading={isUploading}
+        loading={uploadReceiptMutation.isPending}
         loadingLabel={t("receipt.uploading")}
       >
         {t("receipt.upload")}

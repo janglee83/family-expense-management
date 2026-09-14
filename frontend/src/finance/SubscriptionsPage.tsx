@@ -1,6 +1,10 @@
-import { useEffect, useMemo, type FormEvent } from "react";
+import { useMemo, useState, type FormEvent } from "react";
 import { useTranslation } from "react-i18next";
 import { useParams } from "react-router-dom";
+import { translateApiError } from "../api/errorI18n";
+import { useFamilyDetail } from "../families/familyQueries";
+import { useAccounts } from "./queries/goalsQueries";
+import { useCategories } from "../expenses/expenseQueries";
 import { Alert } from "../components/ui/Alert";
 import { Badge } from "../components/ui/Badge";
 import { Button } from "../components/ui/Button";
@@ -12,6 +16,13 @@ import { resolveCategoryDisplayName } from "../expenses/expenseApi";
 import { formatMoney } from "../utils/currency";
 import { type SubscriptionBillingCycle, type SubscriptionStatus } from "./financeApi";
 import { FinanceNav } from "./FinanceNav";
+import {
+  useChangeSubscriptionStatus,
+  useCreateSubscription,
+  useDeleteSubscription,
+  useSubscriptionSummary,
+  useSubscriptions,
+} from "./queries/subscriptionsQueries";
 import { useSubscriptionsStore } from "./stores/subscriptionsStore";
 
 const BILLING_CYCLES: SubscriptionBillingCycle[] = ["weekly", "monthly", "yearly"];
@@ -21,31 +32,40 @@ export function SubscriptionsPage() {
   const { t } = useTranslation();
   const { showSnackbar } = useSnackbar();
   const { familyId } = useParams<{ familyId: string }>();
+  const [formError, setFormError] = useState<string | null>(null);
 
-  const {
-    subscriptions,
-    summary,
-    accounts,
-    categories,
-    familyCurrencyCode,
-    isLoading,
-    isSaving,
-    error,
-    form,
-    setForm,
-    load,
-    createSubscription,
-    changeStatus,
-    deleteSubscription,
-  } = useSubscriptionsStore();
+  const { form, setForm, resetForm } = useSubscriptionsStore();
 
-  useEffect(() => {
-    if (!familyId) {
-      return;
-    }
+  const subscriptionsQuery = useSubscriptions(familyId ?? "");
+  const summaryQuery = useSubscriptionSummary(familyId ?? "");
+  const accountsQuery = useAccounts(familyId ?? "");
+  const categoriesQuery = useCategories(familyId ?? "");
+  const familyDetailQuery = useFamilyDetail(familyId ?? "");
+  const subscriptions = subscriptionsQuery.data ?? [];
+  const summary = summaryQuery.data ?? null;
+  const accounts = accountsQuery.data ?? [];
+  const categories = useMemo(() => categoriesQuery.data ?? [], [categoriesQuery.data]);
+  const familyCurrencyCode = familyDetailQuery.data?.currency_code ?? "jpy";
+  const isLoading =
+    subscriptionsQuery.isLoading ||
+    summaryQuery.isLoading ||
+    accountsQuery.isLoading ||
+    categoriesQuery.isLoading ||
+    familyDetailQuery.isLoading;
+  const queryError =
+    subscriptionsQuery.isError ||
+    summaryQuery.isError ||
+    accountsQuery.isError ||
+    categoriesQuery.isError ||
+    familyDetailQuery.isError
+      ? t("expense.actionFailed")
+      : null;
+  const error = queryError ?? formError;
 
-    void load(familyId, t);
-  }, [familyId, load, t]);
+  const createSubscriptionMutation = useCreateSubscription(familyId ?? "");
+  const changeStatusMutation = useChangeSubscriptionStatus(familyId ?? "");
+  const deleteSubscriptionMutation = useDeleteSubscription(familyId ?? "");
+  const isSaving = createSubscriptionMutation.isPending;
 
   const categoryNameById = useMemo(
     () => Object.fromEntries(categories.map((category) => [category.id, resolveCategoryDisplayName(category, t)])),
@@ -57,27 +77,71 @@ export function SubscriptionsPage() {
 
   function handleCreate(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (!familyId) {
+    if (!familyId) return;
+
+    const parsedAmount = Number(form.amount);
+    if (!Number.isFinite(parsedAmount) || parsedAmount <= 0) {
+      setFormError(t("expense.amountMustBePositive"));
       return;
     }
 
-    void createSubscription(familyId, t, showSnackbar);
+    setFormError(null);
+    createSubscriptionMutation.mutate(
+      {
+        name: form.name.trim(),
+        merchant: form.merchant.trim(),
+        amount: parsedAmount,
+        currency_code: familyCurrencyCode === "vnd" ? "vnd" : "jpy",
+        billing_cycle: form.billingCycle,
+        next_billing_date: form.nextBillingDate,
+        status: form.status,
+        category_id: form.categoryId || null,
+        account_id: form.accountId || null,
+        cancellation_url: form.cancellationUrl.trim() || null,
+      },
+      {
+        onSuccess: () => {
+          resetForm();
+          showSnackbar({ message: t("finance.subscriptionCreated"), variant: "success" });
+        },
+        onError: (err) => {
+          const message = translateApiError(t, err, "expense.actionFailed");
+          setFormError(message);
+          showSnackbar({ message, variant: "error" });
+        },
+      },
+    );
   }
 
   function handleChangeStatus(subscriptionId: string, nextStatus: SubscriptionStatus) {
-    if (!familyId) {
-      return;
-    }
-
-    void changeStatus(familyId, subscriptionId, nextStatus, t, showSnackbar);
+    setFormError(null);
+    changeStatusMutation.mutate(
+      { subscriptionId, status: nextStatus },
+      {
+        onSuccess: () => {
+          showSnackbar({ message: t("finance.subscriptionUpdated"), variant: "success" });
+        },
+        onError: (err) => {
+          const message = translateApiError(t, err, "expense.actionFailed");
+          setFormError(message);
+          showSnackbar({ message, variant: "error" });
+        },
+      },
+    );
   }
 
   function handleDelete(subscriptionId: string) {
-    if (!familyId) {
-      return;
-    }
-
-    void deleteSubscription(familyId, subscriptionId, t, showSnackbar);
+    setFormError(null);
+    deleteSubscriptionMutation.mutate(subscriptionId, {
+      onSuccess: () => {
+        showSnackbar({ message: t("finance.subscriptionDeleted"), variant: "success" });
+      },
+      onError: (err) => {
+        const message = translateApiError(t, err, "expense.actionFailed");
+        setFormError(message);
+        showSnackbar({ message, variant: "error" });
+      },
+    });
   }
 
   if (!familyId || isLoading) {
