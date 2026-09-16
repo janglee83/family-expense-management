@@ -259,6 +259,8 @@
     "createAccountDescription": "現金、銀行、投資、クレジットカード、ローン口座の残高を追跡します。",
     "accountType": "口座タイプ",
     "openingBalance": "開始残高",
+    "accountNameRequired": "口座名を入力してください",
+    "openingBalanceInvalid": "初期残高が無効です",
     "creditLimit": "利用限度額",
     "minimumPayment": "最低支払額",
     "statementClosingDay": "締め日",

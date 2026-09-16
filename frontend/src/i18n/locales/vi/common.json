@@ -259,6 +259,8 @@
     "createAccountDescription": "Theo dõi số dư cho tài khoản tiền mặt, ngân hàng, đầu tư, thẻ tín dụng và khoản vay.",
     "accountType": "Loại tài khoản",
     "openingBalance": "Số dư đầu kỳ",
+    "accountNameRequired": "Vui lòng nhập tên tài khoản",
+    "openingBalanceInvalid": "Số dư đầu kỳ không hợp lệ",
     "creditLimit": "Hạn mức tín dụng",
     "minimumPayment": "Thanh toán tối thiểu",
     "statementClosingDay": "Ngày chốt sao kê",

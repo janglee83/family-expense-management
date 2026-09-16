@@ -48,6 +48,8 @@ export function AccountsLedgerPage() {
   const { showSnackbar } = useSnackbar();
   const { familyId } = useParams<{ familyId: string }>();
   const [formError, setFormError] = useState<string | null>(null);
+  const [accountFieldErrors, setAccountFieldErrors] = useState<{ name?: string; openingBalance?: string }>({});
+  const [ledgerFieldErrors, setLedgerFieldErrors] = useState<{ amount?: string }>({});
 
   const { accountForm, ledgerForm, setAccountForm, setLedgerForm, resetAccountForm, resetLedgerForm } =
     useAccountsLedgerStore();
@@ -87,12 +89,20 @@ export function AccountsLedgerPage() {
     if (!familyId) return;
 
     const opening = Number(accountForm.openingBalance);
+    const errors: typeof accountFieldErrors = {};
+    if (!accountForm.accountName.trim()) {
+      errors.name = t("finance.accountNameRequired");
+    }
     if (!Number.isFinite(opening)) {
-      setFormError(t("expense.actionFailed"));
+      errors.openingBalance = t("finance.openingBalanceInvalid");
+    }
+
+    setAccountFieldErrors(errors);
+    setFormError(null);
+    if (Object.keys(errors).length > 0) {
       return;
     }
 
-    setFormError(null);
     createAccountMutation.mutate(
       {
         name: accountForm.accountName.trim(),
@@ -108,6 +118,7 @@ export function AccountsLedgerPage() {
       {
         onSuccess: () => {
           resetAccountForm();
+          setAccountFieldErrors({});
           showSnackbar({ message: t("finance.accountCreated"), variant: "success" });
         },
         onError: (err) => {
@@ -148,10 +159,12 @@ export function AccountsLedgerPage() {
 
     const amount = Number(ledgerForm.ledgerAmount);
     if (!Number.isFinite(amount) || amount <= 0) {
-      setFormError(t("expense.amountMustBePositive"));
+      setLedgerFieldErrors({ amount: t("expense.amountMustBePositive") });
+      setFormError(null);
       return;
     }
 
+    setLedgerFieldErrors({});
     setFormError(null);
     createLedgerMutation.mutate(
       {
@@ -236,13 +249,15 @@ export function AccountsLedgerPage() {
             </CardHeader>
             <CardContent>
               <form className="space-y-4" onSubmit={handleCreateAccount}>
-                <Field label={t("family.name")} htmlFor="finance-account-name" required>
+                <Field label={t("family.name")} htmlFor="finance-account-name" required error={accountFieldErrors.name}>
                   <input
                     id="finance-account-name"
                     type="text"
                     value={accountForm.accountName}
-                    onChange={(event) => setAccountForm({ accountName: event.target.value })}
-                    required
+                    onChange={(event) => {
+                      setAccountForm({ accountName: event.target.value });
+                      setAccountFieldErrors((current) => ({ ...current, name: undefined }));
+                    }}
                   />
                 </Field>
 
@@ -260,13 +275,20 @@ export function AccountsLedgerPage() {
                   </select>
                 </Field>
 
-                <Field label={t("finance.openingBalance")} htmlFor="finance-account-opening" required>
+                <Field
+                  label={t("finance.openingBalance")}
+                  htmlFor="finance-account-opening"
+                  required
+                  error={accountFieldErrors.openingBalance}
+                >
                   <input
                     id="finance-account-opening"
                     type="number"
                     value={accountForm.openingBalance}
-                    onChange={(event) => setAccountForm({ openingBalance: event.target.value })}
-                    required
+                    onChange={(event) => {
+                      setAccountForm({ openingBalance: event.target.value });
+                      setAccountFieldErrors((current) => ({ ...current, openingBalance: undefined }));
+                    }}
                   />
                 </Field>
 
@@ -339,14 +361,21 @@ export function AccountsLedgerPage() {
                       ))}
                     </select>
                   </Field>
-                  <Field label={t("expense.amount")} htmlFor="finance-ledger-amount" required>
+                  <Field
+                    label={t("expense.amount")}
+                    htmlFor="finance-ledger-amount"
+                    required
+                    error={ledgerFieldErrors.amount}
+                  >
                     <input
                       id="finance-ledger-amount"
                       type="number"
                       min={1}
                       value={ledgerForm.ledgerAmount}
-                      onChange={(event) => setLedgerForm({ ledgerAmount: event.target.value })}
-                      required
+                      onChange={(event) => {
+                        setLedgerForm({ ledgerAmount: event.target.value });
+                        setLedgerFieldErrors({});
+                      }}
                     />
                   </Field>
                 </div>
