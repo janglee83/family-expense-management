@@ -56,6 +56,7 @@
     "addMember": "Thêm thành viên",
     "memberEmail": "Địa chỉ email",
     "invalidMemberEmail": "Email thành viên không hợp lệ",
+    "memberEmailRequired": "Vui lòng nhập email thành viên",
     "memberAlreadyInDraft": "Email này đã có trong danh sách mời",
     "noDraftMembers": "Bạn có thể tạo gia đình trước rồi mời thêm sau",
     "nameRequired": "Vui lòng nhập tên gia đình",

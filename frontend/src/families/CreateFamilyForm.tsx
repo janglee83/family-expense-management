@@ -3,6 +3,7 @@ import { useTranslation } from "react-i18next";
 import { translateApiError } from "../api/errorI18n";
 import { type CurrencyCode, type Family, type FamilyType } from "./familyApi";
 import { useCreateFamily } from "./familyQueries";
+import { isEmailLike } from "../utils/validators";
 import { Button } from "../components/ui/Button";
 import { Field } from "../components/ui/Field";
 import { Alert } from "../components/ui/Alert";
@@ -11,10 +12,6 @@ const MAX_INT_32 = 2_147_483_647;
 
 function normalizeEmail(value: string): string {
   return value.trim().toLowerCase();
-}
-
-function isEmailLike(value: string): boolean {
-  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
 }
 
 function localeForCurrency(currencyCode: CurrencyCode): string {
@@ -53,7 +50,13 @@ export function CreateFamilyForm({ onCreated }: { onCreated: (family: Family) =>
   const [savingsGoalAmount, setSavingsGoalAmount] = useState("");
   const [memberEmailInput, setMemberEmailInput] = useState("");
   const [memberEmails, setMemberEmails] = useState<string[]>([]);
-  const [error, setError] = useState<string | null>(null);
+  const [fieldErrors, setFieldErrors] = useState<{
+    name?: string;
+    memberEmail?: string;
+    monthlyIncome?: string;
+    savingsGoal?: string;
+  }>({});
+  const [formError, setFormError] = useState<string | null>(null);
   const createFamilyMutation = useCreateFamily();
   const nameId = "create-family-name";
   const typeId = "create-family-type";
@@ -69,15 +72,15 @@ export function CreateFamilyForm({ onCreated }: { onCreated: (family: Family) =>
       return;
     }
     if (!isEmailLike(normalized)) {
-      setError(t("family.invalidMemberEmail"));
+      setFieldErrors((current) => ({ ...current, memberEmail: t("family.invalidMemberEmail") }));
       return;
     }
     if (memberEmails.includes(normalized)) {
-      setError(t("family.memberAlreadyInDraft"));
+      setFieldErrors((current) => ({ ...current, memberEmail: t("family.memberAlreadyInDraft") }));
       return;
     }
 
-    setError(null);
+    setFieldErrors((current) => ({ ...current, memberEmail: undefined }));
     setMemberEmails((current) => [...current, normalized]);
     setMemberEmailInput("");
   }
@@ -86,35 +89,31 @@ export function CreateFamilyForm({ onCreated }: { onCreated: (family: Family) =>
     event.preventDefault();
 
     const trimmedName = name.trim();
+    const errors: typeof fieldErrors = {};
     if (!trimmedName) {
-      setError(t("family.nameRequired"));
-      return;
+      errors.name = t("family.nameRequired");
     }
 
     const parsedIncome = parseIntegerFromFormatted(monthlyIncome);
     const parsedSavingsGoal = parseIntegerFromFormatted(savingsGoalAmount);
     if (familyType === "solo" && parsedSavingsGoal === null) {
-      setError(t("family.savingsGoalRequiredForSolo"));
-      return;
+      errors.savingsGoal = t("family.savingsGoalRequiredForSolo");
+    } else if (monthlyIncomeEnabled && parsedIncome === null) {
+      errors.monthlyIncome = t("family.monthlyIncomeRequiredWhenEnabled");
+    } else if (!monthlyIncomeEnabled && parsedIncome !== null) {
+      errors.monthlyIncome = t("family.monthlyIncomeMustBeEmptyWhenDisabled");
+    } else if (parsedIncome !== null && (parsedIncome < 1 || parsedIncome > MAX_INT_32)) {
+      errors.monthlyIncome = t("family.invalidMonthlyIncome");
+    } else if (parsedSavingsGoal !== null && (parsedSavingsGoal < 1 || parsedSavingsGoal > MAX_INT_32)) {
+      errors.savingsGoal = t("family.invalidSavingsGoal");
     }
-    if (monthlyIncomeEnabled && parsedIncome === null) {
-      setError(t("family.monthlyIncomeRequiredWhenEnabled"));
-      return;
-    }
-    if (!monthlyIncomeEnabled && parsedIncome !== null) {
-      setError(t("family.monthlyIncomeMustBeEmptyWhenDisabled"));
-      return;
-    }
-    if (parsedIncome !== null && (parsedIncome < 1 || parsedIncome > MAX_INT_32)) {
-      setError(t("family.invalidMonthlyIncome"));
-      return;
-    }
-    if (parsedSavingsGoal !== null && (parsedSavingsGoal < 1 || parsedSavingsGoal > MAX_INT_32)) {
-      setError(t("family.invalidSavingsGoal"));
+
+    setFieldErrors(errors);
+    setFormError(null);
+    if (Object.keys(errors).length > 0) {
       return;
     }
 
-    setError(null);
     createFamilyMutation.mutate(
       {
         name: trimmedName,
@@ -136,26 +135,29 @@ export function CreateFamilyForm({ onCreated }: { onCreated: (family: Family) =>
           setSavingsGoalAmount("");
           setMemberEmailInput("");
           setMemberEmails([]);
+          setFieldErrors({});
         },
         onError: (err) => {
-          setError(translateApiError(t, err, "family.actionFailed"));
+          setFormError(translateApiError(t, err, "family.actionFailed"));
         },
       },
     );
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-5" data-tour="family-create-form">
+    <form onSubmit={handleSubmit} className="space-y-5" data-tour="family-create-form" noValidate>
       <section className="space-y-4 rounded-lg border border-border/80 bg-muted/25 p-4">
         <h2 className="type-h3">{t("family.name")}</h2>
         <div className="grid gap-4 md:grid-cols-2">
-          <Field label={t("family.name")} htmlFor={nameId} required className="md:col-span-2">
+          <Field label={t("family.name")} htmlFor={nameId} required className="md:col-span-2" error={fieldErrors.name}>
             <input
               id={nameId}
               type="text"
               value={name}
-              onChange={(event) => setName(event.target.value)}
-              required
+              onChange={(event) => {
+                setName(event.target.value);
+                setFieldErrors((current) => ({ ...current, name: undefined }));
+              }}
             />
           </Field>
 
@@ -210,17 +212,18 @@ export function CreateFamilyForm({ onCreated }: { onCreated: (family: Family) =>
               label={t("family.monthlyIncomeWithCurrency", { currency: currencyCode.toUpperCase() })}
               htmlFor={incomeId}
               required
+              error={fieldErrors.monthlyIncome}
             >
               <input
                 id={incomeId}
                 type="text"
                 inputMode="numeric"
                 value={monthlyIncome}
-                onChange={(event) =>
-                  setMonthlyIncome(formatNumberWithCommas(event.target.value, currencyCode))
-                }
+                onChange={(event) => {
+                  setMonthlyIncome(formatNumberWithCommas(event.target.value, currencyCode));
+                  setFieldErrors((current) => ({ ...current, monthlyIncome: undefined }));
+                }}
                 placeholder={currencyCode === "vnd" ? "20.000.000" : "200,000"}
-                required
               />
             </Field>
           ) : null}
@@ -230,17 +233,18 @@ export function CreateFamilyForm({ onCreated }: { onCreated: (family: Family) =>
               label={t("family.savingsGoalWithCurrency", { currency: currencyCode.toUpperCase() })}
               htmlFor={savingsGoalId}
               required
+              error={fieldErrors.savingsGoal}
             >
               <input
                 id={savingsGoalId}
                 type="text"
                 inputMode="numeric"
                 value={savingsGoalAmount}
-                onChange={(event) =>
-                  setSavingsGoalAmount(formatNumberWithCommas(event.target.value, currencyCode))
-                }
+                onChange={(event) => {
+                  setSavingsGoalAmount(formatNumberWithCommas(event.target.value, currencyCode));
+                  setFieldErrors((current) => ({ ...current, savingsGoal: undefined }));
+                }}
                 placeholder={currencyCode === "vnd" ? "20.000.000" : "200,000"}
-                required
               />
             </Field>
           ) : null}
@@ -249,13 +253,16 @@ export function CreateFamilyForm({ onCreated }: { onCreated: (family: Family) =>
 
       {familyType === "shared" ? (
         <section className="space-y-3 rounded-lg border border-border/80 bg-muted/25 p-4">
-          <Field label={t("family.memberEmail")} htmlFor={emailId}>
+          <Field label={t("family.memberEmail")} htmlFor={emailId} error={fieldErrors.memberEmail}>
             <div className="flex flex-col gap-2 sm:flex-row">
               <input
                 id={emailId}
                 type="email"
                 value={memberEmailInput}
-                onChange={(event) => setMemberEmailInput(event.target.value)}
+                onChange={(event) => {
+                  setMemberEmailInput(event.target.value);
+                  setFieldErrors((current) => ({ ...current, memberEmail: undefined }));
+                }}
                 placeholder="member@example.com"
               />
               <Button type="button" variant="secondary" onClick={addMemberEmail}>
@@ -302,9 +309,9 @@ export function CreateFamilyForm({ onCreated }: { onCreated: (family: Family) =>
         </Button>
       </div>
 
-      {error ? (
+      {formError ? (
         <Alert variant="error" role="alert">
-          {error}
+          {formError}
         </Alert>
       ) : null}
     </form>

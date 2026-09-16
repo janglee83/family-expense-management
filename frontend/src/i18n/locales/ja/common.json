@@ -56,6 +56,7 @@
     "addMember": "メンバーを追加",
     "memberEmail": "メールアドレス",
     "invalidMemberEmail": "メンバーのメールアドレスが正しくありません",
+    "memberEmailRequired": "メンバーのメールアドレスを入力してください",
     "memberAlreadyInDraft": "このメールは既に招待リストにあります",
     "noDraftMembers": "先に家族を作成して、あとで招待することもできます",
     "nameRequired": "家族名を入力してください",
