@@ -39,7 +39,11 @@
     "emailInUse": "Email này đã được đăng ký",
     "rateLimited": "Bạn đã đăng nhập sai quá nhiều lần. Vui lòng thử lại sau",
     "passwordTooShort": "Mật khẩu phải có ít nhất 8 ký tự",
-    "genericError": "Đã xảy ra lỗi. Vui lòng thử lại"
+    "genericError": "Đã xảy ra lỗi. Vui lòng thử lại",
+    "emailRequired": "Vui lòng nhập email",
+    "emailInvalid": "Email không hợp lệ",
+    "passwordRequired": "Vui lòng nhập mật khẩu",
+    "displayNameRequired": "Vui lòng nhập tên hiển thị"
   },
   "family": {
     "myFamilies": "Gia đình của tôi",

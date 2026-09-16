@@ -39,7 +39,11 @@
     "emailInUse": "このメールアドレスは既に登録されています",
     "rateLimited": "ログイン試行回数が多すぎます。しばらくしてから再度お試しください",
     "passwordTooShort": "パスワードは8文字以上で入力してください",
-    "genericError": "エラーが発生しました。もう一度お試しください"
+    "genericError": "エラーが発生しました。もう一度お試しください",
+    "emailRequired": "メールアドレスを入力してください",
+    "emailInvalid": "メールアドレスの形式が正しくありません",
+    "passwordRequired": "パスワードを入力してください",
+    "displayNameRequired": "表示名を入力してください"
   },
   "family": {
     "myFamilies": "自分の家族",
