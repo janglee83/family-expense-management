@@ -34,6 +34,8 @@ export function GoalsPage() {
   const { showSnackbar } = useSnackbar();
   const { familyId } = useParams<{ familyId: string }>();
   const [formError, setFormError] = useState<string | null>(null);
+  const [goalFieldErrors, setGoalFieldErrors] = useState<{ name?: string; target?: string; current?: string }>({});
+  const [entryFieldErrors, setEntryFieldErrors] = useState<{ amount?: string }>({});
 
   const { goalForm, entryGoal, entryForm, setGoalForm, setEntryForm, closeEntryModal, openEntryModal, resetGoalForm, resetEntryForm } =
     useGoalsStore();
@@ -69,12 +71,23 @@ export function GoalsPage() {
 
     const targetAmount = Number(goalForm.goalTarget);
     const currentAmount = Number(goalForm.goalCurrent);
-    if (!Number.isFinite(targetAmount) || targetAmount <= 0 || !Number.isFinite(currentAmount) || currentAmount < 0) {
-      setFormError(t("expense.actionFailed"));
+    const errors: typeof goalFieldErrors = {};
+    if (!goalForm.goalName.trim()) {
+      errors.name = t("finance.goalNameRequired");
+    }
+    if (!Number.isFinite(targetAmount) || targetAmount <= 0) {
+      errors.target = t("finance.targetAmountInvalid");
+    }
+    if (!Number.isFinite(currentAmount) || currentAmount < 0) {
+      errors.current = t("finance.currentAmountInvalid");
+    }
+
+    setGoalFieldErrors(errors);
+    setFormError(null);
+    if (Object.keys(errors).length > 0) {
       return;
     }
 
-    setFormError(null);
     createGoalMutation.mutate(
       {
         name: goalForm.goalName.trim(),
@@ -88,6 +101,7 @@ export function GoalsPage() {
       {
         onSuccess: () => {
           resetGoalForm();
+          setGoalFieldErrors({});
           showSnackbar({ message: t("finance.goalCreated"), variant: "success" });
         },
         onError: (err) => {
@@ -145,10 +159,12 @@ export function GoalsPage() {
 
     const amount = Number(entryForm.entryAmount);
     if (!Number.isFinite(amount) || amount <= 0) {
-      setFormError(t("expense.amountMustBePositive"));
+      setEntryFieldErrors({ amount: t("expense.amountMustBePositive") });
+      setFormError(null);
       return;
     }
 
+    setEntryFieldErrors({});
     setFormError(null);
     createEntryMutation.mutate(
       {
@@ -222,35 +238,41 @@ export function GoalsPage() {
           </CardHeader>
           <CardContent>
             <form className="space-y-4" onSubmit={handleCreateGoal}>
-              <Field label={t("family.name")} htmlFor="finance-goal-name" required>
+              <Field label={t("family.name")} htmlFor="finance-goal-name" required error={goalFieldErrors.name}>
                 <input
                   id="finance-goal-name"
                   type="text"
                   value={goalForm.goalName}
-                  onChange={(event) => setGoalForm({ goalName: event.target.value })}
-                  required
+                  onChange={(event) => {
+                    setGoalForm({ goalName: event.target.value });
+                    setGoalFieldErrors((current) => ({ ...current, name: undefined }));
+                  }}
                 />
               </Field>
 
               <div className="grid gap-4 sm:grid-cols-2">
-                <Field label={t("finance.targetAmount")} htmlFor="finance-goal-target" required>
+                <Field label={t("finance.targetAmount")} htmlFor="finance-goal-target" required error={goalFieldErrors.target}>
                   <input
                     id="finance-goal-target"
                     type="number"
                     min={1}
                     value={goalForm.goalTarget}
-                    onChange={(event) => setGoalForm({ goalTarget: event.target.value })}
-                    required
+                    onChange={(event) => {
+                      setGoalForm({ goalTarget: event.target.value });
+                      setGoalFieldErrors((current) => ({ ...current, target: undefined }));
+                    }}
                   />
                 </Field>
-                <Field label={t("finance.currentAmount")} htmlFor="finance-goal-current" required>
+                <Field label={t("finance.currentAmount")} htmlFor="finance-goal-current" required error={goalFieldErrors.current}>
                   <input
                     id="finance-goal-current"
                     type="number"
                     min={0}
                     value={goalForm.goalCurrent}
-                    onChange={(event) => setGoalForm({ goalCurrent: event.target.value })}
-                    required
+                    onChange={(event) => {
+                      setGoalForm({ goalCurrent: event.target.value });
+                      setGoalFieldErrors((current) => ({ ...current, current: undefined }));
+                    }}
                   />
                 </Field>
               </div>
@@ -359,9 +381,19 @@ export function GoalsPage() {
           isOpen={Boolean(entryGoal)}
           title={entryGoal ? `${t("finance.addEntry")}: ${entryGoal.name}` : ""}
           closeLabel={t("common.close")}
-          onClose={closeEntryModal}
+          onClose={() => {
+            closeEntryModal();
+            setEntryFieldErrors({});
+          }}
           footer={
-            <Button type="button" variant="outline" onClick={closeEntryModal}>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => {
+                closeEntryModal();
+                setEntryFieldErrors({});
+              }}
+            >
               {t("common.close")}
             </Button>
           }
@@ -380,14 +412,16 @@ export function GoalsPage() {
                   <option value="withdrawal">{t("finance.withdrawal")}</option>
                 </select>
               </Field>
-              <Field label={t("expense.amount")} htmlFor="finance-goal-entry-amount" required>
+              <Field label={t("expense.amount")} htmlFor="finance-goal-entry-amount" required error={entryFieldErrors.amount}>
                 <input
                   id="finance-goal-entry-amount"
                   type="number"
                   min={1}
                   value={entryForm.entryAmount}
-                  onChange={(event) => setEntryForm({ entryAmount: event.target.value })}
-                  required
+                  onChange={(event) => {
+                    setEntryForm({ entryAmount: event.target.value });
+                    setEntryFieldErrors({});
+                  }}
                 />
               </Field>
             </div>
