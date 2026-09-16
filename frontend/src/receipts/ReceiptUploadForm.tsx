@@ -15,17 +15,19 @@ interface ReceiptUploadFormProps {
 export function ReceiptUploadForm({ familyId, onUploaded }: ReceiptUploadFormProps) {
   const { t } = useTranslation();
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const [error, setError] = useState<string | null>(null);
+  const [fileError, setFileError] = useState<string | null>(null);
+  const [formError, setFormError] = useState<string | null>(null);
   const uploadReceiptMutation = useUploadReceipt(familyId);
   const fileId = `receipt-file-${familyId}`;
 
   function handleFileChange(event: ChangeEvent<HTMLInputElement>) {
     const file = event.target.files?.[0] ?? null;
-    setError(null);
+    setFileError(null);
+    setFormError(null);
     if (file) {
       const validationError = validateReceiptFile(file);
       if (validationError) {
-        setError(t(`receipt.${validationError}`));
+        setFileError(t(`receipt.${validationError}`));
         setSelectedFile(null);
         return;
       }
@@ -37,14 +39,14 @@ export function ReceiptUploadForm({ familyId, onUploaded }: ReceiptUploadFormPro
     event.preventDefault();
     if (!selectedFile) return;
 
-    setError(null);
+    setFormError(null);
     uploadReceiptMutation.mutate(selectedFile, {
       onSuccess: (receipt) => {
         onUploaded(receipt);
         setSelectedFile(null);
       },
       onError: (err) => {
-        setError(translateApiError(t, err, "receipt.uploadFailed"));
+        setFormError(translateApiError(t, err, "receipt.uploadFailed"));
       },
     });
   }
@@ -52,7 +54,7 @@ export function ReceiptUploadForm({ familyId, onUploaded }: ReceiptUploadFormPro
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       <section className="space-y-4 rounded-lg border border-border/80 bg-muted/25 p-4">
-        <Field label={t("receipt.upload")} htmlFor={fileId} required>
+        <Field label={t("receipt.upload")} htmlFor={fileId} required error={fileError}>
           <input id={fileId} type="file" onChange={handleFileChange} />
         </Field>
 
@@ -73,9 +75,9 @@ export function ReceiptUploadForm({ familyId, onUploaded }: ReceiptUploadFormPro
         {t("receipt.upload")}
       </Button>
 
-      {error ? (
+      {formError ? (
         <Alert variant="error" role="alert">
-          {error}
+          {formError}
         </Alert>
       ) : null}
     </form>
