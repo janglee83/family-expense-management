@@ -363,6 +363,7 @@
     "settledSplits": "精算済み",
     "splitMethod": "分割方法",
     "participants": "参加者",
+    "splitParticipantsRequired": "参加者を1人以上選択してください",
     "outstanding": "未精算額",
     "you": "あなた",
     "settled": "精算済み",

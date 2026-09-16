@@ -363,6 +363,7 @@
     "settledSplits": "Đã thanh toán",
     "splitMethod": "Phương thức chia",
     "participants": "Người tham gia",
+    "splitParticipantsRequired": "Vui lòng chọn ít nhất một người tham gia",
     "outstanding": "Còn phải trả",
     "you": "bạn",
     "settled": "đã thanh toán",
