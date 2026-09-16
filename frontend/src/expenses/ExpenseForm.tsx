@@ -73,10 +73,12 @@ export function ExpenseForm({ familyId, expense, currencyCode, onSaved, onCancel
     const parsedAmount = Number(toDigits(amountInput));
     if (!Number.isInteger(parsedAmount) || parsedAmount < MIN_AMOUNT) {
       setAmountError(t("expense.amountMustBePositive"));
+      setFormError(null);
       return;
     }
     if (parsedAmount > MAX_INT_32) {
       setAmountError(t("expense.amountTooLarge"));
+      setFormError(null);
       return;
     }
 
