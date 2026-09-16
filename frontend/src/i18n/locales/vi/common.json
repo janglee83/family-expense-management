@@ -344,6 +344,8 @@
     "cancelSubscription": "Hủy",
     "subscriptionCreated": "Đã tạo đăng ký",
     "subscriptionName": "Tên đăng ký",
+    "subscriptionNameRequired": "Vui lòng nhập tên đăng ký",
+    "merchantRequired": "Vui lòng nhập nhà cung cấp",
     "subscriptionUpdated": "Đã cập nhật đăng ký",
     "subscriptionDeleted": "Đã xóa đăng ký",
     "billingCycleValues": {

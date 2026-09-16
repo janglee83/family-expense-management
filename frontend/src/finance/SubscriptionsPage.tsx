@@ -33,6 +33,7 @@ export function SubscriptionsPage() {
   const { showSnackbar } = useSnackbar();
   const { familyId } = useParams<{ familyId: string }>();
   const [formError, setFormError] = useState<string | null>(null);
+  const [fieldErrors, setFieldErrors] = useState<{ name?: string; merchant?: string; amount?: string }>({});
 
   const { form, setForm, resetForm } = useSubscriptionsStore();
 
@@ -80,12 +81,23 @@ export function SubscriptionsPage() {
     if (!familyId) return;
 
     const parsedAmount = Number(form.amount);
+    const errors: typeof fieldErrors = {};
+    if (!form.name.trim()) {
+      errors.name = t("finance.subscriptionNameRequired");
+    }
+    if (!form.merchant.trim()) {
+      errors.merchant = t("finance.merchantRequired");
+    }
     if (!Number.isFinite(parsedAmount) || parsedAmount <= 0) {
-      setFormError(t("expense.amountMustBePositive"));
+      errors.amount = t("expense.amountMustBePositive");
+    }
+
+    setFieldErrors(errors);
+    setFormError(null);
+    if (Object.keys(errors).length > 0) {
       return;
     }
 
-    setFormError(null);
     createSubscriptionMutation.mutate(
       {
         name: form.name.trim(),
@@ -102,6 +114,7 @@ export function SubscriptionsPage() {
       {
         onSuccess: () => {
           resetForm();
+          setFieldErrors({});
           showSnackbar({ message: t("finance.subscriptionCreated"), variant: "success" });
         },
         onError: (err) => {
@@ -202,35 +215,41 @@ export function SubscriptionsPage() {
           <CardContent>
             <form className="space-y-4" onSubmit={handleCreate}>
               <div className="grid gap-4 sm:grid-cols-2">
-                <Field label={t("finance.subscriptionName")} htmlFor="finance-subscription-name" required>
+                <Field label={t("finance.subscriptionName")} htmlFor="finance-subscription-name" required error={fieldErrors.name}>
                   <input
                     id="finance-subscription-name"
                     type="text"
                     value={form.name}
-                    onChange={(event) => setForm({ name: event.target.value })}
-                    required
+                    onChange={(event) => {
+                      setForm({ name: event.target.value });
+                      setFieldErrors((current) => ({ ...current, name: undefined }));
+                    }}
                   />
                 </Field>
-                <Field label={t("finance.merchant")} htmlFor="finance-subscription-merchant" required>
+                <Field label={t("finance.merchant")} htmlFor="finance-subscription-merchant" required error={fieldErrors.merchant}>
                   <input
                     id="finance-subscription-merchant"
                     type="text"
                     value={form.merchant}
-                    onChange={(event) => setForm({ merchant: event.target.value })}
-                    required
+                    onChange={(event) => {
+                      setForm({ merchant: event.target.value });
+                      setFieldErrors((current) => ({ ...current, merchant: undefined }));
+                    }}
                   />
                 </Field>
               </div>
 
               <div className="grid gap-4 sm:grid-cols-3">
-                <Field label={t("expense.amount")} htmlFor="finance-subscription-amount" required>
+                <Field label={t("expense.amount")} htmlFor="finance-subscription-amount" required error={fieldErrors.amount}>
                   <input
                     id="finance-subscription-amount"
                     type="number"
                     min={1}
                     value={form.amount}
-                    onChange={(event) => setForm({ amount: event.target.value })}
-                    required
+                    onChange={(event) => {
+                      setForm({ amount: event.target.value });
+                      setFieldErrors((current) => ({ ...current, amount: undefined }));
+                    }}
                   />
                 </Field>
                 <Field label={t("finance.billingCycle")} htmlFor="finance-subscription-billing" required>
