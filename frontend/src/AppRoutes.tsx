@@ -7,7 +7,7 @@ import { FamilyCreatePage } from "./routes/FamilyCreatePage";
 import { FamilyList } from "./families/FamilyList";
 import { FamilyDetail } from "./families/FamilyDetail";
 import { ExpenseList } from "./expenses/ExpenseList";
-// import { ReceiptList } from "./receipts/ReceiptList";
+import { ReceiptList } from "./receipts/ReceiptList";
 import { AccountsLedgerPage } from "./finance/AccountsLedgerPage";
 import { GoalsPage } from "./finance/GoalsPage";
 import { SubscriptionsPage } from "./finance/SubscriptionsPage";
@@ -59,14 +59,14 @@ export function AppRoutes() {
           </ProtectedRoute>
         }
       />
-{/*      <Route
+      <Route
         path="/families/:familyId/receipts"
         element={
           <ProtectedRoute>
             <ReceiptList />
           </ProtectedRoute>
         }
-      />*/}
+      />
       <Route
         path="/families/:familyId/finance/accounts"
         element={

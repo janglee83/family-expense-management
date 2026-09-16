@@ -77,6 +77,7 @@ export function RegisterForm() {
           <input
             id={displayNameId}
             type="text"
+            required
             value={displayName}
             onChange={(event) => {
               setDisplayName(event.target.value);
@@ -90,6 +91,7 @@ export function RegisterForm() {
           <input
             id={emailId}
             type="email"
+            required
             value={email}
             onChange={(event) => {
               setEmail(event.target.value);
@@ -103,6 +105,7 @@ export function RegisterForm() {
           <input
             id={passwordId}
             type="password"
+            required
             value={password}
             onChange={(event) => {
               setPassword(event.target.value);
