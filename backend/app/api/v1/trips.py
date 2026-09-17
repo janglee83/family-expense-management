@@ -19,9 +19,11 @@ from app.models.user import User
 from app.schemas.trips import (
     CreateTripRequest,
     TripDetailResponse,
+    TripItineraryItemRequest,
     TripItineraryItemResponse,
     TripResponse,
     TripStatus,
+    UpdateTripItineraryItemRequest,
     UpdateTripRequest,
 )
 
@@ -291,3 +293,120 @@ async def remove_trip_participant(
             await session.delete(participant)
 
     return await _to_trip_response(trip, session, date.today())
+
+
+async def _get_item_or_404(
+    trip_id: uuid.UUID, item_id: uuid.UUID, session: AsyncSession
+) -> TripItineraryItem:
+    item = await session.scalar(
+        select(TripItineraryItem).where(
+            TripItineraryItem.id == item_id, TripItineraryItem.trip_id == trip_id
+        )
+    )
+    if item is None:
+        raise_api_error(
+            status_code=status.HTTP_404_NOT_FOUND,
+            code="TRIP_ITEM_NOT_FOUND",
+            message="Itinerary item not found",
+        )
+    return item
+
+
+def _validate_item_date_in_range(trip: Trip, item_date: date) -> None:
+    if item_date < trip.start_date or item_date > trip.end_date:
+        raise_api_error(
+            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
+            code="TRIP_ITEM_DATE_OUT_OF_RANGE",
+            message="item_date must fall within the trip's date range",
+        )
+
+
+@router.get("/{trip_id}/items")
+async def list_trip_items(
+    family_id: uuid.UUID,
+    trip_id: uuid.UUID,
+    _membership: Annotated[FamilyMember, Depends(get_family_membership)],
+    session: Annotated[AsyncSession, Depends(get_session)],
+) -> list[TripItineraryItemResponse]:
+    await _get_trip_or_404(family_id, trip_id, session)
+    result = await session.scalars(
+        select(TripItineraryItem)
+        .where(TripItineraryItem.trip_id == trip_id)
+        .order_by(TripItineraryItem.item_date, TripItineraryItem.item_time)
+    )
+    return [await _to_item_response(item, session) for item in result.all()]
+
+
+@router.post("/{trip_id}/items", status_code=status.HTTP_201_CREATED)
+async def create_trip_item(
+    family_id: uuid.UUID,
+    trip_id: uuid.UUID,
+    payload: TripItineraryItemRequest,
+    _membership: Annotated[FamilyMember, Depends(get_family_membership)],
+    user: Annotated[User, Depends(get_current_user)],
+    session: Annotated[AsyncSession, Depends(get_session)],
+) -> TripItineraryItemResponse:
+    async with locked_write(session, tables=("trips", "trip_itinerary_items")):
+        trip = await _get_trip_or_404(family_id, trip_id, session)
+        _validate_item_date_in_range(trip, payload.item_date)
+
+        item = TripItineraryItem(
+            trip_id=trip_id,
+            family_id=family_id,
+            created_by_user_id=user.id,
+            title=payload.title,
+            description=payload.description,
+            link_url=payload.link_url,
+            item_date=payload.item_date,
+            item_time=payload.item_time,
+            planned_amount=payload.planned_amount,
+        )
+        session.add(item)
+        await session.flush()
+
+    return await _to_item_response(item, session)
+
+
+@router.patch("/{trip_id}/items/{item_id}")
+async def update_trip_item(
+    family_id: uuid.UUID,
+    trip_id: uuid.UUID,
+    item_id: uuid.UUID,
+    payload: UpdateTripItineraryItemRequest,
+    _membership: Annotated[FamilyMember, Depends(get_family_membership)],
+    session: Annotated[AsyncSession, Depends(get_session)],
+) -> TripItineraryItemResponse:
+    async with locked_write(session, tables=("trips", "trip_itinerary_items")):
+        trip = await _get_trip_or_404(family_id, trip_id, session)
+        item = await _get_item_or_404(trip_id, item_id, session)
+
+        new_item_date = payload.item_date if payload.item_date is not None else item.item_date
+        _validate_item_date_in_range(trip, new_item_date)
+
+        if payload.title is not None:
+            item.title = payload.title
+        if "description" in payload.model_fields_set:
+            item.description = payload.description
+        if "link_url" in payload.model_fields_set:
+            item.link_url = payload.link_url
+        item.item_date = new_item_date
+        if "item_time" in payload.model_fields_set:
+            item.item_time = payload.item_time
+        if "planned_amount" in payload.model_fields_set:
+            item.planned_amount = payload.planned_amount
+
+    return await _to_item_response(item, session)
+
+
+@router.delete("/{trip_id}/items/{item_id}", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_trip_item(
+    family_id: uuid.UUID,
+    trip_id: uuid.UUID,
+    item_id: uuid.UUID,
+    _membership: Annotated[FamilyMember, Depends(get_family_membership)],
+    session: Annotated[AsyncSession, Depends(get_session)],
+) -> None:
+    async with locked_write(session, tables=("trip_itinerary_items", "expenses")):
+        await _get_trip_or_404(family_id, trip_id, session)
+        item = await _get_item_or_404(trip_id, item_id, session)
+        await session.delete(item)

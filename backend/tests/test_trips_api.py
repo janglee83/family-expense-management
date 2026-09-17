@@ -182,3 +182,114 @@ async def test_add_and_remove_trip_participant(client: AsyncClient) -> None:
     )
     assert remove_response.status_code == 200
     assert user_id not in remove_response.json()["participant_user_ids"]
+
+
+@pytest.mark.integration
+async def test_create_and_update_itinerary_item(client: AsyncClient) -> None:
+    await _register(client, _unique_email())
+    family_id = await _create_family(client)
+
+    trip_response = await client.post(
+        f"/api/v1/families/{family_id}/trips/",
+        json={
+            "name": "Trip",
+            "start_date": date(2026, 3, 1).isoformat(),
+            "end_date": date(2026, 3, 10).isoformat(),
+        },
+    )
+    trip_id = trip_response.json()["id"]
+
+    create_response = await client.post(
+        f"/api/v1/families/{family_id}/trips/{trip_id}/items",
+        json={
+            "title": "Nhận phòng khách sạn",
+            "item_date": date(2026, 3, 2).isoformat(),
+            "item_time": "14:00:00",
+            "planned_amount": 2500000,
+        },
+    )
+    assert create_response.status_code == 201
+    item = create_response.json()
+    assert item["actual_amount"] == 0
+    assert item["linked_expense_ids"] == []
+
+    update_response = await client.patch(
+        f"/api/v1/families/{family_id}/trips/{trip_id}/items/{item['id']}",
+        json={"planned_amount": 3000000},
+    )
+    assert update_response.status_code == 200
+    assert update_response.json()["planned_amount"] == 3000000
+
+    trip_after = await client.get(f"/api/v1/families/{family_id}/trips/{trip_id}")
+    assert trip_after.json()["planned_total"] == 3000000
+
+
+@pytest.mark.integration
+async def test_create_itinerary_item_rejects_date_outside_trip_range(client: AsyncClient) -> None:
+    await _register(client, _unique_email())
+    family_id = await _create_family(client)
+
+    trip_response = await client.post(
+        f"/api/v1/families/{family_id}/trips/",
+        json={
+            "name": "Trip",
+            "start_date": date(2026, 3, 1).isoformat(),
+            "end_date": date(2026, 3, 10).isoformat(),
+        },
+    )
+    trip_id = trip_response.json()["id"]
+
+    response = await client.post(
+        f"/api/v1/families/{family_id}/trips/{trip_id}/items",
+        json={"title": "Too early", "item_date": date(2026, 2, 28).isoformat()},
+    )
+    assert response.status_code == 422
+
+
+@pytest.mark.integration
+async def test_delete_itinerary_item_unlinks_but_does_not_delete_expense(client: AsyncClient) -> None:
+    await _register(client, _unique_email())
+    family_id = await _create_family(client)
+
+    trip_response = await client.post(
+        f"/api/v1/families/{family_id}/trips/",
+        json={
+            "name": "Trip",
+            "start_date": date(2026, 1, 1).isoformat(),
+            "end_date": date(2026, 1, 5).isoformat(),
+        },
+    )
+    trip_id = trip_response.json()["id"]
+
+    item_response = await client.post(
+        f"/api/v1/families/{family_id}/trips/{trip_id}/items",
+        json={"title": "Item", "item_date": date(2026, 1, 2).isoformat()},
+    )
+    item_id = item_response.json()["id"]
+
+    me_response = await client.get("/api/v1/auth/me")
+    user_id = me_response.json()["id"]
+    category_response = await client.get(f"/api/v1/families/{family_id}/categories/")
+    category_id = category_response.json()[0]["id"]
+
+    expense_response = await client.post(
+        f"/api/v1/families/{family_id}/expenses/",
+        json={
+            "payer_user_id": user_id,
+            "category_id": category_id,
+            "amount": 500,
+            "is_shared": False,
+            "expense_date": date(2026, 1, 2).isoformat(),
+            "trip_id": trip_id,
+            "trip_itinerary_item_id": item_id,
+        },
+    )
+    assert expense_response.status_code == 201
+    expense_id = expense_response.json()["id"]
+
+    delete_response = await client.delete(f"/api/v1/families/{family_id}/trips/{trip_id}/items/{item_id}")
+    assert delete_response.status_code == 204
+
+    expense_after = await client.get(f"/api/v1/families/{family_id}/expenses/{expense_id}")
+    assert expense_after.json()["trip_itinerary_item_id"] is None
+    assert expense_after.json()["trip_id"] == trip_id
