@@ -740,6 +740,97 @@ export interface paths {
         patch: operations["update_subscription_api_v1_families__family_id__subscriptions__subscription_id__patch"];
         trace?: never;
     };
+    "/api/v1/families/{family_id}/trips/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Trips */
+        get: operations["list_trips_api_v1_families__family_id__trips__get"];
+        put?: never;
+        /** Create Trip */
+        post: operations["create_trip_api_v1_families__family_id__trips__post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/families/{family_id}/trips/{trip_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Trip */
+        get: operations["get_trip_api_v1_families__family_id__trips__trip_id__get"];
+        put?: never;
+        post?: never;
+        /** Delete Trip */
+        delete: operations["delete_trip_api_v1_families__family_id__trips__trip_id__delete"];
+        options?: never;
+        head?: never;
+        /** Update Trip */
+        patch: operations["update_trip_api_v1_families__family_id__trips__trip_id__patch"];
+        trace?: never;
+    };
+    "/api/v1/families/{family_id}/trips/{trip_id}/items": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Trip Items */
+        get: operations["list_trip_items_api_v1_families__family_id__trips__trip_id__items_get"];
+        put?: never;
+        /** Create Trip Item */
+        post: operations["create_trip_item_api_v1_families__family_id__trips__trip_id__items_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/families/{family_id}/trips/{trip_id}/items/{item_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** Delete Trip Item */
+        delete: operations["delete_trip_item_api_v1_families__family_id__trips__trip_id__items__item_id__delete"];
+        options?: never;
+        head?: never;
+        /** Update Trip Item */
+        patch: operations["update_trip_item_api_v1_families__family_id__trips__trip_id__items__item_id__patch"];
+        trace?: never;
+    };
+    "/api/v1/families/{family_id}/trips/{trip_id}/participants/{user_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Add Trip Participant */
+        post: operations["add_trip_participant_api_v1_families__family_id__trips__trip_id__participants__user_id__post"];
+        /** Remove Trip Participant */
+        delete: operations["remove_trip_participant_api_v1_families__family_id__trips__trip_id__participants__user_id__delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/families/{family_id}/undo/expenses/{expense_id}": {
         parameters: {
             query?: never;
@@ -1086,6 +1177,10 @@ export interface components {
              * Format: uuid
              */
             payer_user_id: string;
+            /** Trip Id */
+            trip_id?: string | null;
+            /** Trip Itinerary Item Id */
+            trip_itinerary_item_id?: string | null;
         };
         /** CreateFamilyRequest */
         CreateFamilyRequest: {
@@ -1197,6 +1292,25 @@ export interface components {
             next_billing_date: string;
             /** @default active */
             status: components["schemas"]["SubscriptionStatus"];
+        };
+        /** CreateTripRequest */
+        CreateTripRequest: {
+            /** Budget Amount */
+            budget_amount?: number | null;
+            /** Destination */
+            destination?: string | null;
+            /**
+             * End Date
+             * Format: date
+             */
+            end_date: string;
+            /** Name */
+            name: string;
+            /**
+             * Start Date
+             * Format: date
+             */
+            start_date: string;
         };
         /**
          * CurrencyCode
@@ -1381,6 +1495,10 @@ export interface components {
              * Format: uuid
              */
             payer_user_id: string;
+            /** Trip Id */
+            trip_id: string | null;
+            /** Trip Itinerary Item Id */
+            trip_itinerary_item_id: string | null;
         };
         /** FamilyDetailResponse */
         FamilyDetailResponse: {
@@ -2011,6 +2129,162 @@ export interface components {
             /** Yearly Total */
             yearly_total: number;
         };
+        /** TripDetailResponse */
+        TripDetailResponse: {
+            /** Actual Total */
+            actual_total: number;
+            /** Budget Amount */
+            budget_amount: number | null;
+            /**
+             * Created By User Id
+             * Format: uuid
+             */
+            created_by_user_id: string;
+            /** Destination */
+            destination: string | null;
+            /**
+             * End Date
+             * Format: date
+             */
+            end_date: string;
+            /**
+             * Family Id
+             * Format: uuid
+             */
+            family_id: string;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Is Cancelled */
+            is_cancelled: boolean;
+            /** Items */
+            items: components["schemas"]["TripItineraryItemResponse"][];
+            /** Name */
+            name: string;
+            /** Participant User Ids */
+            participant_user_ids: string[];
+            /** Planned Total */
+            planned_total: number;
+            /**
+             * Start Date
+             * Format: date
+             */
+            start_date: string;
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "upcoming" | "ongoing" | "completed" | "cancelled";
+        };
+        /** TripItineraryItemRequest */
+        TripItineraryItemRequest: {
+            /** Description */
+            description?: string | null;
+            /**
+             * Item Date
+             * Format: date
+             */
+            item_date: string;
+            /** Item Time */
+            item_time?: string | null;
+            /** Link Url */
+            link_url?: string | null;
+            /** Planned Amount */
+            planned_amount?: number | null;
+            /** Title */
+            title: string;
+        };
+        /** TripItineraryItemResponse */
+        TripItineraryItemResponse: {
+            /** Actual Amount */
+            actual_amount: number;
+            /**
+             * Created By User Id
+             * Format: uuid
+             */
+            created_by_user_id: string;
+            /** Description */
+            description: string | null;
+            /**
+             * Family Id
+             * Format: uuid
+             */
+            family_id: string;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /**
+             * Item Date
+             * Format: date
+             */
+            item_date: string;
+            /** Item Time */
+            item_time: string | null;
+            /** Link Url */
+            link_url: string | null;
+            /** Linked Expense Ids */
+            linked_expense_ids: string[];
+            /** Planned Amount */
+            planned_amount: number | null;
+            /** Title */
+            title: string;
+            /**
+             * Trip Id
+             * Format: uuid
+             */
+            trip_id: string;
+        };
+        /** TripResponse */
+        TripResponse: {
+            /** Actual Total */
+            actual_total: number;
+            /** Budget Amount */
+            budget_amount: number | null;
+            /**
+             * Created By User Id
+             * Format: uuid
+             */
+            created_by_user_id: string;
+            /** Destination */
+            destination: string | null;
+            /**
+             * End Date
+             * Format: date
+             */
+            end_date: string;
+            /**
+             * Family Id
+             * Format: uuid
+             */
+            family_id: string;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Is Cancelled */
+            is_cancelled: boolean;
+            /** Name */
+            name: string;
+            /** Participant User Ids */
+            participant_user_ids: string[];
+            /** Planned Total */
+            planned_total: number;
+            /**
+             * Start Date
+             * Format: date
+             */
+            start_date: string;
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "upcoming" | "ongoing" | "completed" | "cancelled";
+        };
         /** UndoDeleteResponse */
         UndoDeleteResponse: {
             /**
@@ -2072,6 +2346,10 @@ export interface components {
              * Format: uuid
              */
             payer_user_id: string;
+            /** Trip Id */
+            trip_id?: string | null;
+            /** Trip Itinerary Item Id */
+            trip_itinerary_item_id?: string | null;
         };
         /** UpdateGoalRequest */
         UpdateGoalRequest: {
@@ -2108,6 +2386,36 @@ export interface components {
             /** Next Billing Date */
             next_billing_date?: string | null;
             status?: components["schemas"]["SubscriptionStatus"] | null;
+        };
+        /** UpdateTripItineraryItemRequest */
+        UpdateTripItineraryItemRequest: {
+            /** Description */
+            description?: string | null;
+            /** Item Date */
+            item_date?: string | null;
+            /** Item Time */
+            item_time?: string | null;
+            /** Link Url */
+            link_url?: string | null;
+            /** Planned Amount */
+            planned_amount?: number | null;
+            /** Title */
+            title?: string | null;
+        };
+        /** UpdateTripRequest */
+        UpdateTripRequest: {
+            /** Budget Amount */
+            budget_amount?: number | null;
+            /** Destination */
+            destination?: string | null;
+            /** End Date */
+            end_date?: string | null;
+            /** Is Cancelled */
+            is_cancelled?: boolean | null;
+            /** Name */
+            name?: string | null;
+            /** Start Date */
+            start_date?: string | null;
         };
         /** UserResponse */
         UserResponse: {
@@ -4200,6 +4508,372 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["SubscriptionResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_trips_api_v1_families__family_id__trips__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                family_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TripResponse"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    create_trip_api_v1_families__family_id__trips__post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                family_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateTripRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TripResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_trip_api_v1_families__family_id__trips__trip_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                family_id: string;
+                trip_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TripDetailResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    delete_trip_api_v1_families__family_id__trips__trip_id__delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                family_id: string;
+                trip_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    update_trip_api_v1_families__family_id__trips__trip_id__patch: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                family_id: string;
+                trip_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateTripRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TripResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_trip_items_api_v1_families__family_id__trips__trip_id__items_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                family_id: string;
+                trip_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TripItineraryItemResponse"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    create_trip_item_api_v1_families__family_id__trips__trip_id__items_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                family_id: string;
+                trip_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TripItineraryItemRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TripItineraryItemResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    delete_trip_item_api_v1_families__family_id__trips__trip_id__items__item_id__delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                family_id: string;
+                trip_id: string;
+                item_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    update_trip_item_api_v1_families__family_id__trips__trip_id__items__item_id__patch: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                family_id: string;
+                trip_id: string;
+                item_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateTripItineraryItemRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TripItineraryItemResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    add_trip_participant_api_v1_families__family_id__trips__trip_id__participants__user_id__post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                family_id: string;
+                trip_id: string;
+                user_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TripResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    remove_trip_participant_api_v1_families__family_id__trips__trip_id__participants__user_id__delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                family_id: string;
+                trip_id: string;
+                user_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TripResponse"];
                 };
             };
             /** @description Validation Error */

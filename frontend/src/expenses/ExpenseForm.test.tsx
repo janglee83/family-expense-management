@@ -80,6 +80,8 @@ describe("ExpenseForm", () => {
       is_shared: false,
       description: null,
       expense_date: "2026-08-25",
+      trip_id: null,
+      trip_itinerary_item_id: null,
     });
     const user = userEvent.setup();
     renderWithProviders(
@@ -111,6 +113,8 @@ describe("ExpenseForm", () => {
       is_shared: true,
       description: "Weekly groceries",
       expense_date: "2026-08-20",
+      trip_id: null,
+      trip_itinerary_item_id: null,
     };
     vi.mocked(updateExpense).mockResolvedValue({ ...existingExpense, amount: 1800 });
     const user = userEvent.setup();

@@ -566,6 +566,30 @@
             "format": "uuid",
             "title": "Payer User Id",
             "type": "string"
+          },
+          "trip_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Trip Id"
+          },
+          "trip_itinerary_item_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Trip Itinerary Item Id"
           }
         },
         "required": [
@@ -940,6 +964,58 @@
         "title": "CreateSubscriptionRequest",
         "type": "object"
       },
+      "CreateTripRequest": {
+        "properties": {
+          "budget_amount": {
+            "anyOf": [
+              {
+                "exclusiveMinimum": 0.0,
+                "maximum": 2147483647.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Budget Amount"
+          },
+          "destination": {
+            "anyOf": [
+              {
+                "maxLength": 200,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Destination"
+          },
+          "end_date": {
+            "format": "date",
+            "title": "End Date",
+            "type": "string"
+          },
+          "name": {
+            "maxLength": 200,
+            "minLength": 1,
+            "title": "Name",
+            "type": "string"
+          },
+          "start_date": {
+            "format": "date",
+            "title": "Start Date",
+            "type": "string"
+          }
+        },
+        "required": [
+          "name",
+          "start_date",
+          "end_date"
+        ],
+        "title": "CreateTripRequest",
+        "type": "object"
+      },
       "CurrencyCode": {
         "enum": [
           "vnd",
@@ -1295,6 +1371,30 @@
             "format": "uuid",
             "title": "Payer User Id",
             "type": "string"
+          },
+          "trip_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Trip Id"
+          },
+          "trip_itinerary_item_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Trip Itinerary Item Id"
           }
         },
         "required": [
@@ -1306,7 +1406,9 @@
           "amount",
           "is_shared",
           "description",
-          "expense_date"
+          "expense_date",
+          "trip_id",
+          "trip_itinerary_item_id"
         ],
         "title": "ExpenseResponse",
         "type": "object"
@@ -2744,6 +2846,394 @@
         "title": "SubscriptionSummaryResponse",
         "type": "object"
       },
+      "TripDetailResponse": {
+        "properties": {
+          "actual_total": {
+            "title": "Actual Total",
+            "type": "integer"
+          },
+          "budget_amount": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Budget Amount"
+          },
+          "created_by_user_id": {
+            "format": "uuid",
+            "title": "Created By User Id",
+            "type": "string"
+          },
+          "destination": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Destination"
+          },
+          "end_date": {
+            "format": "date",
+            "title": "End Date",
+            "type": "string"
+          },
+          "family_id": {
+            "format": "uuid",
+            "title": "Family Id",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "is_cancelled": {
+            "title": "Is Cancelled",
+            "type": "boolean"
+          },
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/TripItineraryItemResponse"
+            },
+            "title": "Items",
+            "type": "array"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "participant_user_ids": {
+            "items": {
+              "format": "uuid",
+              "type": "string"
+            },
+            "title": "Participant User Ids",
+            "type": "array"
+          },
+          "planned_total": {
+            "title": "Planned Total",
+            "type": "integer"
+          },
+          "start_date": {
+            "format": "date",
+            "title": "Start Date",
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "upcoming",
+              "ongoing",
+              "completed",
+              "cancelled"
+            ],
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "family_id",
+          "created_by_user_id",
+          "name",
+          "destination",
+          "start_date",
+          "end_date",
+          "budget_amount",
+          "is_cancelled",
+          "status",
+          "participant_user_ids",
+          "planned_total",
+          "actual_total",
+          "items"
+        ],
+        "title": "TripDetailResponse",
+        "type": "object"
+      },
+      "TripItineraryItemRequest": {
+        "properties": {
+          "description": {
+            "anyOf": [
+              {
+                "maxLength": 1000,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description"
+          },
+          "item_date": {
+            "format": "date",
+            "title": "Item Date",
+            "type": "string"
+          },
+          "item_time": {
+            "anyOf": [
+              {
+                "format": "time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Item Time"
+          },
+          "link_url": {
+            "anyOf": [
+              {
+                "maxLength": 2048,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Link Url"
+          },
+          "planned_amount": {
+            "anyOf": [
+              {
+                "exclusiveMinimum": 0.0,
+                "maximum": 2147483647.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Planned Amount"
+          },
+          "title": {
+            "maxLength": 200,
+            "minLength": 1,
+            "title": "Title",
+            "type": "string"
+          }
+        },
+        "required": [
+          "title",
+          "item_date"
+        ],
+        "title": "TripItineraryItemRequest",
+        "type": "object"
+      },
+      "TripItineraryItemResponse": {
+        "properties": {
+          "actual_amount": {
+            "title": "Actual Amount",
+            "type": "integer"
+          },
+          "created_by_user_id": {
+            "format": "uuid",
+            "title": "Created By User Id",
+            "type": "string"
+          },
+          "description": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description"
+          },
+          "family_id": {
+            "format": "uuid",
+            "title": "Family Id",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "item_date": {
+            "format": "date",
+            "title": "Item Date",
+            "type": "string"
+          },
+          "item_time": {
+            "anyOf": [
+              {
+                "format": "time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Item Time"
+          },
+          "link_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Link Url"
+          },
+          "linked_expense_ids": {
+            "items": {
+              "format": "uuid",
+              "type": "string"
+            },
+            "title": "Linked Expense Ids",
+            "type": "array"
+          },
+          "planned_amount": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Planned Amount"
+          },
+          "title": {
+            "title": "Title",
+            "type": "string"
+          },
+          "trip_id": {
+            "format": "uuid",
+            "title": "Trip Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "trip_id",
+          "family_id",
+          "created_by_user_id",
+          "title",
+          "description",
+          "link_url",
+          "item_date",
+          "item_time",
+          "planned_amount",
+          "linked_expense_ids",
+          "actual_amount"
+        ],
+        "title": "TripItineraryItemResponse",
+        "type": "object"
+      },
+      "TripResponse": {
+        "properties": {
+          "actual_total": {
+            "title": "Actual Total",
+            "type": "integer"
+          },
+          "budget_amount": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Budget Amount"
+          },
+          "created_by_user_id": {
+            "format": "uuid",
+            "title": "Created By User Id",
+            "type": "string"
+          },
+          "destination": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Destination"
+          },
+          "end_date": {
+            "format": "date",
+            "title": "End Date",
+            "type": "string"
+          },
+          "family_id": {
+            "format": "uuid",
+            "title": "Family Id",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "is_cancelled": {
+            "title": "Is Cancelled",
+            "type": "boolean"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "participant_user_ids": {
+            "items": {
+              "format": "uuid",
+              "type": "string"
+            },
+            "title": "Participant User Ids",
+            "type": "array"
+          },
+          "planned_total": {
+            "title": "Planned Total",
+            "type": "integer"
+          },
+          "start_date": {
+            "format": "date",
+            "title": "Start Date",
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "upcoming",
+              "ongoing",
+              "completed",
+              "cancelled"
+            ],
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "family_id",
+          "created_by_user_id",
+          "name",
+          "destination",
+          "start_date",
+          "end_date",
+          "budget_amount",
+          "is_cancelled",
+          "status",
+          "participant_user_ids",
+          "planned_total",
+          "actual_total"
+        ],
+        "title": "TripResponse",
+        "type": "object"
+      },
       "UndoDeleteResponse": {
         "properties": {
           "deleted_expense_id": {
@@ -2903,6 +3393,30 @@
             "format": "uuid",
             "title": "Payer User Id",
             "type": "string"
+          },
+          "trip_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Trip Id"
+          },
+          "trip_itinerary_item_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Trip Itinerary Item Id"
           }
         },
         "required": [
@@ -3121,6 +3635,165 @@
           }
         },
         "title": "UpdateSubscriptionRequest",
+        "type": "object"
+      },
+      "UpdateTripItineraryItemRequest": {
+        "properties": {
+          "description": {
+            "anyOf": [
+              {
+                "maxLength": 1000,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description"
+          },
+          "item_date": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Item Date"
+          },
+          "item_time": {
+            "anyOf": [
+              {
+                "format": "time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Item Time"
+          },
+          "link_url": {
+            "anyOf": [
+              {
+                "maxLength": 2048,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Link Url"
+          },
+          "planned_amount": {
+            "anyOf": [
+              {
+                "exclusiveMinimum": 0.0,
+                "maximum": 2147483647.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Planned Amount"
+          },
+          "title": {
+            "anyOf": [
+              {
+                "maxLength": 200,
+                "minLength": 1,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Title"
+          }
+        },
+        "title": "UpdateTripItineraryItemRequest",
+        "type": "object"
+      },
+      "UpdateTripRequest": {
+        "properties": {
+          "budget_amount": {
+            "anyOf": [
+              {
+                "exclusiveMinimum": 0.0,
+                "maximum": 2147483647.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Budget Amount"
+          },
+          "destination": {
+            "anyOf": [
+              {
+                "maxLength": 200,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Destination"
+          },
+          "end_date": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "End Date"
+          },
+          "is_cancelled": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Is Cancelled"
+          },
+          "name": {
+            "anyOf": [
+              {
+                "maxLength": 200,
+                "minLength": 1,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Name"
+          },
+          "start_date": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Start Date"
+          }
+        },
+        "title": "UpdateTripRequest",
         "type": "object"
       },
       "UserResponse": {
@@ -6479,6 +7152,631 @@
         "summary": "Update Subscription",
         "tags": [
           "subscriptions"
+        ]
+      }
+    },
+    "/api/v1/families/{family_id}/trips/": {
+      "get": {
+        "operationId": "list_trips_api_v1_families__family_id__trips__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "family_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Family Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/TripResponse"
+                  },
+                  "title": "Response List Trips Api V1 Families  Family Id  Trips  Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "List Trips",
+        "tags": [
+          "trips"
+        ]
+      },
+      "post": {
+        "operationId": "create_trip_api_v1_families__family_id__trips__post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "family_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Family Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateTripRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TripResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Create Trip",
+        "tags": [
+          "trips"
+        ]
+      }
+    },
+    "/api/v1/families/{family_id}/trips/{trip_id}": {
+      "delete": {
+        "operationId": "delete_trip_api_v1_families__family_id__trips__trip_id__delete",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "family_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Family Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "trip_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Trip Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Delete Trip",
+        "tags": [
+          "trips"
+        ]
+      },
+      "get": {
+        "operationId": "get_trip_api_v1_families__family_id__trips__trip_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "family_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Family Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "trip_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Trip Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TripDetailResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Trip",
+        "tags": [
+          "trips"
+        ]
+      },
+      "patch": {
+        "operationId": "update_trip_api_v1_families__family_id__trips__trip_id__patch",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "family_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Family Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "trip_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Trip Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateTripRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TripResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Update Trip",
+        "tags": [
+          "trips"
+        ]
+      }
+    },
+    "/api/v1/families/{family_id}/trips/{trip_id}/items": {
+      "get": {
+        "operationId": "list_trip_items_api_v1_families__family_id__trips__trip_id__items_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "family_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Family Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "trip_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Trip Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/TripItineraryItemResponse"
+                  },
+                  "title": "Response List Trip Items Api V1 Families  Family Id  Trips  Trip Id  Items Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "List Trip Items",
+        "tags": [
+          "trips"
+        ]
+      },
+      "post": {
+        "operationId": "create_trip_item_api_v1_families__family_id__trips__trip_id__items_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "family_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Family Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "trip_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Trip Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TripItineraryItemRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TripItineraryItemResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Create Trip Item",
+        "tags": [
+          "trips"
+        ]
+      }
+    },
+    "/api/v1/families/{family_id}/trips/{trip_id}/items/{item_id}": {
+      "delete": {
+        "operationId": "delete_trip_item_api_v1_families__family_id__trips__trip_id__items__item_id__delete",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "family_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Family Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "trip_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Trip Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "item_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Item Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Delete Trip Item",
+        "tags": [
+          "trips"
+        ]
+      },
+      "patch": {
+        "operationId": "update_trip_item_api_v1_families__family_id__trips__trip_id__items__item_id__patch",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "family_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Family Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "trip_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Trip Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "item_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Item Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateTripItineraryItemRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TripItineraryItemResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Update Trip Item",
+        "tags": [
+          "trips"
+        ]
+      }
+    },
+    "/api/v1/families/{family_id}/trips/{trip_id}/participants/{user_id}": {
+      "delete": {
+        "operationId": "remove_trip_participant_api_v1_families__family_id__trips__trip_id__participants__user_id__delete",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "family_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Family Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "trip_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Trip Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "user_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "User Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TripResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Remove Trip Participant",
+        "tags": [
+          "trips"
+        ]
+      },
+      "post": {
+        "operationId": "add_trip_participant_api_v1_families__family_id__trips__trip_id__participants__user_id__post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "family_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Family Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "trip_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Trip Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "user_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "User Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TripResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Add Trip Participant",
+        "tags": [
+          "trips"
         ]
       }
     },

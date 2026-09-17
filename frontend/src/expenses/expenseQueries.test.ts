@@ -22,6 +22,8 @@ const EXPENSE_INPUT = {
   amount: 1000,
   is_shared: false,
   expense_date: "2026-09-01",
+  trip_id: null,
+  trip_itinerary_item_id: null,
 };
 
 describe("expenseQueries", () => {
@@ -102,13 +104,14 @@ describe("expenseQueries", () => {
 
   it("useCreateExpense invalidates expenseKeys.list on success", async () => {
     vi.mocked(expenseApi.listExpenses).mockResolvedValue([]);
-    vi.mocked(expenseApi.createExpense).mockResolvedValue({
+    const expenseResponse = {
       id: "exp-1",
       family_id: "fam-1",
       created_by_user_id: "u1",
       description: null,
       ...EXPENSE_INPUT,
-    });
+    };
+    vi.mocked(expenseApi.createExpense).mockResolvedValue(expenseResponse);
     const wrapper = createQueryWrapper();
     const { result } = renderHook(
       () => ({ create: useCreateExpense("fam-1"), list: useExpenses("fam-1") }),
@@ -125,13 +128,14 @@ describe("expenseQueries", () => {
   });
 
   it("useUpdateExpense calls updateExpense with the bound familyId and given expenseId", async () => {
-    vi.mocked(expenseApi.updateExpense).mockResolvedValue({
+    const expenseResponse = {
       id: "exp-1",
       family_id: "fam-1",
       created_by_user_id: "u1",
       description: null,
       ...EXPENSE_INPUT,
-    });
+    };
+    vi.mocked(expenseApi.updateExpense).mockResolvedValue(expenseResponse);
     const { result } = renderHook(() => useUpdateExpense("fam-1"), { wrapper: createQueryWrapper() });
 
     await act(async () => {
