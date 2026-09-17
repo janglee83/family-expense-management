@@ -33,6 +33,7 @@ frontend/.pnpm-store/*
 # Playwright
 frontend/playwright-report/
 frontend/test-results/
+.playwright-mcp/
 
 # Worktrees
 .worktrees/
