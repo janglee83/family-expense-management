@@ -20,6 +20,7 @@ from app.models.subscription import (
     SubscriptionBillingCycle,
     SubscriptionStatus,
 )
+from app.models.trip import Trip, TripItineraryItem, TripParticipant
 from app.models.undo_action import UndoAction
 from app.models.user import User
 
@@ -49,6 +50,9 @@ __all__ = [
     "Subscription",
     "SubscriptionBillingCycle",
     "SubscriptionStatus",
+    "Trip",
+    "TripItineraryItem",
+    "TripParticipant",
     "UndoAction",
     "Notification",
     "Receipt",

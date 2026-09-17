@@ -43,6 +43,15 @@ class Expense(Base):
     is_shared: Mapped[bool] = mapped_column(Boolean, nullable=False)
     description: Mapped[str | None] = mapped_column(String(500), nullable=True)
     expense_date: Mapped[date] = mapped_column(Date, nullable=False)
+    trip_id: Mapped[uuid.UUID | None] = mapped_column(
+        PGUUID(as_uuid=True), ForeignKey("trips.id", ondelete="SET NULL"), nullable=True, index=True
+    )
+    trip_itinerary_item_id: Mapped[uuid.UUID | None] = mapped_column(
+        PGUUID(as_uuid=True),
+        ForeignKey("trip_itinerary_items.id", ondelete="SET NULL"),
+        nullable=True,
+        index=True,
+    )
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), nullable=False
     )
