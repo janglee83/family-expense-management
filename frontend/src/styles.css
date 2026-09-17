@@ -12,6 +12,7 @@
   --color-muted: oklch(0.948 0.006 58);
   --color-muted-foreground: oklch(0.5 0.012 55);
   --color-border: oklch(0.89 0.008 58);
+  --color-shadow: oklch(0.26 0.012 55);
 
   --color-primary: oklch(0.62 0.19 42);
   --color-primary-foreground: oklch(0.99 0.005 60);
@@ -32,9 +33,9 @@
   --radius-lg: 1rem;
   --radius-xl: 1.25rem;
 
-  --shadow-sm: 0 1px 2px -1px color-mix(in oklab, var(--color-foreground) 12%, transparent), 0 1px 1px color-mix(in oklab, var(--color-foreground) 6%, transparent);
-  --shadow-md: 0 6px 16px -8px color-mix(in oklab, var(--color-foreground) 24%, transparent), 0 2px 8px -4px color-mix(in oklab, var(--color-foreground) 14%, transparent);
-  --shadow-lg: 0 18px 35px -16px color-mix(in oklab, var(--color-foreground) 36%, transparent), 0 8px 16px -10px color-mix(in oklab, var(--color-foreground) 20%, transparent);
+  --shadow-sm: 0 1px 2px -1px color-mix(in oklab, var(--color-shadow) 12%, transparent), 0 1px 1px color-mix(in oklab, var(--color-shadow) 6%, transparent);
+  --shadow-md: 0 6px 16px -8px color-mix(in oklab, var(--color-shadow) 24%, transparent), 0 2px 8px -4px color-mix(in oklab, var(--color-shadow) 14%, transparent);
+  --shadow-lg: 0 18px 35px -16px color-mix(in oklab, var(--color-shadow) 36%, transparent), 0 8px 16px -10px color-mix(in oklab, var(--color-shadow) 20%, transparent);
 }
 
 :root[lang="vi"] {
@@ -54,6 +55,7 @@
   --color-muted: oklch(0.31 0.012 50);
   --color-muted-foreground: oklch(0.76 0.012 50);
   --color-border: oklch(0.34 0.012 50);
+  --color-shadow: oklch(0.06 0.01 50);
   --color-primary: oklch(0.72 0.17 45);
   --color-primary-foreground: oklch(0.18 0.03 40);
   --color-secondary: oklch(0.32 0.05 42);
@@ -78,6 +80,7 @@
     --color-muted: oklch(0.31 0.012 50);
     --color-muted-foreground: oklch(0.76 0.012 50);
     --color-border: oklch(0.34 0.012 50);
+    --color-shadow: oklch(0.06 0.01 50);
     --color-primary: oklch(0.72 0.17 45);
     --color-primary-foreground: oklch(0.18 0.03 40);
     --color-secondary: oklch(0.32 0.05 42);

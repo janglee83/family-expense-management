@@ -39,11 +39,11 @@ export function LoginForm() {
     event.preventDefault();
     const errors = validate();
     setFieldErrors(errors);
+    setFormError(null);
     if (Object.keys(errors).length > 0) {
       return;
     }
 
-    setFormError(null);
     setIsSubmitting(true);
     try {
       await login(email, password);

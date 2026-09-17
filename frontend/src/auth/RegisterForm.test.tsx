@@ -3,6 +3,7 @@ import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router-dom";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import "../i18n/i18n";
+import { ApiError } from "../api/errors";
 import { RegisterForm } from "./RegisterForm";
 import { useAuth } from "./useAuth";
 
@@ -54,8 +55,14 @@ describe("RegisterForm", () => {
     );
   });
 
-  it("shows a translated error when the email is already registered", async () => {
-    registerMock.mockRejectedValue(new Error("email_in_use"));
+  it("routes an email-already-registered API error to the email field, not the top alert", async () => {
+    registerMock.mockRejectedValue(
+      new ApiError({
+        code: "AUTH_EMAIL_ALREADY_REGISTERED",
+        status: 409,
+        backendMessage: "Email already registered",
+      }),
+    );
     const user = userEvent.setup();
     render(<RegisterForm />, { wrapper: MemoryRouter });
 
@@ -64,9 +71,11 @@ describe("RegisterForm", () => {
     await user.type(screen.getByLabelText("パスワード"), "correct-password");
     await user.click(screen.getByRole("button", { name: "登録する" }));
 
-    expect(await screen.findByRole("alert")).toHaveTextContent(
-      "このメールアドレスは既に登録されています",
-    );
+    const emailInput = screen.getByLabelText("メールアドレス");
+    const fieldError = await screen.findByText("このメールアドレスは既に登録されています");
+    expect(emailInput).toHaveAttribute("aria-invalid", "true");
+    expect(emailInput.closest("div")).toContainElement(fieldError);
+    expect(screen.getAllByRole("alert")).toHaveLength(1);
   });
 
   it("shows a generic error for unexpected registration failures", async () => {

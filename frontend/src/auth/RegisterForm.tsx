@@ -3,6 +3,7 @@ import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "./useAuth";
 import { translateApiError } from "../api/errorI18n";
+import { ApiError } from "../api/errors";
 import { isEmailLike } from "../utils/validators";
 import { Button } from "../components/ui/Button";
 import { Field } from "../components/ui/Field";
@@ -52,17 +53,21 @@ export function RegisterForm() {
     event.preventDefault();
     const errors = validate();
     setFieldErrors(errors);
+    setFormError(null);
     if (Object.keys(errors).length > 0) {
       return;
     }
 
-    setFormError(null);
     setIsSubmitting(true);
     try {
       await register(email, password, displayName);
       navigate("/");
     } catch (err) {
-      setFormError(translateApiError(t, err, "auth.genericError"));
+      if (err instanceof ApiError && (err.code === "AUTH_EMAIL_ALREADY_REGISTERED" || err.code === "email_in_use")) {
+        setFieldErrors((current) => ({ ...current, email: t("auth.emailInUse") }));
+      } else {
+        setFormError(translateApiError(t, err, "auth.genericError"));
+      }
     } finally {
       setIsSubmitting(false);
     }
