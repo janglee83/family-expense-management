@@ -293,3 +293,96 @@ async def test_delete_itinerary_item_unlinks_but_does_not_delete_expense(client:
     expense_after = await client.get(f"/api/v1/families/{family_id}/expenses/{expense_id}")
     assert expense_after.json()["trip_itinerary_item_id"] is None
     assert expense_after.json()["trip_id"] == trip_id
+
+
+@pytest.mark.integration
+async def test_create_expense_rejects_item_without_trip(client: AsyncClient) -> None:
+    await _register(client, _unique_email())
+    family_id = await _create_family(client)
+
+    trip_response = await client.post(
+        f"/api/v1/families/{family_id}/trips/",
+        json={
+            "name": "Trip",
+            "start_date": date(2026, 1, 1).isoformat(),
+            "end_date": date(2026, 1, 5).isoformat(),
+        },
+    )
+    trip_id = trip_response.json()["id"]
+    item_response = await client.post(
+        f"/api/v1/families/{family_id}/trips/{trip_id}/items",
+        json={"title": "Item", "item_date": date(2026, 1, 2).isoformat()},
+    )
+    item_id = item_response.json()["id"]
+
+    me_response = await client.get("/api/v1/auth/me")
+    user_id = me_response.json()["id"]
+    category_response = await client.get(f"/api/v1/families/{family_id}/categories/")
+    category_id = category_response.json()[0]["id"]
+
+    response = await client.post(
+        f"/api/v1/families/{family_id}/expenses/",
+        json={
+            "payer_user_id": user_id,
+            "category_id": category_id,
+            "amount": 500,
+            "is_shared": False,
+            "expense_date": date(2026, 1, 2).isoformat(),
+            "trip_itinerary_item_id": item_id,
+        },
+    )
+    assert response.status_code == 422
+    assert response.json()["error"]["code"] == "EXPENSE_TRIP_ITEM_REQUIRES_TRIP"
+
+
+@pytest.mark.integration
+async def test_create_expense_rejects_item_from_different_trip(client: AsyncClient) -> None:
+    await _register(client, _unique_email())
+    family_id = await _create_family(client)
+
+    trip_a = (
+        await client.post(
+            f"/api/v1/families/{family_id}/trips/",
+            json={
+                "name": "Trip A",
+                "start_date": date(2026, 1, 1).isoformat(),
+                "end_date": date(2026, 1, 5).isoformat(),
+            },
+        )
+    ).json()
+    trip_b = (
+        await client.post(
+            f"/api/v1/families/{family_id}/trips/",
+            json={
+                "name": "Trip B",
+                "start_date": date(2026, 2, 1).isoformat(),
+                "end_date": date(2026, 2, 5).isoformat(),
+            },
+        )
+    ).json()
+    item_b = (
+        await client.post(
+            f"/api/v1/families/{family_id}/trips/{trip_b['id']}/items",
+            json={"title": "Item in B", "item_date": date(2026, 2, 2).isoformat()},
+        )
+    ).json()
+
+    me_response = await client.get("/api/v1/auth/me")
+    user_id = me_response.json()["id"]
+    category_response = await client.get(f"/api/v1/families/{family_id}/categories/")
+    category_id = category_response.json()[0]["id"]
+
+    response = await client.post(
+        f"/api/v1/families/{family_id}/expenses/",
+        json={
+            "payer_user_id": user_id,
+            "category_id": category_id,
+            "amount": 500,
+            "is_shared": False,
+            "expense_date": date(2026, 1, 2).isoformat(),
+            "trip_id": trip_a["id"],
+            "trip_itinerary_item_id": item_b["id"],
+        },
+    )
+    assert response.status_code == 422
+    assert response.json()["error"]["code"] == "EXPENSE_TRIP_ITEM_INVALID_FOR_TRIP"

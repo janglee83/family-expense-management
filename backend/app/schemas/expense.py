@@ -54,6 +54,8 @@ class CreateExpenseRequest(BaseModel):
     is_shared: bool
     description: str | None = Field(default=None, max_length=500)
     expense_date: date
+    trip_id: uuid.UUID | None = None
+    trip_itinerary_item_id: uuid.UUID | None = None
 
 
 class UpdateExpenseRequest(BaseModel):
@@ -63,6 +65,8 @@ class UpdateExpenseRequest(BaseModel):
     is_shared: bool
     description: str | None = Field(default=None, max_length=500)
     expense_date: date
+    trip_id: uuid.UUID | None = None
+    trip_itinerary_item_id: uuid.UUID | None = None
 
 
 class ExpenseResponse(BaseModel):
@@ -77,3 +81,5 @@ class ExpenseResponse(BaseModel):
     is_shared: bool
     description: str | None
     expense_date: date
+    trip_id: uuid.UUID | None
+    trip_itinerary_item_id: uuid.UUID | None

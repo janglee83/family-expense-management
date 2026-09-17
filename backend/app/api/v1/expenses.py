@@ -14,6 +14,7 @@ from app.db.transaction import locked_write
 from app.models.category import Category
 from app.models.expense import Expense
 from app.models.family_member import FamilyMember
+from app.models.trip import Trip, TripItineraryItem
 from app.models.user import User
 from app.schemas.expense import CreateExpenseRequest, ExpenseResponse, UpdateExpenseRequest
 
@@ -48,6 +49,46 @@ async def _validate_category(
         )
 
 
+async def _validate_trip_link(
+    family_id: uuid.UUID,
+    trip_id: uuid.UUID | None,
+    trip_itinerary_item_id: uuid.UUID | None,
+    session: AsyncSession,
+) -> None:
+    if trip_itinerary_item_id is not None and trip_id is None:
+        raise_api_error(
+            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
+            code="EXPENSE_TRIP_ITEM_REQUIRES_TRIP",
+            message="trip_itinerary_item_id requires trip_id to also be set",
+        )
+    if trip_id is None:
+        return
+
+    trip = await session.scalar(select(Trip).where(Trip.id == trip_id, Trip.family_id == family_id))
+    if trip is None:
+        raise_api_error(
+            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
+            code="EXPENSE_TRIP_INVALID_FOR_FAMILY",
+            message="trip_id is not a valid trip for this family",
+        )
+
+    if trip_itinerary_item_id is None:
+        return
+
+    item = await session.scalar(
+        select(TripItineraryItem).where(
+            TripItineraryItem.id == trip_itinerary_item_id,
+            TripItineraryItem.trip_id == trip_id,
+        )
+    )
+    if item is None:
+        raise_api_error(
+            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
+            code="EXPENSE_TRIP_ITEM_INVALID_FOR_TRIP",
+            message="trip_itinerary_item_id does not belong to trip_id",
+        )
+
+
 @router.get("/", response_model=list[ExpenseResponse])
 async def list_expenses(
     family_id: uuid.UUID,
@@ -73,6 +114,7 @@ async def create_expense(
     async with locked_write(session, tables=("expenses", "notifications")):
         await _validate_payer(family_id, payload.payer_user_id, session)
         await _validate_category(family_id, payload.category_id, session)
+        await _validate_trip_link(family_id, payload.trip_id, payload.trip_itinerary_item_id, session)
 
         expense = Expense(
             family_id=family_id,
@@ -83,6 +125,8 @@ async def create_expense(
             is_shared=payload.is_shared,
             description=payload.description,
             expense_date=payload.expense_date,
+            trip_id=payload.trip_id,
+            trip_itinerary_item_id=payload.trip_itinerary_item_id,
         )
         session.add(expense)
         await queue_family_notification(
@@ -134,6 +178,7 @@ async def update_expense(
 
         await _validate_payer(family_id, payload.payer_user_id, session)
         await _validate_category(family_id, payload.category_id, session)
+        await _validate_trip_link(family_id, payload.trip_id, payload.trip_itinerary_item_id, session)
 
         expense.payer_user_id = payload.payer_user_id
         expense.category_id = payload.category_id
@@ -141,6 +186,8 @@ async def update_expense(
         expense.is_shared = payload.is_shared
         expense.description = payload.description
         expense.expense_date = payload.expense_date
+        expense.trip_id = payload.trip_id
+        expense.trip_itinerary_item_id = payload.trip_itinerary_item_id
         await queue_family_notification(
             session,
             family_id,
