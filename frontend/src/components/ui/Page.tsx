@@ -63,7 +63,7 @@ export function PageFrame({ children }: { children: ReactNode }) {
     <div className="isolate min-h-screen bg-background text-foreground">
       <Dialog.Root open={isMobileNavOpen} onOpenChange={setIsMobileNavOpen}>
         <Dialog.Portal>
-            <DialogOverlay className="z-70 bg-slate-950/45 lg:hidden" />
+            <DialogOverlay className="z-70 lg:hidden" />
             <DialogContent
             id="mobile-navigation-panel"
             aria-label={t("nav.sidebarLabel")}

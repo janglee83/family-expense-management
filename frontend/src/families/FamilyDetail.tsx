@@ -186,13 +186,13 @@ export function FamilyDetail() {
               >
                 {t("expense.myExpenses")}
               </Link>
-{/*              <Link
+              <Link
                 to={`/families/${familyId}/receipts`}
                 data-tour="family-go-receipts"
                 className={buttonClassName({ variant: "ghost", size: "sm", className: "no-underline" })}
               >
                 {t("receipt.myReceipts")}
-              </Link>*/}
+              </Link>
               <Link
                 to={`/families/${familyId}/finance/accounts`}
                 className={buttonClassName({ variant: "ghost", size: "sm", className: "no-underline" })}

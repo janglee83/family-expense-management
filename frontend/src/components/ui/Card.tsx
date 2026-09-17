@@ -5,7 +5,7 @@ export function Card({ className, ...props }: HTMLAttributes<HTMLDivElement>) {
   return (
     <div
       className={cn(
-        "surface-card transition-all duration-200 motion-safe:hover:border-primary/25 motion-safe:hover:shadow-md",
+        "surface-card transition-all duration-200 motion-safe:hover:border-primary/25 motion-safe:hover:shadow-lg",
         className,
       )}
       {...props}

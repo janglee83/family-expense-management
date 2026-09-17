@@ -34,6 +34,7 @@ export function SplitExpensesPage() {
   const { familyId } = useParams<{ familyId: string }>();
   const [pendingEditGroup, setPendingEditGroup] = useState<SplitExpenseGroup | null>(null);
   const [formError, setFormError] = useState<string | null>(null);
+  const [participantsError, setParticipantsError] = useState<string | null>(null);
 
   const {
     groupForm,
@@ -136,11 +137,17 @@ export function SplitExpensesPage() {
 
   function handleSaveGroup(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (!familyId || !groupPreview || groupForm.participantIds.length === 0) {
+    if (!familyId || !groupPreview) {
       setFormError(t("expense.actionFailed"));
       return;
     }
+    if (groupForm.participantIds.length === 0) {
+      setParticipantsError(t("finance.splitParticipantsRequired"));
+      setFormError(null);
+      return;
+    }
 
+    setParticipantsError(null);
     setFormError(null);
     saveGroupMutation.mutate(
       {
@@ -323,7 +330,10 @@ export function SplitExpensesPage() {
                           <input
                             type="checkbox"
                             checked={groupForm.participantIds.includes(member.user_id)}
-                            onChange={() => toggleGroupParticipant(member.user_id)}
+                            onChange={() => {
+                              toggleGroupParticipant(member.user_id);
+                              setParticipantsError(null);
+                            }}
                           />
                           <span className="text-sm text-foreground">{member.display_name}</span>
                           {groupForm.method === "custom" && groupForm.participantIds.includes(member.user_id) ? (
@@ -350,6 +360,12 @@ export function SplitExpensesPage() {
                         </label>
                       ))}
                     </fieldset>
+
+                    {participantsError ? (
+                      <p className="text-sm text-destructive" role="alert">
+                        {participantsError}
+                      </p>
+                    ) : null}
 
                     {payerMismatchWarning.length > 0 ? (
                       <Alert variant="error" role="alert">

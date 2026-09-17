@@ -50,7 +50,8 @@ export function ExpenseForm({ familyId, expense, currencyCode, onSaved, onCancel
   const [expenseDate, setExpenseDate] = useState(
     expense?.expense_date ?? new Date().toISOString().slice(0, 10),
   );
-  const [error, setError] = useState<string | null>(null);
+  const [amountError, setAmountError] = useState<string | null>(null);
+  const [formError, setFormError] = useState<string | null>(null);
   const createExpenseMutation = useCreateExpense(familyId);
   const updateExpenseMutation = useUpdateExpense(familyId);
   const isSubmitting = createExpenseMutation.isPending || updateExpenseMutation.isPending;
@@ -64,22 +65,25 @@ export function ExpenseForm({ familyId, expense, currencyCode, onSaved, onCancel
   const descriptionId = `expense-description-${familyId}`;
   const effectivePayerUserId = payerUserId || members[0]?.user_id || "";
   const effectiveCategoryId = categoryId || categories[0]?.id || "";
-  const displayError = error || initialLoadError;
+  const displayError = formError || initialLoadError;
 
   function handleSubmit(event: FormEvent) {
     event.preventDefault();
 
     const parsedAmount = Number(toDigits(amountInput));
     if (!Number.isInteger(parsedAmount) || parsedAmount < MIN_AMOUNT) {
-      setError(t("expense.amountMustBePositive"));
+      setAmountError(t("expense.amountMustBePositive"));
+      setFormError(null);
       return;
     }
     if (parsedAmount > MAX_INT_32) {
-      setError(t("expense.amountTooLarge"));
+      setAmountError(t("expense.amountTooLarge"));
+      setFormError(null);
       return;
     }
 
-    setError(null);
+    setAmountError(null);
+    setFormError(null);
     const input = {
       payer_user_id: effectivePayerUserId,
       category_id: effectiveCategoryId,
@@ -92,7 +96,7 @@ export function ExpenseForm({ familyId, expense, currencyCode, onSaved, onCancel
     const mutationOptions = {
       onSuccess: onSaved,
       onError: (err: unknown) => {
-        setError(translateApiError(t, err, "expense.actionFailed"));
+        setFormError(translateApiError(t, err, "expense.actionFailed"));
       },
     };
 
@@ -138,17 +142,18 @@ export function ExpenseForm({ familyId, expense, currencyCode, onSaved, onCancel
       </section>
 
       <section className="grid gap-4 rounded-lg border border-border/80 bg-muted/25 p-4 md:grid-cols-2">
-        <Field label={t("expense.amount")} htmlFor={amountId} required>
+        <Field label={t("expense.amount")} htmlFor={amountId} required error={amountError}>
           <input
             id={amountId}
             type="text"
             inputMode="numeric"
             value={amountInput}
-            onChange={(event) =>
-              setAmountInput(formatDigitsAsAmount(event.target.value, activeCurrencyCode))
-            }
+            onChange={(event) => {
+              setAmountInput(formatDigitsAsAmount(event.target.value, activeCurrencyCode));
+              setAmountError(null);
+            }}
             placeholder="12,345"
-            required
+            aria-invalid={amountError ? true : undefined}
           />
         </Field>
 

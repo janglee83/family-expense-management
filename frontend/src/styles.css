@@ -1,22 +1,23 @@
-@import url("https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&family=Noto+Sans+JP:wght@400;500;600;700&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Quicksand:wght@500;600;700&family=Be+Vietnam+Pro:wght@400;500;600;700&family=Noto+Sans+JP:wght@400;500;600;700&display=swap");
 @import "tailwindcss";
 
 @theme {
-  --font-sans: "Be Vietnam Pro", "Noto Sans JP", "Hiragino Sans", "Segoe UI", sans-serif;
+  --font-sans: "Quicksand", "Be Vietnam Pro", "Noto Sans JP", "Hiragino Sans", "Segoe UI", sans-serif;
   --font-mono: "IBM Plex Mono", "SFMono-Regular", "Consolas", monospace;
 
-  --color-background: oklch(0.975 0.006 255);
-  --color-foreground: oklch(0.26 0.021 262);
-  --color-card: oklch(0.995 0.002 255);
-  --color-card-foreground: oklch(0.26 0.021 262);
-  --color-muted: oklch(0.948 0.01 255);
-  --color-muted-foreground: oklch(0.5 0.02 260);
-  --color-border: oklch(0.89 0.012 257);
+  --color-background: oklch(0.975 0.004 58);
+  --color-foreground: oklch(0.26 0.012 55);
+  --color-card: oklch(0.995 0.002 60);
+  --color-card-foreground: oklch(0.26 0.012 55);
+  --color-muted: oklch(0.948 0.006 58);
+  --color-muted-foreground: oklch(0.5 0.012 55);
+  --color-border: oklch(0.89 0.008 58);
+  --color-shadow: oklch(0.26 0.012 55);
 
-  --color-primary: oklch(0.55 0.15 250);
-  --color-primary-foreground: oklch(0.98 0.005 255);
-  --color-secondary: oklch(0.92 0.02 252);
-  --color-secondary-foreground: oklch(0.33 0.03 258);
+  --color-primary: oklch(0.62 0.19 42);
+  --color-primary-foreground: oklch(0.99 0.005 60);
+  --color-secondary: oklch(0.93 0.035 42);
+  --color-secondary-foreground: oklch(0.35 0.06 40);
 
   --color-destructive: oklch(0.61 0.2 28);
   --color-destructive-foreground: oklch(0.98 0.005 255);
@@ -32,9 +33,9 @@
   --radius-lg: 1rem;
   --radius-xl: 1.25rem;
 
-  --shadow-sm: 0 1px 2px -1px rgb(17 24 39 / 0.12), 0 1px 1px rgb(17 24 39 / 0.06);
-  --shadow-md: 0 6px 16px -8px rgb(15 23 42 / 0.24), 0 2px 8px -4px rgb(15 23 42 / 0.14);
-  --shadow-lg: 0 18px 35px -16px rgb(15 23 42 / 0.36), 0 8px 16px -10px rgb(15 23 42 / 0.2);
+  --shadow-sm: 0 1px 2px -1px color-mix(in oklab, var(--color-shadow) 12%, transparent), 0 1px 1px color-mix(in oklab, var(--color-shadow) 6%, transparent);
+  --shadow-md: 0 6px 16px -8px color-mix(in oklab, var(--color-shadow) 24%, transparent), 0 2px 8px -4px color-mix(in oklab, var(--color-shadow) 14%, transparent);
+  --shadow-lg: 0 18px 35px -16px color-mix(in oklab, var(--color-shadow) 36%, transparent), 0 8px 16px -10px color-mix(in oklab, var(--color-shadow) 20%, transparent);
 }
 
 :root[lang="vi"] {
@@ -47,17 +48,18 @@
 
 :root[data-theme="dark"] {
   color-scheme: dark;
-  --color-background: oklch(0.2 0.02 262);
-  --color-foreground: oklch(0.94 0.012 255);
-  --color-card: oklch(0.24 0.02 262);
-  --color-card-foreground: oklch(0.94 0.012 255);
-  --color-muted: oklch(0.31 0.02 262);
-  --color-muted-foreground: oklch(0.76 0.02 255);
-  --color-border: oklch(0.34 0.02 262);
-  --color-primary: oklch(0.69 0.13 248);
-  --color-primary-foreground: oklch(0.23 0.03 262);
-  --color-secondary: oklch(0.34 0.03 258);
-  --color-secondary-foreground: oklch(0.9 0.02 255);
+  --color-background: oklch(0.2 0.012 50);
+  --color-foreground: oklch(0.94 0.008 50);
+  --color-card: oklch(0.24 0.012 50);
+  --color-card-foreground: oklch(0.94 0.008 50);
+  --color-muted: oklch(0.31 0.012 50);
+  --color-muted-foreground: oklch(0.76 0.012 50);
+  --color-border: oklch(0.34 0.012 50);
+  --color-shadow: oklch(0.06 0.01 50);
+  --color-primary: oklch(0.72 0.17 45);
+  --color-primary-foreground: oklch(0.18 0.03 40);
+  --color-secondary: oklch(0.32 0.05 42);
+  --color-secondary-foreground: oklch(0.92 0.03 50);
   --color-destructive: oklch(0.66 0.18 28);
   --color-destructive-foreground: oklch(0.98 0.005 255);
   --color-success: oklch(0.71 0.14 148);
@@ -71,17 +73,18 @@
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
     color-scheme: dark;
-    --color-background: oklch(0.2 0.02 262);
-    --color-foreground: oklch(0.94 0.012 255);
-    --color-card: oklch(0.24 0.02 262);
-    --color-card-foreground: oklch(0.94 0.012 255);
-    --color-muted: oklch(0.31 0.02 262);
-    --color-muted-foreground: oklch(0.76 0.02 255);
-    --color-border: oklch(0.34 0.02 262);
-    --color-primary: oklch(0.69 0.13 248);
-    --color-primary-foreground: oklch(0.23 0.03 262);
-    --color-secondary: oklch(0.34 0.03 258);
-    --color-secondary-foreground: oklch(0.9 0.02 255);
+    --color-background: oklch(0.2 0.012 50);
+    --color-foreground: oklch(0.94 0.008 50);
+    --color-card: oklch(0.24 0.012 50);
+    --color-card-foreground: oklch(0.94 0.008 50);
+    --color-muted: oklch(0.31 0.012 50);
+    --color-muted-foreground: oklch(0.76 0.012 50);
+    --color-border: oklch(0.34 0.012 50);
+    --color-shadow: oklch(0.06 0.01 50);
+    --color-primary: oklch(0.72 0.17 45);
+    --color-primary-foreground: oklch(0.18 0.03 40);
+    --color-secondary: oklch(0.32 0.05 42);
+    --color-secondary-foreground: oklch(0.92 0.03 50);
     --color-destructive: oklch(0.66 0.18 28);
     --color-destructive-foreground: oklch(0.98 0.005 255);
     --color-success: oklch(0.71 0.14 148);
@@ -194,15 +197,15 @@
   }
 
   .surface-card {
-    @apply rounded-lg border border-border bg-card/90 shadow-sm backdrop-blur-sm;
+    @apply rounded-xl border border-border bg-card/90 shadow-md backdrop-blur-sm;
   }
 
   .surface-elevated {
-    @apply rounded-lg border border-border bg-card/95 shadow-md backdrop-blur-xl;
+    @apply rounded-xl border border-border bg-card/95 shadow-md backdrop-blur-xl;
   }
 
   .interactive-row {
-    @apply relative overflow-hidden rounded-md border border-border bg-muted/30 px-4 py-3 transition-all duration-200 hover:-translate-y-0.5 hover:border-primary/35 hover:bg-card hover:shadow-sm;
+    @apply relative overflow-hidden rounded-md border border-border bg-muted/30 px-4 py-3 transition-all duration-200 hover:border-primary/35 hover:bg-card hover:shadow-sm;
   }
 
   .interactive-row::after {
