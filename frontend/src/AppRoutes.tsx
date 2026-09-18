@@ -13,6 +13,7 @@ import { GoalsPage } from "./finance/GoalsPage";
 import { SubscriptionsPage } from "./finance/SubscriptionsPage";
 import { SplitExpensesPage } from "./finance/SplitExpensesPage";
 import { DataOpsPage } from "./finance/DataOpsPage";
+import { TripsPage } from "./trips/TripsPage";
 
 export function AppRoutes() {
   return (
@@ -64,6 +65,14 @@ export function AppRoutes() {
         element={
           <ProtectedRoute>
             <ReceiptList />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/trips"
+        element={
+          <ProtectedRoute>
+            <TripsPage />
           </ProtectedRoute>
         }
       />

@@ -47,8 +47,11 @@ export function PageFrame({ children }: { children: ReactNode }) {
   const pathname = location.pathname;
   const isHomeRoute = pathname === "/";
   const isCreateFamilyRoute = pathname === "/families/new";
+  const isTripDetailRoute = pathname.startsWith("/families/") && pathname.includes("/trips/");
+  const isTripsRoute = pathname === "/trips" || isTripDetailRoute;
   const isFamiliesRoute =
-    pathname === "/families" || (pathname.startsWith("/families/") && !isCreateFamilyRoute);
+    pathname === "/families" ||
+    (pathname.startsWith("/families/") && !isCreateFamilyRoute && !isTripDetailRoute);
 
   useEffect(() => {
     setIsMobileNavOpen(false);
@@ -107,6 +110,13 @@ export function PageFrame({ children }: { children: ReactNode }) {
                 onClick={() => setIsMobileNavOpen(false)}
               />
               <SidebarLink
+                to="/trips"
+                label={t("nav.trips")}
+                isActive={isTripsRoute}
+                tourId="nav-trips"
+                onClick={() => setIsMobileNavOpen(false)}
+              />
+              <SidebarLink
                 to="/families/new"
                 label={t("nav.createFamily")}
                 isActive={isCreateFamilyRoute}
@@ -148,6 +158,7 @@ export function PageFrame({ children }: { children: ReactNode }) {
                 isActive={isFamiliesRoute}
                 tourId="nav-families"
               />
+              <SidebarLink to="/trips" label={t("nav.trips")} isActive={isTripsRoute} tourId="nav-trips" />
               <SidebarLink
                 to="/families/new"
                 label={t("nav.createFamily")}
