@@ -211,7 +211,6 @@ async def test_create_and_update_itinerary_item(client: AsyncClient) -> None:
     assert create_response.status_code == 201
     item = create_response.json()
     assert item["actual_amount"] == 0
-    assert item["linked_expense_ids"] == []
 
     update_response = await client.patch(
         f"/api/v1/families/{family_id}/trips/{trip_id}/items/{item['id']}",
@@ -386,3 +385,100 @@ async def test_create_expense_rejects_item_from_different_trip(client: AsyncClie
     )
     assert response.status_code == 422
     assert response.json()["error"]["code"] == "EXPENSE_TRIP_ITEM_INVALID_FOR_TRIP"
+
+
+@pytest.mark.integration
+async def test_update_trip_rejects_date_range_that_orphans_items(client: AsyncClient) -> None:
+    await _register(client, _unique_email())
+    family_id = await _create_family(client)
+
+    trip_response = await client.post(
+        f"/api/v1/families/{family_id}/trips/",
+        json={
+            "name": "Trip",
+            "start_date": date(2026, 1, 1).isoformat(),
+            "end_date": date(2026, 1, 10).isoformat(),
+        },
+    )
+    trip_id = trip_response.json()["id"]
+
+    await client.post(
+        f"/api/v1/families/{family_id}/trips/{trip_id}/items",
+        json={"title": "Late item", "item_date": date(2026, 1, 9).isoformat()},
+    )
+
+    response = await client.patch(
+        f"/api/v1/families/{family_id}/trips/{trip_id}",
+        json={"end_date": date(2026, 1, 5).isoformat()},
+    )
+    assert response.status_code == 422
+    assert response.json()["error"]["code"] == "TRIP_DATE_RANGE_ORPHANS_ITEMS"
+
+
+@pytest.mark.integration
+async def test_create_expense_rejects_trip_from_different_family(client: AsyncClient) -> None:
+    await _register(client, _unique_email())
+    family_a_id = await _create_family(client, "Family A")
+    family_b_id = await _create_family(client, "Family B")
+
+    trip_a = (
+        await client.post(
+            f"/api/v1/families/{family_a_id}/trips/",
+            json={
+                "name": "Trip in A",
+                "start_date": date(2026, 1, 1).isoformat(),
+                "end_date": date(2026, 1, 5).isoformat(),
+            },
+        )
+    ).json()
+
+    me_response = await client.get("/api/v1/auth/me")
+    user_id = me_response.json()["id"]
+    category_response = await client.get(f"/api/v1/families/{family_b_id}/categories/")
+    category_id = category_response.json()[0]["id"]
+
+    response = await client.post(
+        f"/api/v1/families/{family_b_id}/expenses/",
+        json={
+            "payer_user_id": user_id,
+            "category_id": category_id,
+            "amount": 500,
+            "is_shared": False,
+            "expense_date": date(2026, 1, 2).isoformat(),
+            "trip_id": trip_a["id"],
+        },
+    )
+    assert response.status_code == 422
+    assert response.json()["error"]["code"] == "EXPENSE_TRIP_INVALID_FOR_FAMILY"
+
+
+@pytest.mark.integration
+async def test_member_can_add_itinerary_item_without_owner_admin_or_creator(client: AsyncClient) -> None:
+    await _register(client, _unique_email(), "Alice")
+    family_id = await _create_family(client)
+
+    trip_response = await client.post(
+        f"/api/v1/families/{family_id}/trips/",
+        json={
+            "name": "Trip",
+            "start_date": date(2026, 1, 1).isoformat(),
+            "end_date": date(2026, 1, 5).isoformat(),
+        },
+    )
+    trip_id = trip_response.json()["id"]
+
+    bob_client = AsyncClient(transport=ASGITransport(app=app), base_url="http://test")
+    await _register(bob_client, _unique_email(), "Bob")
+    bob_me = await bob_client.get("/api/v1/auth/me")
+
+    invite_response = await client.post(
+        f"/api/v1/families/{family_id}/members", json={"email": bob_me.json()["email"]}
+    )
+    assert invite_response.status_code == 201
+
+    item_response = await bob_client.post(
+        f"/api/v1/families/{family_id}/trips/{trip_id}/items",
+        json={"title": "Added by a plain member", "item_date": date(2026, 1, 2).isoformat()},
+    )
+    assert item_response.status_code == 201
+    await bob_client.aclose()

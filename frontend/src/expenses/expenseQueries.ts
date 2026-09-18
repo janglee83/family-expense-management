@@ -10,6 +10,7 @@ import {
   updateExpense,
   type ExpenseInput,
 } from "./expenseApi";
+import { tripKeys } from "../trips/queries/tripKeys";
 
 export const expenseKeys = {
   categories: (familyId: string) => ["families", familyId, "categories"] as const,
@@ -69,6 +70,7 @@ export function useCreateExpense(familyId: string) {
     mutationFn: (input: ExpenseInput) => createExpense(familyId, input),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: expenseKeys.list(familyId) });
+      queryClient.invalidateQueries({ queryKey: tripKeys.list(familyId) });
     },
   });
 }
@@ -80,6 +82,7 @@ export function useUpdateExpense(familyId: string) {
       updateExpense(familyId, expenseId, input),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: expenseKeys.list(familyId) });
+      queryClient.invalidateQueries({ queryKey: tripKeys.list(familyId) });
     },
   });
 }
@@ -90,6 +93,7 @@ export function useDeleteExpense(familyId: string) {
     mutationFn: (expenseId: string) => deleteExpense(familyId, expenseId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: expenseKeys.list(familyId) });
+      queryClient.invalidateQueries({ queryKey: tripKeys.list(familyId) });
     },
   });
 }

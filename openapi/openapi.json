@@ -3086,14 +3086,6 @@
             ],
             "title": "Link Url"
           },
-          "linked_expense_ids": {
-            "items": {
-              "format": "uuid",
-              "type": "string"
-            },
-            "title": "Linked Expense Ids",
-            "type": "array"
-          },
           "planned_amount": {
             "anyOf": [
               {
@@ -3126,7 +3118,6 @@
           "item_date",
           "item_time",
           "planned_amount",
-          "linked_expense_ids",
           "actual_amount"
         ],
         "title": "TripItineraryItemResponse",

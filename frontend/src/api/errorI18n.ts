@@ -33,6 +33,7 @@ const ERROR_TRANSLATION_KEYS: Record<string, string> = {
   TRIP_INVALID_DATE_RANGE: "trip.dateRangeInvalid",
   TRIP_ITEM_DATE_OUT_OF_RANGE: "trip.itemDateOutOfRange",
   TRIP_PARTICIPANT_NOT_IN_FAMILY: "trip.participantNotInFamily",
+  TRIP_DATE_RANGE_ORPHANS_ITEMS: "trip.dateRangeOrphansItems",
   EXPENSE_TRIP_INVALID_FOR_FAMILY: "trip.invalidTripForExpense",
   EXPENSE_TRIP_ITEM_INVALID_FOR_TRIP: "trip.invalidItemForExpense",
   EXPENSE_TRIP_ITEM_REQUIRES_TRIP: "trip.itemRequiresTrip",

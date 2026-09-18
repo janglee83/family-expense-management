@@ -99,6 +99,9 @@ export function TripDetailPage() {
   const updateItemMutation = useUpdateTripItem(familyId ?? "", tripId ?? "");
   const deleteItemMutation = useDeleteTripItem(familyId ?? "", tripId ?? "");
 
+  const [isDeleteTripConfirmOpen, setIsDeleteTripConfirmOpen] = useState(false);
+  const [itemPendingDeleteId, setItemPendingDeleteId] = useState<string | null>(null);
+
   const [isEditingTrip, setIsEditingTrip] = useState(false);
   const [editName, setEditName] = useState("");
   const [editDestination, setEditDestination] = useState("");
@@ -329,7 +332,12 @@ export function TripDetailPage() {
                 <Button type="button" variant="outline" size="sm" onClick={handleCancelTrip}>
                   {trip.is_cancelled ? t("trip.resume") : t("trip.cancel")}
                 </Button>
-                <Button type="button" variant="destructive" size="sm" onClick={handleDeleteTrip}>
+                <Button
+                  type="button"
+                  variant="destructive"
+                  size="sm"
+                  onClick={() => setIsDeleteTripConfirmOpen(true)}
+                >
                   {t("trip.delete")}
                 </Button>
               </>
@@ -463,7 +471,7 @@ export function TripDetailPage() {
                                 type="button"
                                 size="sm"
                                 variant="destructive"
-                                onClick={() => handleDeleteItem(item.id)}
+                                onClick={() => setItemPendingDeleteId(item.id)}
                               >
                                 {t("trip.delete")}
                               </Button>
@@ -630,6 +638,57 @@ export function TripDetailPage() {
             </Button>
           </form>
         </Modal>
+
+        <Modal
+          isOpen={isDeleteTripConfirmOpen}
+          title={t("trip.delete")}
+          description={t("trip.confirmDelete")}
+          closeLabel={t("common.close")}
+          onClose={() => setIsDeleteTripConfirmOpen(false)}
+          footer={
+            <>
+              <Button type="button" variant="outline" onClick={() => setIsDeleteTripConfirmOpen(false)}>
+                {t("common.cancel")}
+              </Button>
+              <Button
+                type="button"
+                variant="destructive"
+                onClick={() => {
+                  handleDeleteTrip();
+                  setIsDeleteTripConfirmOpen(false);
+                }}
+              >
+                {t("common.confirm")}
+              </Button>
+            </>
+          }
+        />
+
+        <Modal
+          isOpen={itemPendingDeleteId !== null}
+          title={t("trip.delete")}
+          description={t("trip.confirmDeleteItem")}
+          closeLabel={t("common.close")}
+          onClose={() => setItemPendingDeleteId(null)}
+          footer={
+            <>
+              <Button type="button" variant="outline" onClick={() => setItemPendingDeleteId(null)}>
+                {t("common.cancel")}
+              </Button>
+              <Button
+                type="button"
+                variant="destructive"
+                onClick={() => {
+                  if (!itemPendingDeleteId) return;
+                  handleDeleteItem(itemPendingDeleteId);
+                  setItemPendingDeleteId(null);
+                }}
+              >
+                {t("common.confirm")}
+              </Button>
+            </>
+          }
+        />
       </main>
     </PageFrame>
   );

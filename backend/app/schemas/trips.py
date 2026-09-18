@@ -117,7 +117,6 @@ class TripItineraryItemResponse(BaseModel):
     item_date: date
     item_time: time | None
     planned_amount: int | None
-    linked_expense_ids: list[uuid.UUID]
     actual_amount: int
 
 

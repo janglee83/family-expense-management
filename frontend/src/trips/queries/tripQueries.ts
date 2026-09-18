@@ -16,6 +16,7 @@ import {
   type UpdateTripItemInput,
 } from "../tripApi";
 import { tripKeys } from "./tripKeys";
+import { expenseKeys } from "../../expenses/expenseQueries";
 
 export function useTrips(familyId: string) {
   return useQuery({
@@ -62,6 +63,7 @@ export function useDeleteTrip(familyId: string) {
     mutationFn: (tripId: string) => deleteTrip(familyId, tripId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: tripKeys.list(familyId) });
+      queryClient.invalidateQueries({ queryKey: expenseKeys.list(familyId) });
     },
   });
 }
@@ -113,6 +115,7 @@ export function useDeleteTripItem(familyId: string, tripId: string) {
     mutationFn: (itemId: string) => deleteTripItem(familyId, tripId, itemId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: tripKeys.list(familyId) });
+      queryClient.invalidateQueries({ queryKey: expenseKeys.list(familyId) });
     },
   });
 }

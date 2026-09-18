@@ -2226,8 +2226,6 @@ export interface components {
             item_time: string | null;
             /** Link Url */
             link_url: string | null;
-            /** Linked Expense Ids */
-            linked_expense_ids: string[];
             /** Planned Amount */
             planned_amount: number | null;
             /** Title */

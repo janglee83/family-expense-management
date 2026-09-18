@@ -3,7 +3,7 @@ from datetime import date
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, status
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.deps import get_current_user, get_family_membership
@@ -93,8 +93,11 @@ async def _to_trip_response(trip: Trip, session: AsyncSession, today: date) -> T
 async def _to_item_response(
     item: TripItineraryItem, session: AsyncSession
 ) -> TripItineraryItemResponse:
-    result = await session.scalars(select(Expense).where(Expense.trip_itinerary_item_id == item.id))
-    linked_expenses = list(result.all())
+    actual_amount = await session.scalar(
+        select(func.coalesce(func.sum(Expense.amount), 0)).where(
+            Expense.trip_itinerary_item_id == item.id
+        )
+    )
     return TripItineraryItemResponse(
         id=item.id,
         trip_id=item.trip_id,
@@ -106,8 +109,7 @@ async def _to_item_response(
         item_date=item.item_date,
         item_time=item.item_time,
         planned_amount=item.planned_amount,
-        linked_expense_ids=[expense.id for expense in linked_expenses],
-        actual_amount=sum(expense.amount for expense in linked_expenses),
+        actual_amount=actual_amount or 0,
     )
 
 
@@ -195,6 +197,22 @@ async def update_trip(
                 code="TRIP_INVALID_DATE_RANGE",
                 message="end_date must be on or after start_date",
             )
+
+        if new_start != trip.start_date or new_end != trip.end_date:
+            orphaned_count = await session.scalar(
+                select(func.count())
+                .select_from(TripItineraryItem)
+                .where(
+                    TripItineraryItem.trip_id == trip_id,
+                    (TripItineraryItem.item_date < new_start) | (TripItineraryItem.item_date > new_end),
+                )
+            )
+            if orphaned_count:
+                raise_api_error(
+                    status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
+                    code="TRIP_DATE_RANGE_ORPHANS_ITEMS",
+                    message="Some itinerary items fall outside the new date range",
+                )
 
         if payload.name is not None:
             trip.name = payload.name
