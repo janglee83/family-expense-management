@@ -1,6 +1,6 @@
 import { useMemo, useState, type FormEvent } from "react";
 import { useTranslation } from "react-i18next";
-import { useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { useAuth } from "../auth/useAuth";
 import { translateApiError } from "../api/errorI18n";
 import { useFamilyDetail } from "../families/familyQueries";
@@ -27,7 +27,11 @@ import {
 import type { TripItineraryItem } from "./tripApi";
 
 function todayIso(): string {
-  return new Date().toISOString().slice(0, 10);
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, "0");
+  const day = String(now.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
 }
 
 interface ItemFieldErrors {
@@ -71,6 +75,7 @@ export function TripDetailPage() {
   const { t } = useTranslation();
   const { showSnackbar } = useSnackbar();
   const { user } = useAuth();
+  const navigate = useNavigate();
   const { familyId, tripId } = useParams<{ familyId: string; tripId: string }>();
   const [formError, setFormError] = useState<string | null>(null);
 
@@ -168,7 +173,10 @@ export function TripDetailPage() {
   function handleDeleteTrip() {
     setFormError(null);
     deleteTripMutation.mutate(tripId ?? "", {
-      onSuccess: () => showSnackbar({ message: t("trip.deleteSuccess"), variant: "success" }),
+      onSuccess: () => {
+        showSnackbar({ message: t("trip.deleteSuccess"), variant: "success" });
+        navigate("/trips");
+      },
       onError: (err) => setFormError(translateApiError(t, err, "trip.actionFailed")),
     });
   }
@@ -322,7 +330,7 @@ export function TripDetailPage() {
                   {trip.is_cancelled ? t("trip.resume") : t("trip.cancel")}
                 </Button>
                 <Button type="button" variant="destructive" size="sm" onClick={handleDeleteTrip}>
-                  {t("family.delete")}
+                  {t("trip.delete")}
                 </Button>
               </>
             ) : undefined
@@ -457,7 +465,7 @@ export function TripDetailPage() {
                                 variant="destructive"
                                 onClick={() => handleDeleteItem(item.id)}
                               >
-                                {t("family.delete")}
+                                {t("trip.delete")}
                               </Button>
                             </div>
                           </div>

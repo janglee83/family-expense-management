@@ -151,7 +151,12 @@ export function DateRangePicker({ fromDate, toDate, onChange }: DateRangePickerP
         </Button>
       </Popover.Trigger>
       <Popover.Portal>
-        <PopoverContent align="start" sideOffset={8}>
+        {/* Inline z-index (not a Tailwind class, since cn() here does not dedupe
+            conflicting utility classes and class-vs-class precedence would depend on
+            Tailwind's generated stylesheet order) so this popover reliably sits above
+            the Modal overlay/content (z-80) when opened from inside a Modal (e.g. the
+            trip edit dialog), while staying below the toast viewport (z-90). */}
+        <PopoverContent align="start" sideOffset={8} style={{ zIndex: 85 }}>
           <div className="grid gap-4 sm:grid-cols-2">
             <div role="group" aria-label={t("finance.fromDate")} className="space-y-2">
               <div className="flex items-center justify-between">

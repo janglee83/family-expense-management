@@ -556,6 +556,7 @@
     "notFound": "プランが見つかりません",
     "editTrip": "プランを編集",
     "updateSuccess": "プランを更新しました",
+    "delete": "削除",
     "deleteSuccess": "プランを削除しました",
     "cancel": "プランをキャンセル",
     "resume": "再開",

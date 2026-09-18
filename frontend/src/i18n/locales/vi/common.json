@@ -556,6 +556,7 @@
     "notFound": "Không tìm thấy kế hoạch",
     "editTrip": "Sửa kế hoạch",
     "updateSuccess": "Đã cập nhật kế hoạch",
+    "delete": "Xóa",
     "deleteSuccess": "Đã xóa kế hoạch",
     "cancel": "Hủy kế hoạch",
     "resume": "Khôi phục",
