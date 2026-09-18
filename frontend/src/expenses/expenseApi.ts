@@ -12,6 +12,8 @@ export interface ExpenseInput {
   is_shared: boolean;
   description?: string | null;
   expense_date: string;
+  trip_id?: string | null;
+  trip_itinerary_item_id?: string | null;
 }
 
 export function resolveCategoryDisplayName(

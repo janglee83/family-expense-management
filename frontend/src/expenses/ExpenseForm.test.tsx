@@ -8,6 +8,7 @@ import { ExpenseForm } from "./ExpenseForm";
 import { getFamilyDetail } from "../families/familyApi";
 import { createExpense, listCategories, updateExpense } from "./expenseApi";
 import type { Expense } from "./expenseApi";
+import { getTrip, listTrips } from "../trips/tripApi";
 
 vi.mock("./expenseApi", async () => {
   const actual = await vi.importActual<typeof import("./expenseApi")>("./expenseApi");
@@ -21,6 +22,14 @@ vi.mock("./expenseApi", async () => {
 vi.mock("../families/familyApi", () => ({
   getFamilyDetail: vi.fn(),
 }));
+vi.mock("../trips/tripApi", async () => {
+  const actual = await vi.importActual<typeof import("../trips/tripApi")>("../trips/tripApi");
+  return {
+    ...actual,
+    listTrips: vi.fn(),
+    getTrip: vi.fn(),
+  };
+});
 
 describe("ExpenseForm", () => {
   const onSaved = vi.fn();
@@ -31,11 +40,14 @@ describe("ExpenseForm", () => {
     vi.mocked(createExpense).mockReset();
     vi.mocked(updateExpense).mockReset();
     vi.mocked(getFamilyDetail).mockReset();
+    vi.mocked(listTrips).mockReset();
+    vi.mocked(getTrip).mockReset();
     await i18n.changeLanguage("ja");
 
     vi.mocked(listCategories).mockResolvedValue([
       { id: "cat-1", family_id: null, name: "groceries", icon: "basket" },
     ]);
+    vi.mocked(listTrips).mockResolvedValue([]);
     vi.mocked(getFamilyDetail).mockResolvedValue({
       id: "fam-1",
       name: "Test Family",

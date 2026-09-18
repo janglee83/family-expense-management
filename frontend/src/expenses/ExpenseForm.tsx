@@ -4,6 +4,7 @@ import { translateApiError } from "../api/errorI18n";
 import { useFamilyDetail } from "../families/familyQueries";
 import { resolveCategoryDisplayName, type Expense } from "./expenseApi";
 import { useCategories, useCreateExpense, useUpdateExpense } from "./expenseQueries";
+import { useTripDetail, useTrips } from "../trips/queries/tripQueries";
 import { Field } from "../components/ui/Field";
 import { Button } from "../components/ui/Button";
 import { Alert } from "../components/ui/Alert";
@@ -50,6 +51,12 @@ export function ExpenseForm({ familyId, expense, currencyCode, onSaved, onCancel
   const [expenseDate, setExpenseDate] = useState(
     expense?.expense_date ?? new Date().toISOString().slice(0, 10),
   );
+  const [tripId, setTripId] = useState(expense?.trip_id ?? "");
+  const [tripItemId, setTripItemId] = useState(expense?.trip_itinerary_item_id ?? "");
+  const tripsQuery = useTrips(familyId);
+  const trips = tripsQuery.data ?? [];
+  const tripDetailQuery = useTripDetail(familyId, tripId);
+  const tripItems = tripDetailQuery.data?.items ?? [];
   const [amountError, setAmountError] = useState<string | null>(null);
   const [formError, setFormError] = useState<string | null>(null);
   const createExpenseMutation = useCreateExpense(familyId);
@@ -63,6 +70,8 @@ export function ExpenseForm({ familyId, expense, currencyCode, onSaved, onCancel
   const sharedId = `expense-shared-${familyId}`;
   const dateId = `expense-date-${familyId}`;
   const descriptionId = `expense-description-${familyId}`;
+  const tripFieldId = `expense-trip-${familyId}`;
+  const tripItemFieldId = `expense-trip-item-${familyId}`;
   const effectivePayerUserId = payerUserId || members[0]?.user_id || "";
   const effectiveCategoryId = categoryId || categories[0]?.id || "";
   const displayError = formError || initialLoadError;
@@ -91,6 +100,8 @@ export function ExpenseForm({ familyId, expense, currencyCode, onSaved, onCancel
       is_shared: isShared,
       description: description || null,
       expense_date: expenseDate,
+      trip_id: tripId || null,
+      trip_itinerary_item_id: tripId ? tripItemId || null : null,
     };
 
     const mutationOptions = {
@@ -139,6 +150,45 @@ export function ExpenseForm({ familyId, expense, currencyCode, onSaved, onCancel
             ))}
           </select>
         </Field>
+      </section>
+
+      <section className="grid gap-4 rounded-lg border border-border/80 bg-muted/25 p-4 md:grid-cols-2">
+        <Field label={t("trip.trip")} htmlFor={tripFieldId}>
+          <select
+            id={tripFieldId}
+            value={tripId}
+            className="min-h-10"
+            onChange={(event) => {
+              setTripId(event.target.value);
+              setTripItemId("");
+            }}
+          >
+            <option value="">-</option>
+            {trips.map((trip) => (
+              <option key={trip.id} value={trip.id}>
+                {trip.name}
+              </option>
+            ))}
+          </select>
+        </Field>
+
+        {tripId ? (
+          <Field label={t("trip.item")} htmlFor={tripItemFieldId}>
+            <select
+              id={tripItemFieldId}
+              value={tripItemId}
+              className="min-h-10"
+              onChange={(event) => setTripItemId(event.target.value)}
+            >
+              <option value="">-</option>
+              {tripItems.map((item) => (
+                <option key={item.id} value={item.id}>
+                  {item.title}
+                </option>
+              ))}
+            </select>
+          </Field>
+        ) : null}
       </section>
 
       <section className="grid gap-4 rounded-lg border border-border/80 bg-muted/25 p-4 md:grid-cols-2">
